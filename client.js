@@ -18,6 +18,53 @@ window.__ModuleLoader__.load({
 
     const API = '/mcmods-studio/api'
     const KEY = 'mc-mod-studio'
+    const STYLE_ID = 'mcmods-studio-styles'
+
+    /** 注入插件页面样式：按钮悬停、按下、禁用态与卡片悬停。 */
+    function ensureStyles() {
+      if (typeof document === 'undefined') return
+      if (document.getElementById(STYLE_ID)) return
+      const style = document.createElement('style')
+      style.id = STYLE_ID
+      style.textContent = `
+        .mcmods-root button {
+          transition: background-color .12s ease, background-image .12s ease,
+            border-color .12s ease, color .12s ease, transform .08s ease;
+        }
+        /* 悬停：叠加一层中性灰，效果与 DSH 原生按钮的灰色高亮一致；
+           用 background-image 叠加而非替换 background-color，任何底色的按钮都适用。 */
+        .mcmods-root button:hover:not(:disabled) {
+          background-image: linear-gradient(
+            rgba(128, 128, 128, .22),
+            rgba(128, 128, 128, .22)
+          ) !important;
+          border-color: var(--dsw-alias-border-l2) !important;
+        }
+        .mcmods-root button:active:not(:disabled) {
+          background-image: linear-gradient(
+            rgba(128, 128, 128, .32),
+            rgba(128, 128, 128, .32)
+          ) !important;
+          transform: translateY(1px);
+        }
+        .mcmods-root button:disabled {
+          opacity: .55;
+          cursor: not-allowed;
+        }
+        .mcmods-root button:focus-visible {
+          outline: 2px solid var(--dsw-alias-brand-primary);
+          outline-offset: 2px;
+        }
+        .mcmods-root .mcmods-card {
+          transition: border-color .12s ease, box-shadow .12s ease;
+        }
+        .mcmods-root .mcmods-card:hover {
+          border-color: var(--dsw-alias-border-l2);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, .14);
+        }
+      `
+      document.head.appendChild(style)
+    }
 
     // ── 基础工具 ─────────────────────────────────────────────
 
@@ -428,6 +475,17 @@ window.__ModuleLoader__.load({
 
       const projects = boot?.registry?.projects || []
 
+      /** 已登记项目的路径集合（统一小写、去掉末尾分隔符后比较）。 */
+      const importedPaths = useMemo(() => {
+        const normalize = (value) => String(value || '').replace(/[\\/]+$/, '').toLowerCase()
+        return new Set(projects.map((item) => normalize(item.path)))
+      }, [projects])
+
+      const isImported = (candidate) => {
+        const normalize = (value) => String(value || '').replace(/[\\/]+$/, '').toLowerCase()
+        return importedPaths.has(normalize(candidate?.path))
+      }
+
       const scan = async () => {
         setScanError('')
         try {
@@ -533,6 +591,12 @@ window.__ModuleLoader__.load({
           h('div', { style: S.sectionTitle }, '扫描已有工程'),
           h('div', { style: { ...S.row, marginBottom: 8 } },
             h('div', { style: { flex: '1 1 320px' } }, h(TextInput, { value: root, onChange: setRoot, placeholder: '扫描根目录，例如 D:\\program' })),
+            h('button', {
+              style: S.btn(), onClick: async () => {
+                const picked = await pickFolder()
+                if (picked) setRoot(picked)
+              },
+            }, '浏览…'),
             h('button', { style: S.btn(), onClick: saveRoot }, '保存为默认根目录'),
             h('button', { style: S.btn(), onClick: scan }, '开始扫描'),
           ),
@@ -541,22 +605,36 @@ window.__ModuleLoader__.load({
             ? (scanning.candidates.length === 0
                 ? h('div', { style: S.empty }, '该目录下没有发现模组工程或工坊项目。')
                 : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
-                    scanning.candidates.map((candidate) => h('div', {
-                      key: candidate.path,
-                      style: {
-                        display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
-                        border: `1px solid ${C.border}`, borderRadius: 8, background: C.layer2,
+                    scanning.candidates.map((candidate) => {
+                      const imported = isImported(candidate)
+                      return h('div', {
+                        key: candidate.path,
+                        style: {
+                          display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
+                          border: `1px solid ${C.border}`, borderRadius: 8, background: C.layer2,
+                          opacity: imported ? 0.86 : 1,
+                        },
                       },
-                    },
-                      h('div', { style: { flex: 1, minWidth: 0 } },
-                        h('div', { style: { fontWeight: 600 } }, candidate.name || candidate.path),
-                        h('div', { style: { ...S.hint, marginTop: 2, wordBreak: 'break-all' } },
-                          [candidate.modid, candidate.loader, candidate.kind === 'studio' ? '工坊项目' : '模组工程'].filter(Boolean).join(' · ')),
-                      ),
-                      candidate.isStudio
-                        ? h('button', { style: S.btn(), onClick: () => addCandidate(candidate) }, '打开')
-                        : h('button', { style: S.btn(), onClick: () => importCandidate(candidate) }, '导入'),
-                    )),
+                        h('div', { style: { flex: 1, minWidth: 0 } },
+                          h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' } },
+                            h('span', { style: { fontWeight: 600 } }, candidate.name || candidate.path),
+                            imported ? h('span', { style: S.badge('success') }, '已导入') : null,
+                            candidate.isStudio && !imported
+                              ? h('span', { style: S.badge('idle') }, '已有工坊数据')
+                              : null,
+                          ),
+                          h('div', { style: { ...S.hint, marginTop: 2, wordBreak: 'break-all' } },
+                            [candidate.modid, candidate.loader, candidate.kind === 'studio' ? '工坊项目' : '模组工程'].filter(Boolean).join(' · ')),
+                        ),
+                        imported
+                          ? h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 } },
+                              h('button', { style: S.btn('ghost'), onClick: () => open(candidate.path) }, '打开'))
+                          : h('button', {
+                              style: S.btn(),
+                              onClick: () => (candidate.isStudio ? addCandidate(candidate) : importCandidate(candidate)),
+                            }, '导入'),
+                      )
+                    }),
                   ))
             : null,
         ),
@@ -1234,7 +1312,7 @@ window.__ModuleLoader__.load({
         { id: 'guide', label: '构建教程' },
       ]
 
-      return h('div', { style: S.page },
+      return h('div', { className: 'mcmods-root', style: S.page },
         h('div', { style: S.header },
           h(Icon, { size: 26, active: true }),
           h('div', null,
@@ -1314,6 +1392,54 @@ window.__ModuleLoader__.load({
       )
     }
 
+    // ── 目录选择 ─────────────────────────────────────────────
+
+    /** 客户端上下文（由 apply 注入），用于调用 uiWorkspace 等客户端服务。 */
+    let appCtx = null
+
+    /** 调起 DSH 原生目录选择器；用户取消或服务不可用时返回 null。 */
+    async function pickFolder() {
+      try {
+        const workspace = appCtx && typeof appCtx.get === 'function' ? appCtx.get('uiWorkspace') : null
+        if (!workspace || typeof workspace.pickDirectory !== 'function') return null
+        const picked = await workspace.pickDirectory()
+        return typeof picked === 'string' && picked ? picked : null
+      } catch {
+        return null
+      }
+    }
+
+    /** 路径输入框 + 「浏览…」按钮：手动填写与目录选择器两用。 */
+    function PathField(props) {
+      const [picking, setPicking] = useState(false)
+      const [note, setNote] = useState('')
+      const browse = async () => {
+        setPicking(true)
+        setNote('')
+        try {
+          const picked = await pickFolder()
+          if (picked) props.onChange(picked)
+          else setNote('没有选择目录，或当前环境不支持目录选择器，请手动填写路径')
+        } finally {
+          setPicking(false)
+        }
+      }
+      return h(Field, { label: props.label, required: props.required, hint: props.hint },
+        h('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
+          h('div', { style: { display: 'flex', gap: 8, alignItems: 'center' } },
+            h('div', { style: { flex: 1, minWidth: 0 } },
+              h(TextInput, { value: props.value, onChange: props.onChange, placeholder: props.placeholder })),
+            h('button', {
+              type: 'button',
+              style: { ...S.btn(), whiteSpace: 'nowrap', flexShrink: 0 },
+              disabled: picking,
+              onClick: browse,
+            }, picking ? '选择中…' : '浏览…'),
+          ),
+          note ? h('div', { style: { fontSize: 11, color: C.danger } }, note) : null,
+        ))
+    }
+
     function CreateProjectModal(props) {
       const [draft, setDraft] = useState({
         path: props.defaultRoot ? `${props.defaultRoot}\\my-mod` : '',
@@ -1340,8 +1466,12 @@ window.__ModuleLoader__.load({
           h('button', { key: 'ok', style: S.btn(), disabled: submitting, onClick: submit }, submitting ? '创建中…' : '创建'),
         ],
       },
-        h(Field, { label: '项目目录', required: true, hint: '必须是空目录或尚不存在的路径，且位于默认根目录内' },
-          h(TextInput, { value: draft.path, onChange: (v) => set('path', v) })),
+        h(PathField, {
+          label: '项目目录', required: true,
+          hint: '任意目录都可以作为项目目录；须为空目录或尚不存在的路径。可点「浏览…」选择文件夹',
+          value: draft.path, onChange: (v) => set('path', v),
+          placeholder: '例如 D:\\program\\my-mod',
+        }),
         h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
           h(Field, { label: '项目名称' }, h(TextInput, { value: draft.name, onChange: (v) => set('name', v) })),
           h(Field, { label: 'modid', required: true }, h(TextInput, { value: draft.modid, onChange: (v) => set('modid', v.toLowerCase()) })),
@@ -1388,8 +1518,12 @@ window.__ModuleLoader__.load({
           h('button', { key: 'ok', style: S.btn(), disabled: submitting, onClick: submit }, submitting ? '导入中…' : '导入'),
         ],
       },
-        h(Field, { label: '工程目录', required: true, hint: '读取 fabric.mod.json / mods.toml / 构建脚本，扫描贴图、模型与 Java 注册名' },
-          h(TextInput, { value: draft.path, onChange: (v) => set('path', v) })),
+        h(PathField, {
+          label: '工程目录', required: true,
+          hint: '读取 fabric.mod.json / mods.toml / 构建脚本，扫描贴图、模型与 Java 注册名；可点「浏览…」选择文件夹',
+          value: draft.path, onChange: (v) => set('path', v),
+          placeholder: '例如 D:\\program\\my-mod',
+        }),
         h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
           h(Field, { label: '项目名称' }, h(TextInput, { value: draft.name, onChange: (v) => set('name', v) })),
           h(Field, { label: 'modid', required: true, hint: '识别不到描述文件时必须手动填写' },
@@ -1458,6 +1592,7 @@ window.__ModuleLoader__.load({
       const statusCount = features.filter((f) => f.status === 'done').length
 
       return h('div', {
+        className: 'mcmods-root',
         style: {
           display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0,
           background: C.bg, color: C.text,
@@ -1518,6 +1653,8 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots'],
       apply(ctx) {
+        appCtx = ctx
+        ensureStyles()
         const slots = ctx.slots || ctx.get('slots')
         if (!slots) return
 

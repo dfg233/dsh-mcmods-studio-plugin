@@ -141,7 +141,7 @@
 | `projects.add` | `{path}` | `{path, meta}` | 必须是工坊项目，否则提示先导入 |
 | `projects.remove` | `{path}` | `{path}` | 只移除登记，不删文件 |
 | `registry.setRoot` | `{root}` | `{root}` | 改扫描根目录 |
-| `project.create` | `{path,name,modid,version,description,loader}` | 项目数据 | 路径必须在扫描根目录内 |
+| `project.create` | `{path,name,modid,version,description,loader}` | 项目数据 | 可位于任意目录；目录须为空或不存在 |
 | `project.open` | `{path}` | `{path, meta, features, items}` | 打开并刷新 `updatedAt` |
 | `project.import` | `{path,modid?,name?,version?}` | 项目数据 + `imported` | 识别 `fabric.mod.json` / `mods.toml` / `build.gradle` |
 | `project.saveMeta` | `{path, patch}` | `meta` | 合并字段 |
@@ -214,6 +214,8 @@ window.__ModuleLoader__.load({
 | `Tabs` | 页签条 | `{tabs,value,onChange}` |
 | `Markdown` | 轻量 Markdown 渲染（标题/列表/代码块/表格） | `{text}` |
 | `renderInline` | 行内 `code`/`**粗体**` 渲染 | `(text)` |
+| `PathField` | 路径输入框 + 「浏览…」按钮（调系统目录选择器） | `{label,value,onChange,required,hint,placeholder}` |
+| `pickFolder()` | 调 `ctx.get('uiWorkspace').pickDirectory()`，取消或不可用时返回 `null` | 无参，`Promise<string\|null>` |
 
 ### 4.4 页面组件
 
@@ -343,6 +345,7 @@ const tabs = [
 | 改默认扫描根目录 | `lib/registry.js` 的 `DEFAULT_ROOT` | 已存注册表不会自动改 |
 | 改数据目录名 | `DATA_DIR` | 老项目需迁移脚本 |
 | 换 MC 版本 | `MC_VERSION`（未来 `mcVersion`） | 字段能力表、代码模板、构建教程 |
+| 改目录选择行为 | `pickFolder()` / `PathField` | `uiWorkspace.pickDirectory()` 返回 `null` 时要有手动输入兜底 |
 
 ## 8. 验证与排查
 
