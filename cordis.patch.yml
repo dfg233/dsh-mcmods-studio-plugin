@@ -1,0 +1,9 @@
+# 模组工坊 Bundle 补丁层
+#
+# 该文件是 package.json 中 `dsh.bundle.patch` 指向的补丁：
+# 安装 bundle 时，Loader 会读取本文件并把下面这一行插件条目插入到配置层，
+# 由 Host 进程加载 index.js（Host 半），并由 `dsh.client` 声明让 Web 端加载
+# client.js（Client 半）。
+- insert:
+    - id: mc-mod-studio
+      name: 'dsh-mcmods-studio-plugin'

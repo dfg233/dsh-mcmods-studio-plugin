@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="模组工坊">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b7a4f"/>
+      <stop offset="1" stop-color="#1f4d33"/>
+    </linearGradient>
+    <linearGradient id="block" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8bd45f"/>
+      <stop offset="1" stop-color="#4f9e34"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="26" fill="url(#bg)"/>
+  <!-- 等轴方块 -->
+  <g transform="translate(64 70)">
+    <path d="M0 -34 L34 -17 L0 0 L-34 -17 Z" fill="url(#block)"/>
+    <path d="M-34 -17 L0 0 L0 34 L-34 17 Z" fill="#2f6b22"/>
+    <path d="M34 -17 L0 0 L0 34 L34 17 Z" fill="#3f8a2c"/>
+  </g>
+  <!-- 锤子 -->
+  <g transform="translate(88 40) rotate(35)">
+    <rect x="-4" y="-4" width="8" height="34" rx="3" fill="#d9b26a"/>
+    <rect x="-18" y="-14" width="36" height="12" rx="4" fill="#cfd8e3"/>
+  </g>
+  <circle cx="30" cy="34" r="5" fill="#f2d36b" opacity="0.9"/>
+</svg>
