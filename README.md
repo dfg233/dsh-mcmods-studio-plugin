@@ -1,7 +1,14 @@
 # 模组工坊（dsh-mcmods-studio-plugin）
 
-面向 **Minecraft 1.20.1**（Forge / NeoForge / Fabric）的模组设计与素材管理插件，
+面向 **Minecraft 1.20.1**（Forge / NeoForge / Fabric）的模组制作插件，
 运行在 DeepSeek Harness 的 Web UI 中。
+
+**版本策略**：当前只适配 Minecraft 1.20.1；其他版本在后续版本逐步适配
+（v1.0.0 起先加 1.21.1，之后按需扩展），详见[项目计划书](docs/PLAN.md)。
+
+设计目的是帮助模组作者完成三件事：**编写代码**、**集中管理模组信息**、
+**用图形化方式创建与修改模组内容**。图形化负责「是什么」，代码负责「怎么实现」，
+生成物可读可改，删除插件后工程仍可正常开发。
 
 ## 功能
 
@@ -10,7 +17,10 @@
 - **物品**：列表 / 画布双视图，按分组编辑物品属性（性质）；
 - **贴图与模型**：上传 PNG、预览、编辑模型 JSON、统计缺失素材；
 - **文档**：一键导出 Markdown 到项目 `docs/`；
-- **构建教程**：内置 1.20.1 三种加载器的 IDEA 构建流程。
+- **构建教程**：内置 1.20.1 三种加载器的 IDEA 构建流程；
+- **代码工作区**（v0.2 计划中）：浏览与编辑工程源码，生成带标记区块的注册代码与资源 JSON。
+
+完整路线见 [项目计划书](docs/PLAN.md)，当前进度见 [项目状态](docs/STATUS.md)。
 
 ## 安装
 
@@ -31,6 +41,9 @@ plugin_manager install_bundle  target: D:\program\dsh-mcmods-studio-plugin
 
 ## 文档
 
+- [项目计划书](docs/PLAN.md)
+- [项目状态（已实现 / 未实现 / 要求）](docs/STATUS.md)
+- [代码索引（函数与接口）](docs/INDEX.md)
 - [开发文档](docs/DEVELOPMENT.md)
 - [架构说明](docs/ARCHITECTURE.md)
 - [数据格式](docs/DATA-FORMAT.md)

@@ -4,7 +4,7 @@
 
 | 维度 | 支持值 | 说明 |
 | --- | --- | --- |
-| Minecraft | **1.20.1** | 首版固定版本，其他版本不在范围内 |
+| Minecraft | **1.20.1** | 当前唯一适配版本；后续版本逐步适配，路线见 [PLAN.md](PLAN.md) 第 2 节 |
 | Forge | 47.x | `net.minecraftforge:forge:1.20.1-47.x.x` |
 | NeoForge | 47.1.x | `net.neoforged:forge:1.20.1-47.1.x` |
 | Fabric | Loader 0.15.x + Fabric API | Yarn 映射，`fabric-loom` |
@@ -26,7 +26,8 @@
 
 ## 3. 插件侧兼容策略
 
-- `loader` 字段只影响文档与提示，不改变生成的文件结构（本插件不生成代码）；
+- `mcVersion` 是项目级字段（默认 1.20.1），决定字段能力表与代码模板目录；
+- `loader` 字段决定文档提示与代码生成模板：v0.1.0 只影响展示，不生成文件；v0.2 起按加载器选择 Java 模板（见 [PLAN.md](PLAN.md)）；
 - 导入工程时通过 `fabric.mod.json` / `mods.toml` / 构建脚本自动识别加载器；
 - 物品属性中的 `loaderNotes` 字段用于记录跨加载器差异；
 - 贴图与模型路径对三种加载器一致（`assets/<modid>/...`），可直接复用。

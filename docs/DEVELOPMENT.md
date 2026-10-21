@@ -26,6 +26,7 @@ plugin_manager install_bundle  target: D:\program\dsh-mcmods-studio-plugin
 
 - 侧栏出现「模组工坊」图标，点击打开中央页面；
 - Host 路由 `POST /mcmods-studio/api` 生效；
+- 改动代码前先查 [代码索引](INDEX.md)，按「文件 → 函数 → 参数 → 返回」定位；
 - 若修改了 Host 代码，需要重装 bundle（或重启 DSH）才能加载新的 JavaScript 模块代；
 - 若只改 Client 代码，通常刷新页面即可；开发时建议同时运行 `pnpm run dev:web` 以获得 HMR。
 
@@ -98,7 +99,7 @@ lib/api.js ──► lib/project.js / lib/assets.js / lib/docs.js
 - 项目路径必须存在且是工坊项目，才允许读写业务数据；
 - 新建/导入项目会被限制在「扫描根目录」以内；
 - 所有界面文案为中文，不引入 i18n 运行时；
-- 不生成 gradle / Java 代码，避免与用户的 IDE 工程冲突；
+- v0.1.0 不生成 gradle / Java 代码；v0.2 起通过 `lib/codegen.js` 生成带注释标记的 Java 与资源 JSON，只替换标记区间，不覆盖手写代码（见 [PLAN.md](PLAN.md)）；
 - 侧栏入口只注册图标区：`sidebar.panellist`（与「插件市场」「费用统计」「上下文洞察」同一区域，`order: 2`），点击后由侧栏按同名 key 打开 `main` 里的 `mc-mod-studio` 面板；不再注册底部 `sidebar.footer.action`。
 - 右侧栏标签页：`ctx.inject(['sidebarRightTabs'], ...)` 注册 `id/kind = mc-mod-studio` 的标签类型（含「开始」页引导卡片），并注册 `sidebar.right.pane.tab`（key 同名）渲染 `SidebarStudioPanel`；面板通过模块级 `studioState`（`projectPath` / `itemId`）与主面板联动，数据用 `project.open` 读取。
 
