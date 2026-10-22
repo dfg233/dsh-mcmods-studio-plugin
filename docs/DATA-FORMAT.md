@@ -69,6 +69,13 @@
   "description": "示例项目",
   "loader": "neoforge",
   "minecraft": "1.20.1",
+  "authors": "张三, 李四",
+  "license": "MIT",
+  "group": "com.example.demo",
+  "minecraftRange": "[1.20.1,1.21)",
+  "loaderVersion": "NeoForge 47.1.79",
+  "loaderRange": "47.1.79",
+  "source": "gradle.properties",
   "createdAt": "2026-10-20T12:00:00.000Z",
   "updatedAt": "2026-10-20T12:30:00.000Z"
 }
@@ -80,6 +87,42 @@
 | `modid` | string | 小写字母/数字/下划线，2–64 位 |
 | `loader` | `forge` \| `neoforge` \| `fabric` | 目标加载器 |
 | `minecraft` | string | 固定 `1.20.1` |
+| `authors` | string | 作者，来自 `mod_authors` |
+| `license` | string | 许可证，来自 `mod_license` |
+| `group` | string | 包名，来自 `mod_group_id` / `maven_group` |
+| `minecraftRange` | string | MC 版本范围，来自 `minecraft_version_range` |
+| `loaderVersion` | string | 可读的加载器版本，如 `NeoForge 47.1.79` |
+| `loaderRange` | string | 加载器版本号原文，如 `47.1.79` |
+| `source` | string | 元数据来源：`gradle.properties` 或 `descriptor` |
+
+> 新建项目时只有前八个字段；`authors`、`license`、`group`、版本范围等由导入时从
+> `gradle.properties` 读取，缺失则留空。界面默认只展示 modid、Minecraft、加载器，
+> 其余字段在「详情 → 更多信息」中查看。
+
+## 2.1 gradle.properties 的解析规则
+
+导入时优先读工程根下的 `gradle.properties`，键名兼容三种加载器：
+
+| 元数据 | 识别键（按顺序取第一个非空） |
+| --- | --- |
+| modid | `mod_id`、`modid`、`archives_base_name` |
+| 名称 | `mod_name` |
+| 版本 | `mod_version`、`version` |
+| 包名 | `mod_group_id`、`maven_group`、`group` |
+| 许可证 | `mod_license`、`license` |
+| 作者 | `mod_authors`、`authors` |
+| MC 版本 | `minecraft_version`（精确）或 `minecraft_version_range`（范围） |
+| NeoForge | `neo_version` |
+| Forge | `forge_version` |
+| Fabric | `loader_version`、`fabric_loader_version`、`fabric_version` |
+
+解析支持注释（`#`、`!`）、反斜杠续行、`\uXXXX` 与 `\t\n\r\\` 转义、行尾空白裁剪。
+
+**冲突处理**：同一字段在「导入表单 / gradle.properties / 工程描述文件」中出现不同值时，
+导入直接失败并列出全部取值与来源，要求人工修正。
+
+**必需字段**：`modid`、`minecraft_version`（或范围）、加载器版本三者全缺时同样失败。
+其余字段缺失只留空，不阻断导入。
 
 ## 3. features.json
 

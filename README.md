@@ -44,6 +44,7 @@ plugin_manager install_bundle  target: D:\program\dsh-mcmods-studio-plugin
 - [项目计划书](docs/PLAN.md)
 - [项目状态（已实现 / 未实现 / 要求）](docs/STATUS.md)
 - [代码索引（函数与接口）](docs/INDEX.md)
+- [模组项目文件结构（1.20.1）](docs/PROJECT-STRUCTURE.md)
 - [开发文档](docs/DEVELOPMENT.md)
 - [架构说明](docs/ARCHITECTURE.md)
 - [数据格式](docs/DATA-FORMAT.md)

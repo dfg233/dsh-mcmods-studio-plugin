@@ -27,10 +27,11 @@
 | `index.js` | Host 入口：HTTP 路由、请求体解析、卸载清理 | 91 |
 | `lib/api.js` | 动作表：所有 `action` 的实现与分派 | 333 |
 | `lib/registry.js` | 插件运行数据：注册表、路径展开、原子写入 | 179 |
-| `lib/project.js` | 项目数据模型：常量、字段定义、项目/功能/物品 CRUD、扫描与导入 | 793 |
+| `lib/project.js` | 项目数据模型：常量、字段定义、项目/功能/物品 CRUD、扫描与导入 | ~1260 |
+| `lib/gradle.js` | 解析 `gradle.properties`，提取模组元数据与加载器判定 | 190 |
 | `lib/assets.js` | 贴图与模型：路径解析、PNG 校验、上传、读取、默认模型 | 221 |
 | `lib/docs.js` | Markdown 导出：五个文件的渲染 | 256 |
-| `client.js` | 浏览器半：全部 UI（单文件） | ~1560 |
+| `client.js` | 浏览器半：全部 UI（单文件） | ~1930 |
 | `docs/*.md` | 插件自身文档（本文件即索引） | — |
 
 ## 2. 数据层（`lib/`）
@@ -97,12 +98,43 @@
 | `deleteItem(path, id)` | 删除物品 | 同时尽可能清理贴图与模型 |
 | `touchMeta(path)` | 更新 `updatedAt` | 内部使用 |
 | `saveProjectMeta(path, patch)` | 合并写入元数据 | 返回新 meta |
-| `scanCandidates(root)` | 扫描候选工程 | 返回数组，元素含 `{path,name,modid,loader,version,hasStudio...}` |
-| `importProject(input)` | 导入已有工程 | 入参 `{path,modid?,name?,version?}`；识别描述文件、扫描素材与 Java 注册名；返回项目数据与 `imported` 统计 |
-| `writeSnapshot(path, info)` | 写导入快照 | 生成 `docs/mcstudio-snapshot.md` |
+| `scanCandidates(root)` | 扫描候选工程 | 返回数组，元素含 `{path,name,modid,loader,version,isStudio,imported,importedAt,projectId,legacy}` |
+| `importProject(input)` | 导入已有工程 | 入参 `{path,modid?,name?,version?}`；按标准路径扫描资源与 Java 注册名，方块/物品自动分类；返回项目数据与 `imported:{assets,registryNames,created,snapshot}` |
+| `writeSnapshot(path, info)` | 写导入快照 | 生成 `docs/mcstudio-snapshot.md`，按资源类型分节 |
 | `assertInside(root, target)` | 路径归属校验 | 越界抛错 |
 
-### 2.3 `lib/assets.js`
+内部函数（不导出，改导入逻辑时看这里）：
+
+| 函数 | 作用 |
+| --- | --- |
+| `detectDescriptor(path)` | 识别 `fabric.mod.json` / `mods.toml` / `neoforge.mods.toml` / gradle；1.20.1 的 Forge 与 NeoForge 共用 `mods.toml`，用 `readBuildText` 区分 |
+| `readBuildText(path)` | 合并读取 `build.gradle`、`build.gradle.kts`、`gradle.properties`、`settings.gradle` |
+| `resolveIdentity(path, input)` | 合并「表单 / gradle.properties / 描述文件」三处信息；冲突或缺必需项时抛异常 |
+| `diffEntries(assets, registryNames, existingItems)` | 计算新增 / 保留 / 类型冲突 / 无资源条目四类差异 |
+| `syncEntries(path, modid, {mode})` | 按差异把条目写入 `items/`；`mode` 为 `merge` 或 `overwrite` |
+| `scanProjectAssets(path, modid)` | 扫描 `assets/<modid>` 与 `data/<modid>` 下各类资源，返回 `{textures,blockTextures,models,blockModels,blockstates,langs,recipes,lootTables,tags,advancements,namespaces}` |
+| `scanRegistryNames(path)` | 遍历 `src/main/java` 提取 `register("id")` 注册名 |
+
+导入相关导出：
+
+| 函数 | 用途 |
+| --- | --- |
+| `isRegisteredProject(path)` | 是否在项目列表（注册表）中；与 `isStudioProject`（看目录内 `project.json`）区分 |
+| `importProject(input)` | 首次导入；`input.force` 可跳过「已登记」检查 |
+| `reimportProject(input)` | 重新导入；`input.mode` 为 `merge`（默认）或 `overwrite` |
+| `analyzeImport(input)` | 只分析不写盘，返回 `{kind, identity, identityError, diff, meta}` |
+
+### 2.3 `lib/gradle.js`
+
+| 函数 | 用途 | 返回 |
+| --- | --- | --- |
+| `parseProperties(text)` | 解析 Java properties 文本（注释、续行、`\uXXXX` 与 `\t\n\r\\` 转义） | 键值对象 |
+| `extractGradleMeta(props)` | 按别名表提取模组元数据 | `{modid,name,version,group,license,authors,minecraft,minecraftRange,neoVersion,forgeVersion,loaderVersion,loader,missing}` |
+| `detectLoaderFromGradle(meta, props)` | 依据版本字段判定加载器 | `forge` / `neoforge` / `fabric` / `''` |
+| `readGradleProperties(path)` | 读取并解析工程根下的 `gradle.properties` | `{exists, file, props, meta}` |
+| `loaderVersionText(meta)` | 生成可读的加载器版本文本 | 如 `NeoForge 47.1.79` |
+
+### 2.4 `lib/assets.js`
 
 | 函数 | 用途 | 参数 | 返回 |
 | --- | --- | --- | --- |
@@ -148,7 +180,9 @@
 | `registry.setRoot` | `{root}` | `{root}` | 改扫描根目录 |
 | `project.create` | `{path,name,modid,version,description,loader}` | 项目数据 | 可位于任意目录；目录须为空或不存在 |
 | `project.open` | `{path}` | `{path, meta, features, items}` | 打开并刷新 `updatedAt` |
-| `project.import` | `{path,modid?,name?,version?}` | 项目数据 + `imported` | 识别 `fabric.mod.json` / `mods.toml` / `build.gradle` |
+| `project.import` | `{path,modid?,name?,version?,force?}` | 项目数据 + `imported` | 先读 `gradle.properties` 补全信息；冲突或缺必需项抛错；`force` 跳过已登记检查 |
+| `project.analyzeImport` | `{path,modid?,name?,version?}` | `{kind, registered, identity, identityError, diff, meta}` | 只分析不写盘；`kind` 为 `new`/`orphan`/`registered` |
+| `project.reimport` | `{path, mode?}` | 项目数据 + `imported` | `mode` 为 `merge`（默认，保留已有）或 `overwrite`（改写类型冲突） |
 | `project.saveMeta` | `{path, patch}` | `meta` | 合并字段 |
 | `features.list` | `{path}` | `{features}` | — |
 | `features.save` | `{path, feature}` | `{feature}` | 无 id 即新增 |
@@ -235,11 +269,13 @@ window.__ModuleLoader__.load({
 | `renderField` | 1025 | 按字段类型渲染控件 | `(field, value, onChange)` |
 | `AssetsTab` | 1046 | 贴图上传、预览、模型编辑 | `{project,assets,reloadAssets,setError}` |
 | `GuideTab` | 1205 | 构建教程 | `{guide}` |
-| `StudioPage` | 1215 | 页面框架与页签 | 内部状态 `tab/createOpen/importTarget` |
-| `CreateProjectModal` | 1317 | 新建项目弹窗 | `{defaultRoot,onClose,onCreated}` |
-| `ImportProjectModal` | 1363 | 导入工程弹窗 | `{target,onClose,onImported}` |
-| `SidebarStudioPanel` | 1421 | 右侧栏：项目概览 + 选中物品 | 无 props，读 `studioState` |
-| `InfoRow` | 1408 | 右侧栏「标签—值」行 | `{label,value}` |
+| `StudioPage` | 1317 | 页面框架与页签 | 内部状态 `tab/createOpen/importTarget/reimportTarget` |
+| `CreateProjectModal` | 约 1490 | 新建项目弹窗 | `{defaultRoot,onClose,onCreated}` |
+| `ImportProjectModal` | 约 1540 | 导入工程弹窗（第一步：填表） | `{candidate,onClose,onImported}` |
+| `ProjectDetailModal` | 约 1603 | 项目详情（默认只显示 modid/MC/加载器，其余折叠） | `{item,onClose,setError}` |
+| `ImportConfirmModal` | 约 1671 | 导入/重新导入前的差异确认 | `{path,seed,title,confirmText,onClose,onConfirm}` |
+| `SidebarStudioPanel` | 约 1790 | 右侧栏：项目概览 + 选中物品 | 无 props，读 `studioState` |
+| `InfoRow` | 约 1810 | 「标签—值」行 | `{label,value}` |
 
 `StudioPage` 的页签定义（加页签改这里）：
 

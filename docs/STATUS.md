@@ -46,7 +46,16 @@
 - 扫描候选工程：扫描「扫描根目录」下的子目录，识别 `fabric.mod.json`、`mods.toml`、`neoforge.mods.toml`、`build.gradle`；
 - 扫描状态：以项目目录内的 `.mcstudio/studio.json` 标记判断是否已导入（不依赖注册表路径）；已导入的显示「已导入」徽章、导入时间与「打开」按钮，未导入的显示「导入」按钮；
 - 标记文件：新建、导入、添加、打开项目时写入 `.mcstudio/studio.json`，保存 `projectId`、首次导入时间、来源与目标版本；只有 `project.json` 的老项目视为已导入，首次打开时自动补写标记；
-- 导入已有工程：读取描述文件与构建脚本，扫描 `assets/<modid>/textures|models`、Java 中的 `register("…")` 注册名，写入工坊数据并生成 `docs/mcstudio-snapshot.md`；
+- 导入已有工程：先读 `gradle.properties` 补全项目信息（modid、名称、版本、作者、许可证、包名、MC 与加载器版本范围），再按 [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) 的固定路径精确扫描——`assets/<modid>/textures/item|block`、`models/item|block`、`blockstates`、`lang`，`data/<modid>/recipes`、`loot_tables/blocks`、`tags/items|blocks`、`advancements`，并从 `src/main/java` 提取 `register("…")` 注册名；
+- 导入信息校验：`modid`、`minecraft_version`、加载器版本缺失时抛异常要求人工介入；同一字段在「导入表单 / gradle.properties / 工程描述文件」三处不一致时也抛异常，并列出全部取值与来源；
+- 导入三分支判定：在项目列表中 → 抛「该目录已经是工坊项目，可直接打开」；有工坊数据但不在列表（曾被移除）→ 走添加流程并补登记；全新目录 → 正常导入；
+- 导入确认：点击「下一步」先调用 `project.analyzeImport` 展示将新增的条目、已存在条目、类型冲突与无对应资源的条目，确认后才写入；
+- 重新导入：项目列表每行提供「重新导入」按钮，确认后按差异同步——新增条目自动创建，已有条目默认保留（可选按扫描结果改写类型冲突项）；
+- 项目详情：列表每行提供「详情」按钮，默认只显示 modid、Minecraft 版本、加载器；作者、许可证、包名、版本范围等收在「更多信息」里；
+- 导入分类：有 blockstate / 方块模型 / 方块贴图的条目归为「方块」，其余归为「物品」；语言文件名（`zh_cn`、`en_us`）不作为条目；
+- 加载器识别：`fabric.mod.json` 直接判定 Fabric；`mods.toml` 因 1.20.1 的 Forge 与 NeoForge 共用文件名，改由 `build.gradle` / `gradle.properties` 中的 `net.neoforged` / `neo_version` 区分；
+- 命名空间记录：快照中列出 `assets/` 与 `data/` 下检测到的全部命名空间，并标注是否属于本项目；
+- 生成 `docs/mcstudio-snapshot.md`：按资源类型列出数量与清单（物品贴图、方块贴图、模型、方块状态、语言、配方、战利品表、标签、进度、注册名）；
 - 修改扫描根目录（默认 `D:\program`）。
 
 ### 2.2 功能列表

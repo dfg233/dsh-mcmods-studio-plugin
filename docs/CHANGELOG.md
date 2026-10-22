@@ -34,6 +34,15 @@
 - 按钮悬停：插件页面与右侧栏注入统一样式，悬停时按钮叠加中性灰（与 DSH 原生按钮的灰色高亮一致），按下加深并轻微下沉，另含禁用态与键盘焦点环；卡片悬停有边框与阴影反馈。
 - 扫描状态：改为读取项目目录内的 `.mcstudio/studio.json` 标记判断是否已导入，不再依赖注册表路径；已导入的项目显示「已导入」徽章、导入时间与「打开」按钮，未导入的显示「导入」按钮。
 - 工坊标记：新增 `.mcstudio/studio.json`，记录 `projectId`、首次导入时间、来源（create/import/add/open）与目标版本；新建、导入、添加、打开项目时自动写入；只有 `project.json` 的老项目视为已导入，首次打开时补写标记。
+- 项目结构文档：新增 [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md)，依据 Forge 1.20.1、NeoForge 与 Fabric 官方文档及 NeoForge 源码分支，说明代码、素材、数据、元数据与构建文件的固定位置。
+- 导入精确化：按文档固定路径扫描 `textures/item|block`、`models/item|block`、`blockstates`、`lang`、`recipes`、`loot_tables/blocks`、`tags`、`advancements` 与 Java 注册名；方块与物品自动分类；语言文件名不再误判为条目；其他命名空间只记录不导入。
+- 加载器识别修正：1.20.1 的 Forge 与 NeoForge 共用 `mods.toml`，改为结合 `build.gradle` / `gradle.properties` 中的 `net.neoforged` / `neo_version` 判定 NeoForge。
+- 导入快照扩充：`docs/mcstudio-snapshot.md` 改为按资源类型分节的表格与清单，并列出检测到的命名空间。
+- gradle.properties 解析：新增 `lib/gradle.js`，支持注释、续行、`\uXXXX` 与 `\t\n\r\\` 转义，兼容 Forge / NeoForge / Fabric 三套键名，提取 modid、名称、版本、作者、许可证、包名、MC 与加载器版本范围。
+- 导入流程重写：`gradle.properties` 优先补全信息 → 三处取值冲突或缺必需项时抛异常要求人工介入 → 按注册表与工坊标记做「已登记 / 曾移除 / 全新」三分支判定 → 扫描创建条目 → 完成。
+- 导入确认与重新导入：新增 `project.analyzeImport`（只分析不写盘）与 `project.reimport`（`merge` 保留已有、`overwrite` 改写类型冲突）；前端导入改为两步，项目列表每行新增「重新导入」按钮。
+- 项目详情：列表每行新增「详情」按钮，默认只展示 modid、Minecraft 版本、加载器，作者/许可证/包名/版本范围收在「更多信息」。
+- 元数据扩展：`project.json` 新增 `authors`、`license`、`group`、`minecraftRange`、`loaderVersion`、`loaderRange`、`source` 字段，快照文档同步展示。
 
 ### 说明
 

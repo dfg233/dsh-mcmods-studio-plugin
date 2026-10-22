@@ -500,6 +500,9 @@ window.__ModuleLoader__.load({
         }
       }
 
+      /** 打开项目详情弹窗。 */
+      const [detail, setDetail] = useState(null)
+
       const addCandidate = async (candidate) => {
         try {
           await call('projects.add', { path: candidate.path })
@@ -586,6 +589,8 @@ window.__ModuleLoader__.load({
                     item.isStudio && !item.missing
                       ? h('button', { style: S.btn(), onClick: () => open(item.path) }, '打开')
                       : h('button', { style: S.btn(), onClick: () => props.onImport({ path: item.path }) }, '导入'),
+                    h('button', { style: { ...S.btn('ghost'), marginLeft: 6 }, onClick: () => setDetail(item) }, '详情'),
+                    h('button', { style: { ...S.btn('ghost'), marginLeft: 6 }, onClick: () => props.onReimport(item) }, '重新导入'),
                     h('button', { style: { ...S.btn('ghost'), marginLeft: 6, color: C.danger }, onClick: () => remove(item.path) }, '移除'),
                   ),
                 ))),
@@ -651,6 +656,12 @@ window.__ModuleLoader__.load({
                   ))
             : null,
         ),
+
+        detail ? h(ProjectDetailModal, {
+          item: detail,
+          onClose: () => setDetail(null),
+          setError,
+        }) : null,
       )
     }
 
@@ -1309,6 +1320,7 @@ window.__ModuleLoader__.load({
       const [tab, setTab] = useState('project')
       const [createOpen, setCreateOpen] = useState(false)
       const [importTarget, setImportTarget] = useState(null)
+      const [reimportTarget, setReimportTarget] = useState(null)
 
       const reloadAssets = useCallback(async () => {
         if (!project) return
@@ -1368,6 +1380,7 @@ window.__ModuleLoader__.load({
                   onCreate: () => setCreateOpen(true),
                   onImportNew: () => setImportTarget({ path: '', name: '', modid: '' }),
                   onImport: (candidate) => setImportTarget(candidate),
+                  onReimport: (item) => setReimportTarget(item),
                   onCloseProject: () => { setProject(null); setAssets(null); setStudioState({ projectPath: null, itemId: null }) },
                 })
               : tab === 'features'
@@ -1401,6 +1414,26 @@ window.__ModuleLoader__.load({
             setTab('project')
           },
           setError,
+        }) : null,
+
+        reimportTarget ? h(ImportConfirmModal, {
+          path: reimportTarget.path,
+          title: '重新导入',
+          confirmText: '开始重新导入',
+          onClose: () => setReimportTarget(null),
+          onConfirm: async ({ overwrite }) => {
+            const result = await call('project.reimport', {
+              path: reimportTarget.path,
+              mode: overwrite ? 'overwrite' : 'merge',
+            })
+            setReimportTarget(null)
+            await refreshBoot()
+            if (project?.path === result.path) await open(result.path)
+            window.alert(
+              `重新导入完成：新增 ${result.imported.created.length} 个，`
+              + `改写 ${result.imported.updated.length} 个，保留 ${result.imported.kept.length} 个。`,
+            )
+          },
         }) : null,
       )
     }
@@ -1510,40 +1543,242 @@ window.__ModuleLoader__.load({
         modid: props.candidate.modid || '',
         version: '',
       })
-      const [submitting, setSubmitting] = useState(false)
+      const [confirming, setConfirming] = useState(false)
       const set = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }))
-      const submit = async () => {
-        setSubmitting(true)
-        try {
-          const project = await call('project.import', draft)
-          props.onImported(project.path)
-        } catch (err) {
-          props.setError(err.message)
-        } finally {
-          setSubmitting(false)
-        }
+
+      // 第二步：确认差异后才真正导入
+      if (confirming) {
+        return h(ImportConfirmModal, {
+          path: draft.path,
+          seed: { modid: draft.modid, name: draft.name, version: draft.version },
+          title: '导入确认',
+          confirmText: '开始导入',
+          onClose: () => setConfirming(false),
+          onConfirm: async () => {
+            const project = await call('project.import', {
+              path: draft.path,
+              name: draft.name,
+              modid: draft.modid,
+              version: draft.version,
+            })
+            props.onImported(project.path)
+          },
+        })
       }
+
       return h(Modal, {
         title: '导入已有模组工程',
         onClose: props.onClose,
         footer: [
           h('button', { key: 'cancel', style: S.btn('ghost'), onClick: props.onClose }, '取消'),
-          h('button', { key: 'ok', style: S.btn(), disabled: submitting, onClick: submit }, submitting ? '导入中…' : '导入'),
+          h('button', {
+            key: 'ok', style: S.btn(), disabled: !draft.path,
+            onClick: () => setConfirming(true),
+          }, '下一步：确认导入'),
         ],
       },
         h(PathField, {
           label: '工程目录', required: true,
-          hint: '读取 fabric.mod.json / mods.toml / 构建脚本，扫描贴图、模型与 Java 注册名；可点「浏览…」选择文件夹',
+          hint: '优先读取 gradle.properties 补全信息；可点「浏览…」选择文件夹',
           value: draft.path, onChange: (v) => set('path', v),
           placeholder: '例如 D:\\program\\my-mod',
         }),
         h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
-          h(Field, { label: '项目名称' }, h(TextInput, { value: draft.name, onChange: (v) => set('name', v) })),
-          h(Field, { label: 'modid', required: true, hint: '识别不到描述文件时必须手动填写' },
+          h(Field, { label: '项目名称', hint: '留空则用 gradle.properties 或描述文件的值' },
+            h(TextInput, { value: draft.name, onChange: (v) => set('name', v) })),
+          h(Field, { label: 'modid', hint: '留空则自动识别；填写值与自动识别不一致会报错' },
             h(TextInput, { value: draft.modid, onChange: (v) => set('modid', v.toLowerCase()) })),
           h(Field, { label: '版本' }, h(TextInput, { value: draft.version, onChange: (v) => set('version', v) })),
         ),
-        h('div', { style: S.hint }, '导入会在工程目录写入 .mcstudio/ 数据与 docs/mcstudio-snapshot.md 快照，不会修改 Java 或 gradle 文件。'),
+        h('div', { style: S.hint },
+          '导入按标准路径扫描：assets/<modid>/textures/{item,block}、models/{item,block}、blockstates、lang，',
+          '以及 data/<modid>/recipes、loot_tables/blocks、tags、advancements，并从 Java 源码提取注册名。',
+          '下一步会先列出将新增的条目，确认后才写入。'),
+      )
+    }
+
+    // ── 项目详情 / 重新导入 ──────────────────────────────────
+
+    /** 详情弹窗：默认只列关键三项，其余字段折叠在「更多信息」里。 */
+    function ProjectDetailModal(props) {
+      const [expanded, setExpanded] = useState(false)
+      const [loading, setLoading] = useState(false)
+      const [meta, setMeta] = useState(null)
+      const [error, setError] = useState('')
+      const path = props.item?.path
+
+      useEffect(() => {
+        if (!path) return
+        let alive = true
+        setLoading(true)
+        call('project.analyzeImport', { path })
+          .then((result) => { if (alive) setMeta(result) })
+          .catch((err) => { if (alive) setError(err.message) })
+          .finally(() => { if (alive) setLoading(false) })
+        return () => { alive = false }
+      }, [path])
+
+      const item = props.item || {}
+      const info = meta?.meta || {}
+      const identity = meta?.identity || {}
+      const loaderText = identity.loaderVersion
+        || (info.loader && info.minecraft ? `${LOADER_LABELS[info.loader] || info.loader} · MC ${info.minecraft}` : '')
+
+      return h(Modal, {
+        title: '项目详情',
+        onClose: props.onClose,
+        footer: [h('button', { key: 'close', style: S.btn(), onClick: props.onClose }, '关闭')],
+      },
+        loading ? h('div', { style: S.empty }, '读取中…') : null,
+        error ? h('div', { style: { ...S.hint, color: C.danger, marginBottom: 8 } }, error) : null,
+
+        h('div', { style: S.card },
+          h('div', { style: S.sectionTitle }, item.name || info.name || '（未命名）'),
+          h(InfoRow, { label: 'modid', value: info.modid || item.modid || '—' }),
+          h(InfoRow, { label: 'Minecraft', value: info.minecraft || '—' }),
+          h(InfoRow, { label: '加载器', value: loaderText || item.loader || '—' }),
+        ),
+
+        !loading ? h('div', { style: { marginTop: 10 } },
+          h('button', {
+            style: S.btn('ghost'),
+            onClick: () => setExpanded((value) => !value),
+          }, expanded ? '收起更多信息' : '更多信息'),
+        ) : null,
+
+        expanded ? h('div', { style: { ...S.card, marginTop: 10 } },
+          h(InfoRow, { label: '项目名称', value: info.name || '—' }),
+          h(InfoRow, { label: '版本', value: info.version || '—' }),
+          h(InfoRow, { label: '作者', value: info.authors || '—' }),
+          h(InfoRow, { label: '许可证', value: info.license || '—' }),
+          h(InfoRow, { label: '包名 / group', value: info.group || '—' }),
+          h(InfoRow, { label: 'MC 版本范围', value: info.minecraftRange || '—' }),
+          h(InfoRow, { label: '加载器版本', value: identity.loaderRange || info.loaderVersion || '—' }),
+          h(InfoRow, { label: '信息来源', value: identity.source === 'gradle.properties' ? 'gradle.properties' : (identity.source || '—') }),
+          h(InfoRow, { label: '条目数', value: String(info.items ?? '—') }),
+          h(InfoRow, { label: '最后更新', value: info.updatedAt ? new Date(info.updatedAt).toLocaleString('zh-CN') : '—' }),
+          h(InfoRow, { label: '目录', value: path || '—' }),
+        ) : null,
+      )
+    }
+
+    /**
+     * 导入 / 重新导入前的差异确认。
+     *
+     * 展示：项目身份、是否已登记、将新增的条目数、类型冲突、将保留的条目。
+     * 由调用方决定确认后执行哪个动作（首次导入 / 重新导入）。
+     */
+    function ImportConfirmModal(props) {
+      const [analysis, setAnalysis] = useState(null)
+      const [error, setError] = useState('')
+      const [busy, setBusy] = useState(false)
+      const [overwrite, setOverwrite] = useState(false)
+      const [loading, setLoading] = useState(true)
+      const path = props.path
+
+      useEffect(() => {
+        let alive = true
+        setLoading(true)
+        call('project.analyzeImport', { path, ...(props.seed || {}) })
+          .then((result) => { if (alive) setAnalysis(result) })
+          .catch((err) => { if (alive) setError(err.message) })
+          .finally(() => { if (alive) setLoading(false) })
+        return () => { alive = false }
+      }, [path])
+
+      const confirm = async () => {
+        setBusy(true)
+        setError('')
+        try {
+          await props.onConfirm({ overwrite })
+        } catch (err) {
+          setError(err.message)
+        } finally {
+          setBusy(false)
+        }
+      }
+
+      const identity = analysis?.identity || {}
+      const diff = analysis?.diff || {}
+      const kind = analysis?.kind
+      const conflicts = diff.typeConflicts || []
+      const created = diff.created || []
+      const kept = diff.kept || []
+      const missing = diff.missing || []
+
+      const kindText = kind === 'registered'
+        ? '该项目已在工坊列表中'
+        : kind === 'orphan'
+          ? '目录里有工坊数据，但不在列表中（曾被移除）'
+          : '全新导入'
+
+      return h(Modal, {
+        title: props.title || '导入确认',
+        onClose: props.onClose,
+        footer: [
+          h('button', { key: 'cancel', style: S.btn('ghost'), onClick: props.onClose }, '取消'),
+          h('button', {
+            key: 'ok',
+            style: S.btn(),
+            disabled: busy || loading || Boolean(error && !analysis),
+            onClick: confirm,
+          }, busy ? '处理中…' : (props.confirmText || '开始导入')),
+        ],
+      },
+        loading ? h('div', { style: S.empty }, '正在分析工程…') : null,
+        error ? h('div', { style: { ...S.hint, color: C.danger, marginBottom: 8 } }, error) : null,
+
+        analysis ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
+          h('div', { style: S.card },
+            h('div', { style: S.sectionTitle }, '项目信息'),
+            h(InfoRow, { label: '名称', value: identity.name || '—' }),
+            h(InfoRow, { label: 'modid', value: identity.modid || '—' }),
+            h(InfoRow, { label: '版本', value: identity.version || '—' }),
+            h(InfoRow, { label: '加载器', value: `${LOADER_LABELS[identity.loader] || identity.loader || '—'}${identity.loaderRange ? ` ${identity.loaderRange}` : ''}` }),
+            h(InfoRow, { label: 'Minecraft', value: identity.minecraft || '—' }),
+            h(InfoRow, { label: '信息来源', value: identity.source === 'gradle.properties' ? 'gradle.properties' : (identity.source || '—') }),
+          ),
+
+          h('div', { style: S.card },
+            h('div', { style: S.sectionTitle }, '导入判定'),
+            h(InfoRow, { label: '当前状态', value: kindText }),
+            h(InfoRow, { label: '将新增条目', value: `${created.length} 个` }),
+            h(InfoRow, { label: '已存在（保留）', value: `${kept.length} 个` }),
+            h(InfoRow, { label: '类型冲突', value: `${conflicts.length} 个` }),
+            h(InfoRow, { label: '扫描到但无条目', value: `${missing.length} 个` }),
+            missing.length
+              ? h('div', { style: { ...S.hint, marginTop: 6 } },
+                  `无对应资源的已有条目：${missing.slice(0, 8).map((entry) => entry.id).join('、')}${missing.length > 8 ? ' …' : ''}`)
+              : null,
+          ),
+
+          conflicts.length ? h('div', { style: S.card },
+            h('div', { style: S.sectionTitle }, '类型冲突'),
+            h('div', { style: S.hint }, '同一 id 在工程里被判为另一种类型。默认保留现有类型。'),
+            ...conflicts.slice(0, 10).map((conflict) => h(InfoRow, {
+              key: conflict.id,
+              label: conflict.id,
+              value: `${conflict.from} → ${conflict.to}`,
+            })),
+            h('label', {
+              style: { ...S.row, marginTop: 10, cursor: 'pointer', fontSize: 12.5 },
+            },
+              h('input', {
+                type: 'checkbox',
+                checked: overwrite,
+                onChange: (event) => setOverwrite(event.target.checked),
+              }),
+              h('span', null, '按扫描结果改写这些条目的类型'),
+            ),
+          ) : null,
+
+          created.length ? h('div', { style: S.card },
+            h('div', { style: S.sectionTitle }, `将新增（${created.length}）`),
+            h('div', { style: { ...S.hint, wordBreak: 'break-all' } },
+              created.slice(0, 30).map((entry) => `${entry.id}(${entry.type === 'block' ? '方块' : '物品'})`).join('、')
+              + (created.length > 30 ? ' …' : '')),
+          ) : null,
+        ) : null,
       )
     }
 
