@@ -8,6 +8,7 @@
 ```text
 <项目>/
 ├── .mcstudio/
+│   ├── studio.json           # 工坊标记：存在即表示已被本插件接管
 │   ├── project.json          # 项目元数据
 │   ├── features.json         # 功能列表
 │   └── items/
@@ -28,6 +29,34 @@
 
 > 若项目还不是 gradle 工程（没有 `src/main/resources`），素材会存放在
 > `<项目>/.mcstudio/assets/<modid>/` 下。
+
+## 1.1 studio.json（工坊标记）
+
+扫描时通过这个文件判断「是否已导入」，不依赖插件注册表，因此项目文件夹可以
+复制、移动或换机器后仍被识别。
+
+```json
+{
+  "schemaVersion": 1,
+  "projectId": "p_mvicghvb_pmnuu7",
+  "importedAt": "2026-10-21T16:46:18.743Z",
+  "importedBy": "dsh-mcmods-studio-plugin",
+  "source": "create",
+  "path": "D:\\program\\demo",
+  "mcVersion": "1.20.1"
+}
+```
+
+| 字段 | 说明 |
+| --- | --- |
+| `projectId` | 首次接管时生成，之后保持不变，用于跨路径识别同一项目 |
+| `importedAt` | 首次导入时间，后续不会覆盖 |
+| `source` | `create` / `import` / `add` / `open` / `migrate` |
+| `path` | 最近一次写入时的绝对路径（仅参考，不用于判断） |
+| `mcVersion` | 写入时的目标版本 |
+
+兼容规则：只有 `project.json`、没有 `studio.json` 的老项目，扫描时仍视为「已导入」
+（标记为旧数据），首次打开或重新添加时会自动补写标记。
 
 ## 2. project.json
 

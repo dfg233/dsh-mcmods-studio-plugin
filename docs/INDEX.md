@@ -72,6 +72,11 @@
 | `itemSchema()` | 给前端的字段定义 | 返回 `{mcVersion, loaders, fields, types, statuses, priorities}` |
 | `defaultProperties()` | 生成默认属性对象 | 由 `ITEM_FIELDS` 推导 |
 | `projectDataDir(path)` | `.mcstudio` 绝对路径 | — |
+| `STUDIO_MARKER = 'studio.json'` | 工坊标记文件名 | 存在即表示项目已被接管 |
+| `studioMarkerFile(path)` | 标记文件路径 | `<项目>/.mcstudio/studio.json` |
+| `readStudioMarker(path)` | 读标记 | 返回对象或 `null`（不存在/损坏） |
+| `writeStudioMarker(path, patch)` | 写标记 | 首次生成 `projectId`/`importedAt`，之后不覆盖 |
+| `ensureStudioMarker(path, source)` | 缺失时补写 | 老项目迁移用，返回标记对象 |
 | `projectMetaFile(path)` | `project.json` 路径 | — |
 | `itemsDir(path)` | `items/` 路径 | — |
 | `featuresFile(path)` | `features.json` 路径 | — |
@@ -271,6 +276,22 @@ const tabs = [
 
 ## 5. 数据结构
 
+### 5.0 `<项目>/.mcstudio/studio.json`（工坊标记）
+
+扫描时据此判断「是否已导入」，不依赖注册表。
+
+```json
+{
+  "schemaVersion": 1,
+  "projectId": "p_mvicghvb_pmnuu7",
+  "importedAt": "2026-10-21T16:46:18.743Z",
+  "importedBy": "dsh-mcmods-studio-plugin",
+  "source": "create",
+  "path": "D:\\program\\demo",
+  "mcVersion": "1.20.1"
+}
+```
+
 ### 5.1 `<项目>/.mcstudio/project.json`
 
 ```json
@@ -345,6 +366,7 @@ const tabs = [
 | 改默认扫描根目录 | `lib/registry.js` 的 `DEFAULT_ROOT` | 已存注册表不会自动改 |
 | 改数据目录名 | `DATA_DIR` | 老项目需迁移脚本 |
 | 换 MC 版本 | `MC_VERSION`（未来 `mcVersion`） | 字段能力表、代码模板、构建教程 |
+| 改「已导入」判定 | `lib/project.js` 的 `readStudioMarker` / `scanCandidates` | 前端 `isImported()`、老项目兼容 |
 | 改目录选择行为 | `pickFolder()` / `PathField` | `uiWorkspace.pickDirectory()` 返回 `null` 时要有手动输入兜底 |
 
 ## 8. 验证与排查

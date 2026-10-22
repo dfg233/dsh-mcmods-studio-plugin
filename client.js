@@ -475,13 +475,18 @@ window.__ModuleLoader__.load({
 
       const projects = boot?.registry?.projects || []
 
-      /** 已登记项目的路径集合（统一小写、去掉末尾分隔符后比较）。 */
+      /** 已登记项目的路径集合（作为旧版扫描结果的兜底判断）。 */
       const importedPaths = useMemo(() => {
         const normalize = (value) => String(value || '').replace(/[\\/]+$/, '').toLowerCase()
         return new Set(projects.map((item) => normalize(item.path)))
       }, [projects])
 
+      /**
+       * 是否已导入：以项目目录内的 `.mcstudio/studio.json` 标记为准（由 Host 扫描时读出）；
+       * 旧版返回没有 imported 字段时，退回注册表路径比较。
+       */
       const isImported = (candidate) => {
+        if (typeof candidate?.imported === 'boolean') return candidate.imported
         const normalize = (value) => String(value || '').replace(/[\\/]+$/, '').toLowerCase()
         return importedPaths.has(normalize(candidate?.path))
       }
@@ -624,7 +629,15 @@ window.__ModuleLoader__.load({
                               : null,
                           ),
                           h('div', { style: { ...S.hint, marginTop: 2, wordBreak: 'break-all' } },
-                            [candidate.modid, candidate.loader, candidate.kind === 'studio' ? '工坊项目' : '模组工程'].filter(Boolean).join(' · ')),
+                            [
+                              candidate.modid,
+                              candidate.loader,
+                              candidate.kind === 'studio' ? '工坊项目' : '模组工程',
+                              imported && candidate.importedAt
+                                ? `导入于 ${new Date(candidate.importedAt).toLocaleString('zh-CN')}`
+                                : '',
+                              imported && candidate.legacy ? '旧数据，打开后自动补标记' : '',
+                            ].filter(Boolean).join(' · ')),
                         ),
                         imported
                           ? h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 } },
