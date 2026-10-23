@@ -150,7 +150,7 @@
 | --- | --- | --- |
 | 项目元数据 | `.mcstudio/project.json` | 否，构建时被忽略 |
 | 工坊标记 | `.mcstudio/studio.json` | 否 |
-| 功能列表 | `.mcstudio/features.json` | 否 |
+| 构想清单 | `.mcstudio/features.json` | 否 |
 | 物品属性 | `.mcstudio/items/<id>.json` | 否 |
 | 贴图 | 优先 `src/main/resources/assets/<modid>/textures/item/<id>.png` | 是（打进 JAR） |
 | 模型 | 优先 `src/main/resources/assets/<modid>/models/item/<id>.json` | 是 |

@@ -1,4 +1,4 @@
-# 功能列表模块计划
+# 构想模块计划
 
 > 模块编号：05
 > 代码位置：`lib/project.js` 的 `listFeatures`/`saveFeature`/`deleteFeature`/`featuresFile`；`client.js` 的 `FeaturesTab`、`FeatureEditor`；`lib/docs.js` 的 `renderFeatures`

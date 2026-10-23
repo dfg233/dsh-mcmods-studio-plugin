@@ -25,7 +25,7 @@
 
 | 文件 | 渲染函数 | 内容 |
 | --- | --- | --- |
-| `docs/FEATURES.md` | `renderFeatures` | 功能列表，按状态分组 |
+| `docs/FEATURES.md` | `renderFeatures` | 构想，按状态分组 |
 | `docs/ITEMS.md` | `renderItemsIndex` | 物品总览表（id、名称、类型、堆叠、耐久） |
 | `docs/ITEMS/<id>.md` | `renderItem` | 单件物品全部 19 项属性 |
 | `docs/ASSETS.md` | `renderAssets` | 贴图与模型清单 + 缺失提示 |
@@ -36,7 +36,7 @@
 | 来源 | 函数 |
 | --- | --- |
 | 项目元数据 | `readProjectMeta` |
-| 功能列表 | `listFeatures` |
+| 构想清单 | `listFeatures` |
 | 物品列表 | `listItems` |
 | 素材清单 | `listAssets` |
 | 字段定义 | `ITEM_FIELDS`、`ITEM_TYPES`、`FEATURE_STATUS`、`FEATURE_PRIORITY`、`LOADERS` |
@@ -155,6 +155,6 @@ client: 显示「已导出 N 个文件」
 
 | 方向 | 模块 |
 | --- | --- |
-| 上游 | 01 平台基础、02 项目管理（meta）、05 功能列表、06 物品管理、07 素材管理 |
+| 上游 | 01 平台基础、02 项目管理（meta）、05 构想、06 物品管理、07 素材管理 |
 | 下游 | 无（终端输出） |
 | 依据 | [DATA-FORMAT.md](../DATA-FORMAT.md) 的导出文件说明 |

@@ -665,7 +665,7 @@ window.__ModuleLoader__.load({
       )
     }
 
-    // ── 功能页 ───────────────────────────────────────────────
+    // ── 构想页 ───────────────────────────────────────────────
 
     function FeaturesTab(props) {
       const { project, setProject, schema, setError } = props
@@ -688,7 +688,7 @@ window.__ModuleLoader__.load({
       }
 
       const remove = async (id) => {
-        if (!window.confirm('删除这条功能记录？')) return
+        if (!window.confirm('删除这条构想？')) return
         try {
           const result = await call('features.delete', { path: project.path, id })
           setProject({ ...project, features: result.features })
@@ -697,11 +697,11 @@ window.__ModuleLoader__.load({
 
       return h('div', { style: { display: 'flex', flexDirection: 'column', gap: 12 } },
         h('div', { style: S.row },
-          h('div', { style: { ...S.sectionTitle, flex: 1 } }, `功能列表（${features.length}）`),
-          h('button', { style: S.btn(), onClick: () => setEditing({ name: '', description: '', status: 'idea', priority: 'medium', version: '', notes: '' }) }, '新增功能'),
+          h('div', { style: { ...S.sectionTitle, flex: 1 } }, `构想（${features.length}）`),
+          h('button', { style: S.btn(), onClick: () => setEditing({ name: '', description: '', status: 'idea', priority: 'medium', version: '', notes: '' }) }, '新增构想'),
         ),
         features.length === 0
-          ? h('div', { style: S.empty }, '还没有功能条目。先为模组列出要实现的功能，它们会参与文档导出。')
+          ? h('div', { style: S.empty }, '还没有构想。先为模组列出想做的内容，它们会参与文档导出。')
           : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } },
               features.map((feature) => h('div', {
                 key: feature.id,
@@ -737,17 +737,17 @@ window.__ModuleLoader__.load({
       const [draft, setDraft] = useState(() => ({ ...props.feature }))
       const set = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }))
       return h(Modal, {
-        title: props.feature.id ? '编辑功能' : '新增功能',
+        title: props.feature.id ? '编辑构想' : '新增构想',
         onClose: props.onCancel,
         footer: [
           h('button', { key: 'cancel', style: S.btn('ghost'), onClick: props.onCancel }, '取消'),
           h('button', { key: 'save', style: S.btn(), onClick: () => props.onSave(draft) }, '保存'),
         ],
       },
-        h(Field, { label: '功能名称', required: true },
+        h(Field, { label: '构想名称', required: true },
           h(TextInput, { value: draft.name, onChange: (v) => set('name', v), placeholder: '例如：红宝石系列工具' })),
-        h(Field, { label: '功能说明' },
-          h(Textarea, { value: draft.description, onChange: (v) => set('description', v), placeholder: '这个功能提供什么玩法？' })),
+        h(Field, { label: '构想说明' },
+          h(Textarea, { value: draft.description, onChange: (v) => set('description', v), placeholder: '这个构想提供什么玩法？' })),
         h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
           h(Field, { label: '状态' }, h(Select, {
             value: draft.status, onChange: (v) => set('status', v),
@@ -1331,7 +1331,7 @@ window.__ModuleLoader__.load({
 
       const tabs = [
         { id: 'project', label: '项目' },
-        { id: 'features', label: '功能列表' },
+        { id: 'features', label: '构想' },
         { id: 'items', label: '物品' },
         { id: 'assets', label: '贴图与模型' },
         { id: 'guide', label: '构建教程' },
@@ -1867,7 +1867,7 @@ window.__ModuleLoader__.load({
                     h(InfoRow, { label: '加载器', value: LOADER_LABELS[meta.loader] || meta.loader }),
                     h(InfoRow, { label: '版本', value: meta.version || '—' }),
                     h(InfoRow, { label: '物品', value: `${items.length} 个` }),
-                    h(InfoRow, { label: '功能', value: `${features.length} 项（已完成 ${statusCount}）` }),
+                    h(InfoRow, { label: '构想', value: `${features.length} 项（已完成 ${statusCount}）` }),
                   ),
                   item
                     ? h('div', { style: S.card },

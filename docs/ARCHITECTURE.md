@@ -8,7 +8,7 @@
 │   sidebar.panellist: mc-mod-studio  →  侧栏图标           │
 │   main: key = mc-mod-studio        →  「模组工坊」页面     │
 │      ├─ 项目      （项目列表 / 新建 / 扫描 / 导入）        │
-│      ├─ 功能列表  （功能条目 CRUD）                        │
+│      ├─ 构想      （构想条目 CRUD）                        │
 │      ├─ 物品      （列表 / 画布 / 属性编辑）               │
 │      ├─ 贴图与模型（上传 / 预览 / 模型 JSON）              │
 │      └─ 构建教程  （内置 markdown）                        │

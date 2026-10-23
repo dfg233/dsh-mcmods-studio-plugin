@@ -89,7 +89,7 @@
 | `isStudioProject(path)` | 是否为工坊项目 | 以 `project.json` 是否存在判断 |
 | `readProject(path)` | 读完整项目 | `{path, meta, features, items}` |
 | `createProject(input)` | 新建项目 | 入参 `{path,name,modid,version,description,loader}`；要求目录为空或不存在；只建 `.mcstudio/` 与 `docs/` |
-| `listFeatures(path)` | 功能列表 | 数组，按更新时间倒序 |
+| `listFeatures(path)` | 构想清单 | 数组，按更新时间倒序 |
 | `saveFeature(path, feature)` | 新增或更新功能 | 无 `id` 时生成；返回保存后的条目 |
 | `deleteFeature(path, id)` | 删除功能 | 返回剩余数组 |
 | `listItems(path)` | 物品列表 | 读 `items/*.json` |
@@ -266,7 +266,7 @@ window.__ModuleLoader__.load({
 | --- | --- | --- | --- |
 | `useStudioData` | 382 | 首屏数据 hook：boot、项目、素材 | 返回 `{boot,project,assets,error,busy,refreshBoot,open,setProject,setAssets,setError}` |
 | `ProjectTab` | 423 | 项目列表、新建、扫描、导入、移除 | `{boot,project,refreshBoot,open,onCreate,onImport,onCloseProject}` |
-| `FeaturesTab` | 568 | 功能列表 | `{project,setProject,schema,setError}` |
+| `FeaturesTab` | 568 | 构想页 | `{project,setProject,schema,setError}` |
 | `FeatureEditor` | 634 | 功能编辑弹窗 | `{value,onSave,onCancel}` |
 | `ItemsTab` | 685 | 物品列表 / 画布 | `{project,setProject,assets,schema,setError,reloadAssets}` |
 | `ItemEditor` | 928 | 物品属性弹窗（按分组渲染字段） | `{value,schema,onSave,onCancel}` |
@@ -286,7 +286,7 @@ window.__ModuleLoader__.load({
 ```js
 const tabs = [
   { id: 'project', label: '项目' },
-  { id: 'features', label: '功能列表' },
+  { id: 'features', label: '构想' },
   { id: 'items', label: '物品' },
   { id: 'assets', label: '贴图与模型' },
   { id: 'guide', label: '构建教程' },
@@ -383,7 +383,7 @@ const tabs = [
 
 | 文件 | 渲染函数 | 内容 |
 | --- | --- | --- |
-| `docs/FEATURES.md` | `renderFeatures` | 功能列表按状态分组 |
+| `docs/FEATURES.md` | `renderFeatures` | 构想按状态分组 |
 | `docs/ITEMS.md` | `renderItemsIndex` | 物品总览表 |
 | `docs/ITEMS/<id>.md` | `renderItem` | 单件物品全部属性 |
 | `docs/ASSETS.md` | `renderAssets` | 贴图与模型清单 + 缺失 |

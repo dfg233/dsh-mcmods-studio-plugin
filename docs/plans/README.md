@@ -12,7 +12,7 @@
 | 02 | 项目管理 | [PROJECT-PLAN.md](PROJECT-PLAN.md) | 已实现 | `lib/project.js`、`ProjectTab`、`CreateProjectModal` |
 | 03 | 扫描发现 | [SCAN-PLAN.md](SCAN-PLAN.md) | 已实现 | `scanCandidates`、`ProjectTab` 扫描区 |
 | 04 | 工程导入 | [IMPORT-PLAN.md](IMPORT-PLAN.md) | 已实现 | `detectDescriptor`、`scanProjectAssets`、`importProject` |
-| 05 | 功能列表 | [FEATURES-PLAN.md](FEATURES-PLAN.md) | 已实现 | `features.*`、`FeaturesTab`、`FeatureEditor` |
+| 05 | 构想 | [FEATURES-PLAN.md](FEATURES-PLAN.md) | 已实现 | `features.*`、`FeaturesTab`、`FeatureEditor` |
 | 06 | 物品管理 | [ITEMS-PLAN.md](ITEMS-PLAN.md) | 已实现 | `items.*`、`ItemsTab`、`ItemEditor` |
 | 07 | 素材管理 | [ASSETS-PLAN.md](ASSETS-PLAN.md) | 已实现 | `lib/assets.js`、`AssetsTab` |
 | 08 | 文档导出 | [DOCS-PLAN.md](DOCS-PLAN.md) | 已实现 | `lib/docs.js` |
@@ -40,7 +40,7 @@
  │                    │              │
  │                    └──────────────┴──→ 06 物品管理 ──→ 07 素材管理
  │                                          │              │
- │                    05 功能列表 ───────────┴──────────────┤
+ │                    05 构想 ───────────┴──────────────┤
  │                                                          ▼
  │                                              08 文档导出 / 09 构建教程
  │

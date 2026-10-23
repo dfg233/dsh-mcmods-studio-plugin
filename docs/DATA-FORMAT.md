@@ -10,7 +10,7 @@
 ├── .mcstudio/
 │   ├── studio.json           # 工坊标记：存在即表示已被本插件接管
 │   ├── project.json          # 项目元数据
-│   ├── features.json         # 功能列表
+│   ├── features.json         # 构想清单
 │   └── items/
 │       ├── ruby.json         # 每个物品一份
 │       └── ruby_sword.json

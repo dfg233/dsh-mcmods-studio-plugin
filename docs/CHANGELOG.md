@@ -19,7 +19,7 @@
 - 侧栏入口：`sidebar.panellist` 图标区（与「插件市场」「费用统计」「上下文洞察」同一区域，`order: 2`），显示「模组工坊」图标与文字，点击打开主面板。
 - 右侧栏标签页：`sidebarRightTabs` 注册 `mc-mod-studio` 类型与 `sidebar.right.pane.tab` 内容，显示当前项目概览（名称、modid、加载器、版本、物品与功能统计）以及主面板中选中物品的属性详情；同时在右侧栏「开始」页提供「模组工坊」引导卡片。
 - 项目页：项目列表、新建项目、扫描根目录候选工程、导入已有工程（读取 `fabric.mod.json` / `mods.toml` / 构建脚本），并生成 `docs/mcstudio-snapshot.md` 快照。
-- 功能列表页：功能条目增删改，状态（构思 / 规划中 / 实现中 / 已完成）与优先级。
+- 构想页：构想条目增删改，状态（构思 / 规划中 / 实现中 / 已完成）与优先级。
 - 物品页：列表与画布双视图、搜索、物品属性编辑器（基础 / 数值 / 行为 / 标签 / 兼容五组字段）。
 - 画布视图：卡片自由拖拽排布，松开后自动把坐标保存到物品的 `canvas` 字段。
 - 素材页：贴图上传（PNG 校验、正方形检查、16×16 提示）、贴图预览、模型 JSON 查看与编辑、缺失素材统计。
@@ -44,6 +44,7 @@
 - 项目详情：列表每行新增「详情」按钮，默认只展示 modid、Minecraft 版本、加载器，作者/许可证/包名/版本范围收在「更多信息」。
 - 元数据扩展：`project.json` 新增 `authors`、`license`、`group`、`minecraftRange`、`loaderVersion`、`loaderRange`、`source` 字段，快照文档同步展示。
 - 修复占位符误判：描述文件里写成 `${mod_version}`、`$mod_version`、`${file.jarVersion}` 等 Gradle 占位符时，先用 `gradle.properties` 解析；解析成功用真实值比对，解析不出按「未提供」处理，不再误报冲突；`${file.jarVersion}` 这类构建期才存在的变量直接忽略。
+- 重命名「功能列表」为「构想」：标签页、页内标题、新增/编辑/删除文案、空态提示、右侧栏统计项统一改为「构想」；导出的 `FEATURES.md` 标题与统计、`docs/README.md` 索引、新建项目的 README 说明同步调整。内部标识（`features`、`features.json`、`FeaturesTab`）保持不变，兼容既有项目数据。
 
 ### 说明
 
