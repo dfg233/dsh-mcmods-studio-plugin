@@ -107,9 +107,9 @@
 
 | 函数 | 作用 |
 | --- | --- |
-| `detectDescriptor(path)` | 识别 `fabric.mod.json` / `mods.toml` / `neoforge.mods.toml` / gradle；1.20.1 的 Forge 与 NeoForge 共用 `mods.toml`，用 `readBuildText` 区分 |
+| `detectDescriptor(path, props)` | 识别 `fabric.mod.json` / `mods.toml` / `neoforge.mods.toml` / gradle；描述文件里的占位符先用 `props` 解析，解析不出按未提供处理 |
 | `readBuildText(path)` | 合并读取 `build.gradle`、`build.gradle.kts`、`gradle.properties`、`settings.gradle` |
-| `resolveIdentity(path, input)` | 合并「表单 / gradle.properties / 描述文件」三处信息；冲突或缺必需项时抛异常 |
+| `resolveIdentity(path, input)` | 合并「表单 / gradle.properties / 描述文件」三处信息；只比对真实值，冲突或缺必需项时抛异常 |
 | `diffEntries(assets, registryNames, existingItems)` | 计算新增 / 保留 / 类型冲突 / 无资源条目四类差异 |
 | `syncEntries(path, modid, {mode})` | 按差异把条目写入 `items/`；`mode` 为 `merge` 或 `overwrite` |
 | `scanProjectAssets(path, modid)` | 扫描 `assets/<modid>` 与 `data/<modid>` 下各类资源，返回 `{textures,blockTextures,models,blockModels,blockstates,langs,recipes,lootTables,tags,advancements,namespaces}` |
@@ -133,6 +133,10 @@
 | `detectLoaderFromGradle(meta, props)` | 依据版本字段判定加载器 | `forge` / `neoforge` / `fabric` / `''` |
 | `readGradleProperties(path)` | 读取并解析工程根下的 `gradle.properties` | `{exists, file, props, meta}` |
 | `loaderVersionText(meta)` | 生成可读的加载器版本文本 | 如 `NeoForge 47.1.79` |
+| `isPlaceholder(value)` | 是否为 `${name}` / `$name` 形式的 Gradle 占位符 | `boolean` |
+| `placeholderKey(value)` | 取出占位符内的变量名 | `string`，非占位符返回 `''` |
+| `resolvePlaceholder(value, props)` | 用 gradle.properties 解析占位符 | 解析值或 `''`；`file.` 前缀直接返回 `''` |
+| `realValue(value, props)` | 把值规范成「真实值或空」 | 占位符解析结果，解析失败为 `''` |
 
 ### 2.4 `lib/assets.js`
 

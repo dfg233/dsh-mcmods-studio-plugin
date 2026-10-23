@@ -108,6 +108,19 @@
 
 > 1.20.1 的 Forge 与 NeoForge **共用 `mods.toml`**，只能靠构建脚本区分。
 
+### 3.4 占位符事件
+
+模板工程的描述文件里常写 `${mod_version}` 这类 Gradle 占位符，构建期才替换。
+
+| 输入 | 处理 | 结果 |
+| --- | --- | --- |
+| `version = "${mod_version}"`，props 有 `mod_version=2.1.0` | 解析为 `2.1.0` | 参与比对，与 gradle 值一致 → 无冲突 |
+| `version = "${mod_version}"`，props 无该键 | 解析为空 | 视为「未提供」，不参与比对 |
+| `version = "${file.jarVersion}"` | `file.` 前缀直接忽略 | 视为「未提供」 |
+| `version = "2.1.0"`，gradle 是 `9.9.9` | 值不相同 | **报冲突**，要求人工修正 |
+
+支持 `${name}` 与 `$name` 两种写法，允许 `project.` / `gradle.` 前缀，值本身是占位符时递归解析一层。
+
 ## 4. 运行过程
 
 ### 4.0 前端两步确认

@@ -43,6 +43,7 @@
 - 导入确认与重新导入：新增 `project.analyzeImport`（只分析不写盘）与 `project.reimport`（`merge` 保留已有、`overwrite` 改写类型冲突）；前端导入改为两步，项目列表每行新增「重新导入」按钮。
 - 项目详情：列表每行新增「详情」按钮，默认只展示 modid、Minecraft 版本、加载器，作者/许可证/包名/版本范围收在「更多信息」。
 - 元数据扩展：`project.json` 新增 `authors`、`license`、`group`、`minecraftRange`、`loaderVersion`、`loaderRange`、`source` 字段，快照文档同步展示。
+- 修复占位符误判：描述文件里写成 `${mod_version}`、`$mod_version`、`${file.jarVersion}` 等 Gradle 占位符时，先用 `gradle.properties` 解析；解析成功用真实值比对，解析不出按「未提供」处理，不再误报冲突；`${file.jarVersion}` 这类构建期才存在的变量直接忽略。
 
 ### 说明
 
