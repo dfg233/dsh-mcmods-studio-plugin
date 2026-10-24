@@ -4,7 +4,14 @@
 
 ```text
 ┌──────────────────────────────────────────────────────────┐
-│ DSH Web UI（浏览器）                                      │
+│ 使用方                                                     │
+│   用户 → DSH Web UI（浏览器）                              │
+│   Agent → 工具调用（规划中，见 plans/AGENT-PLAN.md）        │
+└───────────────────────┬──────────────────────────────────┘
+                        │ POST /mcmods-studio/api
+                        ▼
+┌──────────────────────────────────────────────────────────┐
+│ DSH Web UI                                               │
 │   sidebar.panellist: mc-mod-studio  →  侧栏图标           │
 │   main: key = mc-mod-studio        →  「模组工坊」页面     │
 │      ├─ 项目      （项目列表 / 新建 / 扫描 / 导入）        │
@@ -13,6 +20,7 @@
 │      ├─ 贴图与模型（上传 / 预览 / 模型 JSON）              │
 │      └─ 构建教程  （内置 markdown）                        │
 └───────────────────────┬──────────────────────────────────┘
+                        ▲
                         │ POST /mcmods-studio/api
                         ▼
 ┌──────────────────────────────────────────────────────────┐
@@ -21,6 +29,7 @@
 │   lib/api.js → 动作分派                                   │
 │      ├─ registry.js   注册表（$DSH_HOME/mcmods-studio）     │
 │      ├─ project.js    项目数据 / 扫描 / 导入              │
+│      ├─ gradle.js     gradle.properties 解析              │
 │      ├─ assets.js     贴图 / 模型                        │
 │      └─ docs.js       Markdown 导出                       │
 └───────────────────────┬──────────────────────────────────┘
@@ -28,12 +37,15 @@
               文件系统（用户的项目目录）
 ```
 
+> 规划中的工具层（`lib/tools.js`、`lib/summary.js`、`lib/validate.js`）会复用上图的业务函数，
+> 不另建一套实现。设计稿见 [plans/AGENT-PLAN.md](plans/AGENT-PLAN.md)。
+
 ## 2. 为什么走 HTTP 路由而不是 Remote
 
 - `webServer.register` 是 Host 已提供的稳定能力，注册与清理都跟随插件生命周期；
 - Client 只做同源 `fetch`，不依赖 Typert / Remote 的生成物；
 - 数据量小（JSON + base64 贴图），请求/响应模型足够；
-- 后续若要接入 Agent 工具，只需在 `lib/api.js` 之上再包一层 `ctx.tools.register`。
+- 后续接入 Agent 工具时，在 `lib/api.js` 之上再包一层工具注册即可，业务函数无需重写（见 [plans/AGENT-PLAN.md](plans/AGENT-PLAN.md)）。
 
 ## 3. 生命周期
 
@@ -48,7 +60,7 @@
 | --- | --- | --- | --- |
 | 插件代码 | `D:\program\dsh-mcmods-studio-plugin` | 是 | 本仓库 |
 | 插件注册表 | `$DSH_HOME/mcmods-studio/registry.json` | 否 | 本机项目索引与默认根目录 |
-| 项目设计数据 | `<项目>/.mcstudio/` | 建议是 | 元数据、功能、物品 |
+| 项目设计数据 | `<项目>/.mcstudio/` | 建议是 | 元数据、构想、物品、工坊标记 |
 | 项目素材 | `<项目>/src/main/resources/assets/` | 是 | 贴图与模型（标准路径） |
 | 导出文档 | `<项目>/docs/` | 是 | 人读的 Markdown |
 
@@ -57,7 +69,7 @@
 ## 5. 边界与安全
 
 - 所有写操作都要求目标目录是已存在的工坊项目（`project.create` 与 `project.import` 例外）；
-- `project.create` / `project.import` 限制在「扫描根目录」内，防止误写到任意路径；
+- `project.create` / `project.import` 允许任意目录，但要求目录为空或不存在、且工程能被识别，避免误覆盖；
 - 贴图上传限制：PNG 魔数校验、必须正方形、单文件 ≤ 2MB；
 - 物品 id / modid 使用白名单正则，避免路径穿越；
 - JSON 写入采用「临时文件 + rename」的原子写入。

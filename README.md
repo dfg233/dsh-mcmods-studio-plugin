@@ -6,9 +6,13 @@
 **版本策略**：当前只适配 Minecraft 1.20.1；其他版本在后续版本逐步适配
 （v1.0.0 起先加 1.21.1，之后按需扩展），详见[项目计划书](docs/PLAN.md)。
 
-设计目的是帮助模组作者完成三件事：**编写代码**、**集中管理模组信息**、
-**用图形化方式创建与修改模组内容**。图形化负责「是什么」，代码负责「怎么实现」，
+设计目的是把模组开发中可结构化的部分（想做什么、有哪些内容、每个内容的属性、素材在哪、
+代码该长什么样）从笔记与源码里抽出来，变成**一份人和 agent 都能直接读写的结构化事实**：
+对 agent 提供准确、紧凑、可校验的项目上下文，对用户提供直观的项目关系与低门槛的编辑方式。
 生成物可读可改，删除插件后工程仍可正常开发。
+
+完整定位见[项目计划书第 0 节「插件宗旨」](docs/PLAN.md)，agent 改进方案见
+[Agent 结合与发展建议](docs/plans/AGENT-PLAN.md)；当前只适配 Minecraft 1.20.1。
 
 ## 功能
 
@@ -41,8 +45,10 @@ plugin_manager install_bundle  target: D:\program\dsh-mcmods-studio-plugin
 
 ## 文档
 
-- [项目计划书](docs/PLAN.md)
+- [项目计划书（含插件宗旨）](docs/PLAN.md)
 - [项目状态（已实现 / 未实现 / 要求）](docs/STATUS.md)
+- [Agent 结合与发展建议](docs/plans/AGENT-PLAN.md)
+- [模块计划索引](docs/plans/README.md)
 - [代码索引（函数与接口）](docs/INDEX.md)
 - [模组项目文件结构（1.20.1）](docs/PROJECT-STRUCTURE.md)
 - [开发文档](docs/DEVELOPMENT.md)

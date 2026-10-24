@@ -45,8 +45,10 @@
 - 元数据扩展：`project.json` 新增 `authors`、`license`、`group`、`minecraftRange`、`loaderVersion`、`loaderRange`、`source` 字段，快照文档同步展示。
 - 修复占位符误判：描述文件里写成 `${mod_version}`、`$mod_version`、`${file.jarVersion}` 等 Gradle 占位符时，先用 `gradle.properties` 解析；解析成功用真实值比对，解析不出按「未提供」处理，不再误报冲突；`${file.jarVersion}` 这类构建期才存在的变量直接忽略。
 - 重命名「功能列表」为「构想」：标签页、页内标题、新增/编辑/删除文案、空态提示、右侧栏统计项统一改为「构想」；导出的 `FEATURES.md` 标题与统计、`docs/README.md` 索引、新建项目的 README 说明同步调整。内部标识（`features`、`features.json`、`FeaturesTab`）保持不变，兼容既有项目数据。
+- 明确插件宗旨：在 [PLAN.md](PLAN.md) 新增第 0 节，定义「人机共用的模组开发工作台」定位、三条设计纲领（事实只有一份 / 上下文优先于生成 / 给人看的给人看）与判断标准；同步调整设计目的、版本路线（v0.2 提前为 Agent 接入）与技术路线。
+- 新增 [plans/AGENT-PLAN.md](plans/AGENT-PLAN.md)：基于实测（`boot` 返回 7418 字节、schema 占 3765 字节、28 个动作仅面向浏览器）提出九项建议与四阶段优先级，含与既有 v0.2 计划的关系与路线选择。
 
 ### 说明
 
 - 目标版本固定为 Minecraft 1.20.1；加载器支持 Forge、NeoForge、Fabric。
-- v0.1.0 不生成 gradle 工程，构建由用户在 IDEA 中完成；代码工作区与代码生成列入 v0.2（见 [PLAN.md](PLAN.md)）。
+- v0.1.0 不生成 gradle 工程，构建由用户在 IDEA 中完成；v0.2 做 Agent 接入，代码工作区与代码生成列入 v0.3（见 [PLAN.md](PLAN.md)）。

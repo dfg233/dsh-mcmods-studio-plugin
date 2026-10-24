@@ -97,9 +97,10 @@ lib/api.js ──► lib/project.js / lib/assets.js / lib/docs.js
 
 - 所有文件读写都在 Host 侧完成，Client 不直接触碰文件系统；
 - 项目路径必须存在且是工坊项目，才允许读写业务数据；
-- 新建/导入项目会被限制在「扫描根目录」以内；
+- 新建与导入的项目**可以位于任意目录**；「扫描根目录」只用于批量扫描候选工程，不再是项目位置的限制；
+- 是否「已导入」以项目目录内的 `.mcstudio/studio.json` 为准，不依赖注册表路径；
 - 所有界面文案为中文，不引入 i18n 运行时；
-- v0.1.0 不生成 gradle / Java 代码；v0.2 起通过 `lib/codegen.js` 生成带注释标记的 Java 与资源 JSON，只替换标记区间，不覆盖手写代码（见 [PLAN.md](PLAN.md)）；
+- v0.1.0 不生成 gradle / Java 代码；v0.3 起通过 `lib/codegen.js` 生成带注释标记的 Java 与资源 JSON，只替换标记区间，不覆盖手写代码，且以工具形式暴露给界面与 agent 共用（见 [PLAN.md](PLAN.md)）；
 - 侧栏入口只注册图标区：`sidebar.panellist`（与「插件市场」「费用统计」「上下文洞察」同一区域，`order: 2`），点击后由侧栏按同名 key 打开 `main` 里的 `mc-mod-studio` 面板；不再注册底部 `sidebar.footer.action`。
 - 右侧栏标签页：`ctx.inject(['sidebarRightTabs'], ...)` 注册 `id/kind = mc-mod-studio` 的标签类型（含「开始」页引导卡片），并注册 `sidebar.right.pane.tab`（key 同名）渲染 `SidebarStudioPanel`；面板通过模块级 `studioState`（`projectPath` / `itemId`）与主面板联动，数据用 `project.open` 读取。
 
