@@ -1,12 +1,37 @@
 /**
  * 「模组工坊」Client 半。
  *
- * 浏览器端注册两个座位：
+ * 浏览器端注册三个位置：
  *   - sidebar.panellist（id: mc-mod-studio）：侧栏全局图标；
- *   - main（key: mc-mod-studio）：中央页面。
+ *   - main（key: mc-mod-studio）：中央页面；
+ *   - sidebar.right.pane.tab（key: mc-mod-studio）：右侧栏项目概览标签。
  *
  * 页面数据全部通过 POST /mcmods-studio/api 从 Host 半获取，
  * 本文件不直接访问文件系统。
+ *
+ * ── 文件结构索引 ────────────────────────────────────────────
+ * 本文件是单文件模块（`__ModuleLoader__.load` 只接受一个 factory，
+ * 不能拆成多个 ES 模块），因此靠分节注释定位。查找时按名称搜索 `// ──`。
+ *
+ *   基础工具          call / ensureStyles / 格式化
+ *   通用组件          Icon Modal Field TextInput NumberInput Select
+ *                     Textarea Toggle TagsInput Tabs PathField InfoRow
+ *   极简 markdown     renderInline / Markdown
+ *   状态与数据        useStudioData（首屏数据、项目切换）
+ *   跨面板共享状态    studioState / get / set / subscribe
+ *   项目页            ProjectTab / CreateProjectModal / ImportProjectModal / PathField
+ *   构想页            FeaturesTab / FeatureEditor
+ *   物品页            ItemsTab / ItemEditor / renderField / 画布常量
+ *   素材页            AssetsTab
+ *   教程页            GuideTab
+ *   主页面            StudioPage（页签编排与弹窗挂载）
+ *   目录选择          pickFolder / PathField
+ *   项目详情/重新导入  ProjectDetailModal / ImportConfirmModal
+ *   右侧栏面板        SidebarStudioPanel
+ *   注册              apply(ctx)：三个座位的注册与清理
+ *
+ * 组件之间通过页面级 props 与 `studioState` 通信，不共享可变模块状态
+ * （`appCtx` 与 `studioState` 除外，两者都是显式设计的跨组件通道）。
  */
 
 window.__ModuleLoader__.load({
@@ -792,6 +817,8 @@ window.__ModuleLoader__.load({
       const [images, setImages] = useState({})
       const [positions, setPositions] = useState({})
       const [drag, setDrag] = useState(null)
+      const [report, setReport] = useState(null)
+      const [reportOpen, setReportOpen] = useState(false)
       const positionsRef = useRef({})
       const movedRef = useRef(false)
 
@@ -801,6 +828,16 @@ window.__ModuleLoader__.load({
         const q = query.trim().toLowerCase()
         return item.id.includes(q) || item.displayName.toLowerCase().includes(q)
       }), [items, query])
+
+      // 校验：进入页面与条目变化后异步刷新，失败时静默（不打断编辑）
+      useEffect(() => {
+        if (!project?.path) { setReport(null); return }
+        let alive = true
+        call('agent.validate', { path: project.path })
+          .then((data) => { if (alive) setReport(data) })
+          .catch(() => { if (alive) setReport(null) })
+        return () => { alive = false }
+      }, [project?.path, items.length])
 
       useEffect(() => {
         if (!project) return
@@ -914,6 +951,37 @@ window.__ModuleLoader__.load({
           ),
           h('button', { style: S.btn(), onClick: newItem }, '新建物品'),
         ),
+
+        // 校验提示条：只在有问题时出现，点击展开明细
+        report && (report.errors.length || report.warnings.length)
+          ? h('div', { style: { ...S.card, padding: 10 } },
+              h('div', { style: { ...S.row, cursor: 'pointer' }, onClick: () => setReportOpen((value) => !value) },
+                h('span', {
+                  style: S.badge(report.errors.length ? 'danger' : 'warn'),
+                }, report.errors.length ? `${report.errors.length} 个错误` : '无错误'),
+                report.warnings.length
+                  ? h('span', { style: S.badge('warn') }, `${report.warnings.length} 个警告`)
+                  : null,
+                h('span', { style: { ...S.hint, marginTop: 0, flex: 1 } },
+                  reportOpen ? '点击收起' : '点击查看明细'),
+              ),
+              reportOpen
+                ? h('div', { style: { marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 } },
+                    [...report.errors, ...report.warnings].slice(0, 30).map((entry, index) => h('div', {
+                      key: `${entry.code}-${index}`,
+                      style: { fontSize: 12, display: 'flex', gap: 8, alignItems: 'flex-start' },
+                    },
+                      h('span', { style: S.badge(entry.level === 'error' ? 'danger' : 'warn') },
+                        entry.level === 'error' ? '错误' : '警告'),
+                      h('span', { style: { flex: 1 } }, entry.message),
+                    )),
+                    (report.errors.length + report.warnings.length) > 30
+                      ? h('div', { style: S.hint }, `还有 ${report.errors.length + report.warnings.length - 30} 条未显示`)
+                      : null,
+                  )
+                : null,
+            )
+          : null,
 
         filtered.length === 0
           ? h('div', { style: S.empty }, items.length === 0 ? '还没有物品。新建一个物品，填写属性后会生成属性文档。' : '没有匹配的物品。')
@@ -1739,6 +1807,17 @@ window.__ModuleLoader__.load({
             h(InfoRow, { label: '信息来源', value: identity.source === 'gradle.properties' ? 'gradle.properties' : (identity.source || '—') }),
           ),
 
+          // 判定提示：说明系统替你做了哪些判断（占位符解析、加载器判定等）
+          (analysis.notices?.length)
+            ? h('div', { style: S.card },
+                h('div', { style: S.sectionTitle }, '判定提示'),
+                ...analysis.notices.slice(0, 8).map((notice, index) => h('div', {
+                  key: `${notice.code}-${index}`,
+                  style: { fontSize: 12, color: C.muted, lineHeight: 1.7 },
+                }, `· ${notice.message}`)),
+              )
+            : null,
+
           h('div', { style: S.card },
             h('div', { style: S.sectionTitle }, '导入判定'),
             h(InfoRow, { label: '当前状态', value: kindText }),
@@ -1803,6 +1882,7 @@ window.__ModuleLoader__.load({
     function SidebarStudioPanel() {
       const [state, setState] = useState({ ...getStudioState() })
       const [data, setData] = useState(null)
+      const [summary, setSummary] = useState(null)
       const [error, setError] = useState('')
 
       useEffect(() => subscribeStudioState(() => setState({ ...getStudioState() })), [])
@@ -1811,6 +1891,7 @@ window.__ModuleLoader__.load({
         const path = state.projectPath
         if (!path) {
           setData(null)
+          setSummary(null)
           setError('')
           return
         }
@@ -1826,6 +1907,10 @@ window.__ModuleLoader__.load({
             setData(null)
             setError(err.message)
           })
+        // 摘要用于展示缺失素材数量；失败不影响主内容
+        call('agent.summary', { path })
+          .then((result) => { if (alive) setSummary(result) })
+          .catch(() => { if (alive) setSummary(null) })
         return () => { alive = false }
       }, [state.projectPath])
 
@@ -1868,6 +1953,9 @@ window.__ModuleLoader__.load({
                     h(InfoRow, { label: '版本', value: meta.version || '—' }),
                     h(InfoRow, { label: '物品', value: `${items.length} 个` }),
                     h(InfoRow, { label: '构想', value: `${features.length} 项（已完成 ${statusCount}）` }),
+                    summary?.missing?.count
+                      ? h(InfoRow, { label: '缺失素材', value: `${summary.missing.count} 个` })
+                      : null,
                   ),
                   item
                     ? h('div', { style: S.card },

@@ -22,19 +22,36 @@
 
 | 文件 | 职责 | 约行数 |
 | --- | --- | --- |
-| `package.json` | bundle 清单：包名、`dsh.bundle.patch`、`dsh.client` 注入列表 | 40 |
+| `package.json` | bundle 清单：包名、`dsh.bundle.patch`、`dsh.client` 注入列表 | 42 |
 | `cordis.patch.yml` | 向 Loader 插入一行 `id: mc-mod-studio` | 12 |
-| `index.js` | Host 入口：HTTP 路由、请求体解析、卸载清理 | 91 |
-| `lib/api.js` | 动作表：所有 `action` 的实现与分派 | 333 |
-| `lib/registry.js` | 插件运行数据：注册表、路径展开、原子写入 | 179 |
-| `lib/project.js` | 项目数据模型：常量、字段定义、项目/功能/物品 CRUD、扫描与导入 | ~1260 |
-| `lib/gradle.js` | 解析 `gradle.properties`，提取模组元数据与加载器判定 | 190 |
+| `index.js` | Host 入口：HTTP 路由、请求体解析、卸载清理 | 103 |
+| `lib/api.js` | 动作表：所有 `action` 的实现与分派 | 360 |
+| `lib/registry.js` | 插件运行数据：注册表、路径展开、原子写入 | 191 |
+| `lib/paths.js` | `.mcstudio/` 路径、id 校验、路径归属判断 | 75 |
+| `lib/schema.js` | 加载器、构想状态与优先级、物品类型与 19 个字段 | 182 |
+| `lib/meta.js` | `project.json` 与 `studio.json` 读写、项目创建与状态判断 | 217 |
+| `lib/entries.js` | 构想与物品 CRUD、字段纠偏、`readProject` 聚合视图 | 194 |
+| `lib/import.js` | 工程识别、资源扫描、身份解析、差异比对、条目同步、快照 | 687 |
+| `lib/summary.js` | 维护 `.mcstudio/summary.json` 项目摘要，供 agent 一次读取 | 108 |
+| `lib/validate.js` | 项目校验：id、数值范围、素材缺失、模型引用、语言键 | 175 |
+| `lib/tools.js` | 17 个 agent 工具的定义与调用入口 | 400 |
+| `data/schema.json` | 字段定义的对外副本（由 `scripts/gen-schema.mjs` 生成） | 7360 字节 |
+| `lib/project.js` | **转发层**：`export *` 上述五个模块，保持既有 import 路径不变 | 18 |
+| `lib/gradle.js` | 解析 `gradle.properties`，提取模组元数据与加载器判定 | 214 |
 | `lib/assets.js` | 贴图与模型：路径解析、PNG 校验、上传、读取、默认模型 | 221 |
 | `lib/docs.js` | Markdown 导出：五个文件的渲染 | 256 |
-| `client.js` | 浏览器半：全部 UI（单文件） | ~1930 |
+| `client.js` | 浏览器半：全部 UI（单文件） | ~1946 |
+| `test/*.mjs` | 回归测试：75 项用例，`npm test` 运行 | 1542 |
 | `docs/*.md` | 插件自身文档（本文件即索引） | — |
 
+> `lib/project.js` 在 2026-10-24 的拆分中从 1281 行降为 18 行转发层，
+> 详见 [refactor/01-split-project.md](refactor/01-split-project.md)。
+
 ## 2. 数据层（`lib/`）
+
+> 2.2–2.6 原本都在 `lib/project.js` 里，2026-10-24 按职责拆分为五个模块。
+> 函数名与签名未变，只是换了文件归属；`lib/project.js` 作为转发层继续导出全部符号，
+> 既有 `import ... from './project.js'` 无需修改。
 
 ### 2.1 `lib/registry.js`
 
@@ -57,26 +74,39 @@
 | `forgetProject(path)` | 从注册表移除 | `path` | 不删除磁盘文件 |
 | `setRegistryRoot(root)` | 修改扫描根目录 | `root` | 返回更新后的 registry |
 
-### 2.2 `lib/project.js`
+### 2.2 项目数据模型（拆分后的五个文件）
 
-项目级数据模型。**新增字段或类型时主要改这里。**
+项目级数据模型。**新增字段或类型时主要改 `schema.js`。**
 
-| 导出 | 用途 | 说明 |
-| --- | --- | --- |
-| `DATA_DIR = '.mcstudio'` | 项目内数据目录名 | 改动会影响所有路径函数 |
-| `MC_VERSION = '1.20.1'` | 当前适配的 MC 版本 | 未来改为项目字段 `mcVersion` |
-| `LOADERS[]` | 加载器定义 | `{id,label,note}`，当前 forge / neoforge / fabric |
-| `FEATURE_STATUS[]` | 功能状态 | idea / planning / implementing / done |
-| `FEATURE_PRIORITY[]` | 优先级 | high / medium / low |
-| `ITEM_TYPES[]` | 物品类型 | item / block / tool / weapon / armor / food / material |
-| `ITEM_FIELDS[]` | 19 个属性字段定义 | `{key,label,type,group,default,min,max,unit,hint,options?}` |
-| `itemSchema()` | 给前端的字段定义 | 返回 `{mcVersion, loaders, fields, types, statuses, priorities}` |
-| `defaultProperties()` | 生成默认属性对象 | 由 `ITEM_FIELDS` 推导 |
-| `projectDataDir(path)` | `.mcstudio` 绝对路径 | — |
-| `STUDIO_MARKER = 'studio.json'` | 工坊标记文件名 | 存在即表示项目已被接管 |
-| `studioMarkerFile(path)` | 标记文件路径 | `<项目>/.mcstudio/studio.json` |
-| `readStudioMarker(path)` | 读标记 | 返回对象或 `null`（不存在/损坏） |
-| `writeStudioMarker(path, patch)` | 写标记 | 首次生成 `projectId`/`importedAt`，之后不覆盖 |
+| 文件 | 内容 |
+| --- | --- |
+| `paths.js` | `DATA_DIR`、`MC_VERSION`、`STUDIO_MARKER`、路径函数、id 校验、`requireProjectPath`、`assertInside` |
+| `schema.js` | `LOADERS`、`FEATURE_STATUS`、`FEATURE_PRIORITY`、`ITEM_TYPES`、`ITEM_FIELDS`、`itemSchema`、`defaultProperties` |
+| `meta.js` | `readStudioMarker`、`writeStudioMarker`、`ensureStudioMarker`、`readProjectMeta`、`isStudioProject`、`isRegisteredProject`、`createProject`、`touchMeta`、`saveProjectMeta` |
+| `entries.js` | `listFeatures`、`saveFeature`、`deleteFeature`、`listItems`、`normalizeItem`、`saveItem`、`deleteItem`、`readProject` |
+| `import.js` | `scanCandidates`、`detectDescriptor`、`scanProjectAssets`、`scanRegistryNames`、`importProject`、`reimportProject`、`analyzeImport`、`writeSnapshot` |
+
+> 依赖方向：`paths → schema → meta → entries → import`，单向无环。
+> `readProject` 放在 entries 而非 meta，是为了避免 meta ↔ entries 循环依赖。
+
+以下为全部导出（42 项），均可从 `lib/project.js` 继续导入；「文件」列指出实际所在模块。
+
+| 导出 | 所在文件 | 用途 | 说明 |
+| --- | --- | --- | --- |
+| `DATA_DIR = '.mcstudio'` | paths | 项目内数据目录名 | 改动会影响所有路径函数 |
+| `MC_VERSION = '1.20.1'` | paths | 当前适配的 MC 版本 | 未来改为项目字段 `mcVersion` |
+| `LOADERS[]` | schema | 加载器定义 | `{id,label,note}`，当前 forge / neoforge / fabric |
+| `FEATURE_STATUS[]` | schema | 功能状态 | idea / planning / implementing / done |
+| `FEATURE_PRIORITY[]` | schema | 优先级 | high / medium / low |
+| `ITEM_TYPES[]` | schema | 物品类型 | item / block / tool / weapon / armor / food / material |
+| `ITEM_FIELDS[]` | schema | 19 个属性字段定义 | `{key,label,type,group,default,min,max,unit,hint,options?}` |
+| `itemSchema()` | schema | 给前端的字段定义 | 返回 `{mcVersion, loaders, fields, types, statuses, priorities}` |
+| `defaultProperties()` | schema | 生成默认属性对象 | 由 `ITEM_FIELDS` 推导 |
+| `projectDataDir(path)` | paths | `.mcstudio` 绝对路径 | — |
+| `STUDIO_MARKER = 'studio.json'` | paths | 工坊标记文件名 | 存在即表示项目已被接管 |
+| `studioMarkerFile(path)` | paths | 标记文件路径 | `<项目>/.mcstudio/studio.json` |
+| `readStudioMarker(path)` | meta | 读标记 | 返回对象或 `null`（不存在/损坏） |
+| `writeStudioMarker(path, patch)` | meta | 写标记 | 首次生成 `projectId`/`importedAt`，之后不覆盖 |
 | `ensureStudioMarker(path, source)` | 缺失时补写 | 老项目迁移用，返回标记对象 |
 | `projectMetaFile(path)` | `project.json` 路径 | — |
 | `itemsDir(path)` | `items/` 路径 | — |
@@ -103,7 +133,11 @@
 | `writeSnapshot(path, info)` | 写导入快照 | 生成 `docs/mcstudio-snapshot.md`，按资源类型分节 |
 | `assertInside(root, target)` | 路径归属校验 | 越界抛错 |
 
-内部函数（不导出，改导入逻辑时看这里）：
+其余符号按前缀可定位文件：路径与校验类在 `paths.js`，字段与枚举在 `schema.js`，
+项目元数据与标记在 `meta.js`，两类条目与 `readProject` 在 `entries.js`，
+`scan*` / `import*` / `analyze*` / `reimport*` / `writeSnapshot` 在 `import.js`。
+
+内部函数（不导出，改导入逻辑时看这里，全部位于 `import.js`）：
 
 | 函数 | 作用 |
 | --- | --- |
@@ -155,7 +189,7 @@
 | `buildDefaultModel(modid, item)` | 生成默认 `item/generated` 模型 | — | 对象 |
 | `ensureModel(projectPath, item)` | 缺失时补默认模型 | — | 写入结果 |
 
-### 2.4 `lib/docs.js`
+### 2.5 `lib/docs.js`
 
 | 函数 | 用途 | 参数 | 返回 |
 | --- | --- | --- | --- |
@@ -204,6 +238,10 @@
 | `assets.root` | `{path}` | `{root, standard}` | 素材根目录 |
 | `docs.export` | `{path}` | `{files[]}` | 写 `<项目>/docs/` |
 | `guide` | — | `{text}` | 内置构建教程 Markdown |
+| `agent.summary` | `{path}` | 摘要对象 | 刷新并返回 `.mcstudio/summary.json` |
+| `agent.validate` | `{path}` | `{ok, errors[], warnings[]}` | 项目校验，输出分级问题 |
+| `agent.tools` | — | `{tools[], actions[]}` | 列出 17 个 agent 工具与 32 个动作 |
+| `agent.call` | `{tool, args}` | 工具结果 | 用工具名调用，agent 只需记一个入口 |
 | `debug.clientGraph` | — | `{available, keys, hits}` | 诊断：客户端模块图里的本插件条目 |
 
 ### 3.3 新增一个动作的步骤

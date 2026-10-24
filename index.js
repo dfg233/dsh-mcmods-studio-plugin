@@ -12,6 +12,7 @@ import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { dispatch, setGraphProvider, setPluginRoot } from './lib/api.js'
+import { registerTools } from './lib/tool-bridge.js'
 
 /** 请求体上限（贴图以 base64 传输，留出余量）。 */
 const MAX_BODY_BYTES = 8 * 1024 * 1024
@@ -99,5 +100,22 @@ export function apply(ctx) {
       }
       return () => setGraphProvider(null)
     }, 'mcmods-studio: client graph probe')
+  })
+
+  // 把 lib/tools.js 的工具注册为 DSH 原生工具，agent 可直接调用，
+  // 不必经过 HTTP。宿主没有 tools 服务时整段跳过。
+  ctx.inject(['tools'], (child) => {
+    child.effect(() => {
+      const disposers = registerTools(child)
+      return () => {
+        for (const dispose of disposers) {
+          try {
+            dispose()
+          } catch {
+            // 卸载期的清理失败不影响其它工具
+          }
+        }
+      }
+    }, 'mcmods-studio: agent tools')
   })
 }
