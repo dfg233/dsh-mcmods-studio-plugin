@@ -25,8 +25,14 @@ node test/04-entries.mjs # 单跑某个文件（输出更详细）
 | `05-assets.mjs` | PNG 校验、模型读写、缺失统计、路径回退 | 13 |
 | `06-docs.mjs` | 五个导出文件、内容正确性、幂等 | 8 |
 | `07-scan.mjs` | 扫描、已导入判定、差异分析、重新导入 | 12 |
+| `08-client-load.mjs` | 客户端模块加载、座位注册 | 8 |
+| `09-agent.mjs` | 工具清单、摘要、校验、筛选 | 19 |
+| `10-schema-sync.mjs` | schema.json 与 schema.js 一致 | 2 |
+| `11-tool-bridge.mjs` | DSH 工具定义、执行、导入提示 | 8 |
+| `12-render.mjs` | 客户端渲染结构（空态、条目、按钮、差异展示） | 15 |
+| `render-harness.mjs` | 渲染测试装置（假 React + 元素树查询） | — |
 
-合计 **75 项**。
+合计 **117 项**。
 
 ## 设计要点
 
@@ -97,11 +103,25 @@ process.exitCode = await runSuite('08 · 新模块', cases)
 - 准备数据用 `ws.write` / `ws.call`，不要写死绝对路径；
 - 断言失败时不要吞异常，交给运行器处理。
 
+## 渲染测试
+
+`12-render.mjs` 通过 `render-harness.mjs` 在 Node 里渲染组件：
+
+1. 用假 React 执行 `client.js`，`useState` 可写、`useEffect` 同步执行；
+2. 设置 `window.__MCMODS_TEST__` 让模块暴露组件（仅测试时，运行时不暴露）；
+3. 用 `texts` / `hasText` / `buttons` / `countTag` 对元素树做结构断言。
+
+`renderSettled()` 会放行一轮微任务与宏任务再重渲染，用于覆盖「`useEffect` 里
+异步取数后更新界面」这类场景。
+
+**能验证**：空态文案、条件渲染分支、按钮存在性、列表条目、差异展示。
+**不能验证**：样式数值、鼠标交互、真实 DOM 布局。
+
 ## 已知边界
 
-- 只覆盖 Host 层。`client.js` 是浏览器代码，当前无 DOM 环境，**未覆盖**；
 - 不测试真实 HTTP 路由（`index.js` 的 `handleRequest`），只测 `dispatch`；
-- 不测试 DSH 座位注册（`ctx.slots`），那是运行时行为，属于手动验证范围。
+- 不测试 DSH 座位注册（`ctx.slots`），那是运行时行为，属于手动验证范围；
+- 渲染测试不执行 CSS，样式问题仍需人工确认。
 
 ## 历史
 

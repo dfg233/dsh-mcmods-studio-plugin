@@ -1857,6 +1857,25 @@ window.__ModuleLoader__.load({
               created.slice(0, 30).map((entry) => `${entry.id}(${entry.type === 'block' ? '方块' : '物品'})`).join('、')
               + (created.length > 30 ? ' …' : '')),
           ) : null,
+
+          // 已存在且类型一致：会被保留，不会覆盖用户数据
+          kept.length ? h('div', { style: S.card },
+            h('div', { style: S.sectionTitle }, `保持不变（${kept.length}）`),
+            h('div', { style: { ...S.hint, wordBreak: 'break-all' } },
+              kept.slice(0, 30).map((entry) => entry.id).join('、')
+              + (kept.length > 30 ? ' …' : '')),
+            h('div', { style: { ...S.hint, marginTop: 4 } }, '这些条目已存在，导入不会改动你填过的属性。'),
+          ) : null,
+
+          // 扫描到但本地无条目：说明工程里有资源却没建成条目
+          missing.length ? h('div', { style: S.card },
+            h('div', { style: S.sectionTitle }, `本地有、工程里没有（${missing.length}）`),
+            h('div', { style: { ...S.hint, wordBreak: 'break-all' } },
+              missing.slice(0, 30).map((entry) => entry.id).join('、')
+              + (missing.length > 30 ? ' …' : '')),
+            h('div', { style: { ...S.hint, marginTop: 4 } },
+              '这些条目在工程里找不到对应资源，导入不会删除它们。'),
+          ) : null,
         ) : null,
       )
     }
@@ -1986,7 +2005,25 @@ window.__ModuleLoader__.load({
 
     // ── 注册 ─────────────────────────────────────────────────
 
+    /**
+     * 测试钩子：仅在宿主显式设置 `window.__MCMODS_TEST__` 时暴露组件，
+     * 供 test/12-render.mjs 做结构断言。正常运行时该字段为 undefined，
+     * 不增加任何开销，也不影响座位注册。
+     */
+    const testHook = (typeof window !== 'undefined' && window.__MCMODS_TEST__)
+      ? {
+          components: {
+            ProjectTab, FeaturesTab, ItemsTab, AssetsTab, GuideTab,
+            StudioPage, SidebarStudioPanel, ItemEditor, FeatureEditor,
+            ProjectDetailModal, ImportConfirmModal, Icon, InfoRow, PathField,
+          },
+          helpers: { call, pickFolder, getStudioState, setStudioState, defaultSlot },
+          constants: { CANVAS_COLUMNS, CANVAS_CELL_W, CANVAS_CELL_H, KEY, API },
+        }
+      : {}
+
     return {
+      ...testHook,
       inject: ['slots'],
       apply(ctx) {
         appCtx = ctx
