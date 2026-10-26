@@ -60,7 +60,7 @@ dsh-mcmods-studio-plugin/
 index.js（Host 路由）
    │  dispatch(action, payload)
    ▼
-lib/api.js ──► lib/project.js / lib/assets.js / lib/docs.js
+lib/api.js ──► lib/meta.js / lib/entries.js / lib/import.js / lib/assets.js / lib/docs.js
    │
    ▼
 <project>/.mcstudio/  与  <project>/src/main/resources/assets/
@@ -73,7 +73,7 @@ lib/api.js ──► lib/project.js / lib/assets.js / lib/docs.js
 
 ### 新增一个物品属性字段
 
-1. 在 `lib/project.js` 的 `ITEM_FIELDS` 中增加一条定义（`key`、`label`、`type`、`group`、`default`、`hint`）；
+1. 在 `lib/schema.js` 的 `ITEM_FIELDS` 中增加一条定义（`key`、`label`、`type`、`group`、`default`、`hint`）；
 2. 若需要新的输入控件类型，在 `client.js` 的 `renderField()` 中加分支；
 3. 文档导出会自动包含新字段（`lib/docs.js` 按 `ITEM_FIELDS` 遍历）。
 

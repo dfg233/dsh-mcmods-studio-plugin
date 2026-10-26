@@ -133,18 +133,18 @@ index.js  sendJson(res, 200, {ok:true,data})
 | `dispatch(action, payload)` | 查表执行；未知动作抛 `未知动作：xxx` |
 | `setPluginRoot(dir)` | 注入插件目录，供读取内置教程 |
 | `setGraphProvider(fn)` | 注入客户端模块图读取器，仅诊断用 |
-| `dumpRegistry()` | 读回注册表（调试/迁移用） |
 
-动作清单（共 24 个）按前缀归属：
+动作清单（共 33 个）按前缀归属：
 
 | 前缀 | 动作 |
 | --- | --- |
 | `projects.` | `scan`、`add`、`remove` |
 | `registry.` | `setRoot` |
-| `project.` | `create`、`open`、`import`、`saveMeta` |
+| `project.` | `create`、`open`、`import`、`analyzeImport`、`reimport`、`saveMeta` |
 | `features.` | `list`、`save`、`delete` |
 | `items.` | `list`、`save`、`delete` |
 | `assets.` | `list`、`upload`、`read`、`readMany`、`delete`、`model.get`、`model.save`、`root` |
+| `agent.` | `summary`、`validate`、`tools`、`call` |
 | 其他 | `boot`、`docs.export`、`guide`、`debug.clientGraph` |
 
 ## 6. 前端组件
@@ -185,7 +185,6 @@ async function call(action, payload) {
 - 无请求鉴权（依赖 DSH 自身的会话边界）；
 - 无并发写锁，多窗口同时改注册表可能互相覆盖；
 - 无接口版本号，动作签名变更时旧前端会报错；
-- `dumpRegistry` 未被前端使用。
 
 ## 9. 关联模块
 

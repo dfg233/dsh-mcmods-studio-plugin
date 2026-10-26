@@ -1,7 +1,7 @@
 # 模块计划索引
 
 > 本目录存放模组工坊各功能模块的详细计划，用于在改动代码前明确「这个模块做什么、什么时候触发、怎么跑」。
-> 生成日期：2026-10-22
+> 生成日期：2026-10-22（2026-10-25 更新状态）
 > 配套文档：[PLAN.md](../PLAN.md)（版本路线）、[STATUS.md](../STATUS.md)（实现状态）、[INDEX.md](../INDEX.md)（代码索引）
 
 ## 模块一览
@@ -9,7 +9,7 @@
 | # | 模块 | 文档 | 状态 | 主要代码 |
 | --- | --- | --- | --- | --- |
 | 01 | 平台基础 | [PLATFORM-PLAN.md](PLATFORM-PLAN.md) | 已实现 | `index.js`、`lib/registry.js`、`lib/api.js` |
-| 02 | 项目管理 | [PROJECT-PLAN.md](PROJECT-PLAN.md) | 已实现 | `lib/project.js`、`ProjectTab`、`CreateProjectModal` |
+| 02 | 项目管理 | [PROJECT-PLAN.md](PROJECT-PLAN.md) | 已实现 | `lib/meta.js`、`lib/entries.js`、`ProjectTab`、`CreateProjectModal` |
 | 03 | 扫描发现 | [SCAN-PLAN.md](SCAN-PLAN.md) | 已实现 | `scanCandidates`、`ProjectTab` 扫描区 |
 | 04 | 工程导入 | [IMPORT-PLAN.md](IMPORT-PLAN.md) | 已实现 | `detectDescriptor`、`scanProjectAssets`、`importProject` |
 | 05 | 构想 | [FEATURES-PLAN.md](FEATURES-PLAN.md) | 已实现 | `features.*`、`FeaturesTab`、`FeatureEditor` |
@@ -18,11 +18,15 @@
 | 08 | 文档导出 | [DOCS-PLAN.md](DOCS-PLAN.md) | 已实现 | `lib/docs.js` |
 | 09 | 构建教程 | [GUIDE-PLAN.md](GUIDE-PLAN.md) | 已实现 | `readGuide`、`GuideTab`、`BUILD-GUIDE.md` |
 | 10 | 界面外壳 | [SHELL-PLAN.md](SHELL-PLAN.md) | 已实现 | `client.js` 全文件 |
-| 11 | 代码工作区 | [CODEGEN-PLAN.md](CODEGEN-PLAN.md) | **规划中** | 拟新增 `lib/files.js`、`lib/codegen.js` |
-| 12 | Agent 接入 | [AGENT-PLAN.md](AGENT-PLAN.md) | **建议稿，未实施** | 拟新增 `lib/tools.js`、`lib/summary.js`、`lib/validate.js`、`data/schema.json` |
+| 11 | 代码工作区 | [CODEGEN-PLAN.md](CODEGEN-PLAN.md) | **规划中（v0.3）** | 拟新增 `lib/files.js`、`lib/codegen.js` |
+| 12 | Agent 接入 | [AGENT-PLAN.md](AGENT-PLAN.md) | **已实现** | `lib/tools.js`、`lib/tool-bridge.js`、`lib/summary.js`、`lib/validate.js`、`data/schema.json` |
 
 > 模块 12 不是独立功能，而是横切改进：它把 01–11 的能力以工具与紧凑数据的形式重新暴露给 agent。
 > 方向依据见 [../PLAN.md](../PLAN.md) 第 0 节「插件宗旨」。
+>
+> **模块 12 落地情况**：建议 1（原生工具）、2（摘要）、3（双表示）、4（schema 外置）、5（校验器）、
+> 6（导入提示）已完成；建议 7（关系视图）、8（编辑提效）、9（文档双向同步）仍在计划中，
+> 归入 v0.2 与后续版本。
 
 ## 每份文档的固定结构
 

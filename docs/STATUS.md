@@ -1,9 +1,9 @@
 # 项目状态：已实现、未实现与要求
 
 > 适用版本：模组工坊（`dsh-mcmods-studio-plugin`）v0.1.0
-> 更新日期：2026-10-23
+> 更新日期：2026-10-25
 > 本文档回答三个问题：**现在能做什么**、**还不能做什么**、**必须遵守什么**。
-> 历史变更见 [CHANGELOG.md](CHANGELOG.md)，开发方式见 [DEVELOPMENT.md](DEVELOPMENT.md)，版本路线与宗旨见 [PLAN.md](PLAN.md)，agent 改进方案见 [plans/AGENT-PLAN.md](plans/AGENT-PLAN.md)。
+> 历史变更见 [CHANGELOG.md](CHANGELOG.md)，开发方式见 [DEVELOPMENT.md](DEVELOPMENT.md)，版本路线与宗旨见 [PLAN.md](PLAN.md)，代码索引见 [INDEX.md](INDEX.md)。
 
 ## 0. 设计目的
 
@@ -16,11 +16,11 @@
 
 当前承担的三件事：
 
-1. **为 agent 提供上下文**（v0.2 起，见 [plans/AGENT-PLAN.md](plans/AGENT-PLAN.md)）：工具化读写、聚合摘要、schema 外置、校验器；
-2. **为用户提供直观平台**：构想清单、物品属性、贴图模型、文档集中在一处，可画布与列表浏览；
-3. **衔接设计与实现**：结构化数据可生成规范的 Java 注册代码与资源 JSON，生成物可读可改。
-
-当前已实现的是第 2、3 件的大部分（不含代码生成），第 1 件尚未开始。
+1. **为 agent 提供上下文**（**已完成**）：17 个 DSH 原生工具、项目摘要 `summary.json`、
+   schema 外置 `data/schema.json`、9 类校验器、导入判定提示；
+2. **为用户提供直观平台**（**大部分完成**）：构想清单、物品属性、贴图模型、文档集中在一处，
+   可画布与列表浏览；缺依赖图、时间线与内联编辑；
+3. **衔接设计与实现**（**未开始**）：结构化数据生成 Java 注册代码与资源 JSON，规划在 v0.3。
 
 ## 1. 需求对照
 
@@ -123,60 +123,90 @@
 
 ### 2.8 运行与数据
 
-- 项目数据：`<项目>/.mcstudio/project.json`、`features.json`、`items/<id>.json`；
+- 项目数据：`<项目>/.mcstudio/project.json`、`features.json`、`items/<id>.json`、
+  `studio.json`（工坊标记）、`summary.json`（派生摘要）；
 - 插件注册表：`$DSH_HOME/mcmods-studio/registry.json`（记录扫描根目录与项目列表）；
-- Host 接口：`POST /mcmods-studio/api`，动作为
-  `boot`、`projects.scan/add/remove`、`registry.setRoot`、`project.create/open/import/saveMeta`、
-  `features.list/save/delete`、`items.list/save/delete`、
-  `assets.list/upload/read/readMany/delete/model.get/model.save/root`、
-  `docs.export`、`guide`、`debug.clientGraph`（诊断用，只返回客户端模块名）。
+- Host 接口：`POST /mcmods-studio/api`，共 **33 个动作**：
+
+| 分组 | 动作 |
+| --- | --- |
+| 项目与注册表 | `boot`、`projects.scan`、`projects.add`、`projects.remove`、`projects.remember`、`registry.setRoot`、`project.create`、`project.open`、`project.import`、`project.analyzeImport`、`project.reimport`、`project.saveMeta` |
+| 构想与物品 | `features.list`、`features.save`、`features.delete`、`items.list`、`items.save`、`items.delete` |
+| 素材与文档 | `assets.list`、`assets.upload`、`assets.read`、`assets.readMany`、`assets.delete`、`assets.model.get`、`assets.model.save`、`assets.root`、`docs.export`、`guide` |
+| Agent 与诊断 | `agent.summary`、`agent.validate`、`agent.tools`、`agent.call`、`debug.clientGraph` |
+
+- Agent 工具：17 个，注册为 DSH 原生 `mcmods_*` 工具，清单见 [INDEX.md](INDEX.md) 第 4 节。
 
 ## 3. 未实现功能
 
-### 3.0 Agent 接入（新增，详见 [plans/AGENT-PLAN.md](plans/AGENT-PLAN.md)）
+### 3.0 Agent 接入（已完成）
 
-当前 28 个动作**只面向浏览器**，agent 使用需自写脚本。这是与宗旨最大的差距。
+v0.1.0 已补齐面向 agent 的能力层，不再需要自写脚本探测项目。
 
-| 优先级 | 功能 | 说明 |
+| 能力 | 落地 | 说明 |
 | --- | --- | --- |
-| P0 | 原生工具 | 项目摘要、条目读写、schema 查询、校验、导出注册为 agent 可直接调用的工具 |
-| P0 | `summary.json` 聚合 | 一次读取掌握项目全貌，替代逐文件解析 |
-| P1 | 紧凑 / 详细双表示 | 列举用紧凑格式，确认后取详情 |
-| P1 | schema 外置 | 字段定义抽到 `data/schema.json`，agent 与工具共用 |
-| P1 | 校验器 | id、数值范围、贴图缺失、模型引用、语言键、类型一致性 |
-| P3 | 导入提示 | 占位符解析、加载器判定等结果以 `notices[]` 返回 |
+| 原生工具 | `lib/tools.js` + `lib/tool-bridge.js` | 17 个工具，注册为 DSH 原生 `mcmods_*` 工具，agent 可直接调用 |
+| 项目摘要 | `lib/summary.js` | `.mcstudio/summary.json`，12 物品约 1.2 KB，写操作后自动刷新 |
+| 紧凑 / 详细双表示 | `item_list` / `item_get` | 列举仅回 id / 名称 / 类型（12 物品约 300 字节）；详情才回 19 个字段 |
+| schema 外置 | `data/schema.json` | 由 `lib/schema.js` 生成，`test/10-schema-sync.mjs` 守住一致性 |
+| 校验器 | `lib/validate.js` | 9 类检查，分级 error / warning |
+| 导入提示 | `lib/import.js` 的 `notices[]` | 占位符解析、加载器判定来源等结论随导入返回 |
+| 通用入口 | `agent.call` | agent 只需记住一个动作名 + 工具名，不必为每个操作拼请求 |
+
+界面也已消费这批能力：物品页显示校验提示条，右侧栏显示缺失素材数量，
+导入确认弹窗显示判定提示与四类差异。
+
+### 3.0.1 素材与状态修复（已完成）
+
+针对实际使用中暴露的三个问题，本次修复前两项，第三项留待下一轮。
+
+| 问题 | 根因 | 解决 |
+| --- | --- | --- |
+| 方块贴图不显示 | `listAssets` 只扫 `textures/item` 与 `models/item`，完全没看 `textures/block`、`models/block`、`blockstates` | 新增 `describeBlock` 按「blockstate → 模型 → parent 链 → 贴图」解析，素材页新增「方块面贴图」区块 |
+| 项目切换不持久化 | `StudioPage` 挂载时无条件打开列表第一个未缺失项目 | 注册表新增 `lastProject`，新动作 `projects.remember`，启动时优先恢复上次项目 |
+| 工程结构文档 | 缺少结构解析与实时更新机制 | **留到下一轮**：需先确定更新时机（全量重建或增量补丁）与 `summary.json` 的职责边界 |
+
+方块解析的具体规则：读 `blockstates/<id>.json` 收集 `variants` 与 `multipart`
+引用的模型；沿 `parent` 链自下而上合并 `textures`；展开 `#all` 这类变量引用
+（最多 8 层防循环）；按 `elements[].faces` 得出每个面用哪张贴图。六面相同标记
+`uniform`，去重后只算一张。无 blockstate 时回退到同名 `models/block/<id>.json`。
+
+遗留限制：`elements` 定义在 `minecraft:` 内置父模型里时，面信息取不到——内置
+资源不在工程内，只按模型声明的 `textures` 归类。此时 `faces` 可能为空，界面
+退回按 id 显示缩略图。
 
 ### 3.1 计划中（按优先级）
 
-> 优先级口径：P0 = v0.2 Agent 接入（见 3.0）；P1 = v0.3 代码工作区与生成；P2 = v0.4 图形化；P3 = v0.5 质量与效率。
+> 优先级口径：P0 = 渲染层测试（**已完成**）；P1 = v0.2 关系视图与编辑效率；P2 = v0.3 代码工作区与生成；P3 = v0.4 图形化；P4 = v0.5 质量与效率。
 
 | 优先级 | 功能 | 说明 |
 | --- | --- | --- |
-| P1 | 代码工作区 | 工程文件树 + 文本编辑器（行号、未保存提示、`Ctrl+S`），路径限定在工程内 |
-| P1 | Java 注册代码生成 | 按物品列表生成 `ModItems.java`，用注释标记生成区块，重复生成不覆盖手写代码；以工具形式暴露 |
-| P1 | 资源 JSON 生成 | 物品模型、`lang/zh_cn.json`、`lang/en_us.json` |
-| P2 | 图形化方块 | 属性表单 + blockstate + 方块模型 |
-| P2 | 图形化配方 | 工作台有序 / 无序、熔炉、切石机 |
-| P2 | 关系视图 | 依赖图、缺失面板、变更时间线（建议 7） |
+| P1 | 工程结构文档 | 解析 Java 包结构、注册类、依赖清单写入 `.mcstudio/`，并在后续写操作后实时更新；需先定更新时机与 `summary.json` 的职责边界 |
+| P1 | 关系视图 | 构想 → 物品 → 素材的依赖图、缺失面板、变更时间线；需先在构想上增加 `itemRefs` 字段 |
+| P1 | 内联编辑 | 列表内直接改名称、类型、堆叠，不必打开弹窗 |
+| P1 | 批量操作 | 多选后统一改类型或标签 |
+| P2 | 代码工作区 | 工程文件树 + 文本编辑器（行号、未保存提示、`Ctrl+S`），路径限定在工程内 |
+| P2 | Java 注册代码生成 | 生成 `ModItems.java`，用注释标记生成区块，重复生成不覆盖手写代码；以工具形式暴露 |
+| P2 | 资源 JSON 生成 | 物品模型、`lang/zh_cn.json`、`lang/en_us.json` |
+| P3 | 图形化方块 | 属性表单 + blockstate + 方块模型 |
+| P3 | 图形化配方 | 工作台有序 / 无序、熔炉、切石机 |
 | P3 | 批量贴图导入 | 一次选择多张 PNG 或整个文件夹，按物品 ID 自动匹配 |
-| P3 | 物品复制与批量编辑 | 复制现有物品作为模板；多选后批量修改类型或标签 |
-| P3 | 快照差异对比 | 重新导入工程时列出新增 / 变更 / 删除的素材与注册名 |
-| P3 | 右侧栏自动打开 | 点左侧「模组工坊」图标时同步展开右侧标签（当前需手动从「开始」页打开） |
-| P3 | 列表视图排序与筛选 | 按类型、堆叠、是否有贴图筛选；当前只有搜索 |
+| P4 | 快照差异对比 | 重新导入工程时列出新增 / 变更 / 删除的素材与注册名 |
+| P4 | 右侧栏自动打开 | 点左侧「模组工坊」图标时同步展开右侧标签（当前需手动从「开始」页打开） |
+| P4 | 列表视图排序与筛选 | 按类型、堆叠、是否有贴图筛选；当前只有搜索 |
+| P4 | 撤销 / 重做 | 编辑操作的历史栈 |
 | P4 | 战利品表 | 方块掉落配置 |
 | P4 | 创造模式标签拖拽排序 | 图形化调整物品分组与顺序 |
 | P4 | 贴图动画 | `.mcmeta` 动画配置 |
 | P4 | 导入 `.jar` | 当前只解析源码工程，不解析已编译的模组包 |
-| P4 | 撤销 / 重做 | 编辑操作的历史栈 |
 | P4 | 多 MC 版本 | 当前只适配 1.20.1；v1.0.0 起先加 1.21.1，之后按需扩展（见 [PLAN.md](PLAN.md)） |
-| P3 | 素材引用检查 | 检测模型引用了不存在的贴图、物品没有对应模型、lang 缺键（已纳入 3.0 的校验器） |
 | P4 | 界面多语言 | 目前仅中文，`en.json` 只用于插件标题与描述 |
 
 > 完整的阶段划分与验收标准见 [PLAN.md](PLAN.md)。
 
 ### 3.2 当前版本不做
 
-- **v0.1.0 不含代码工作区与代码生成**：v0.2 优先做 Agent 接入，代码编辑与 Java / 资源生成移到 v0.3（见 [PLAN.md](PLAN.md)），当前版本的构建仍由用户在 IDEA 中完成；
+- **v0.1.0 不含代码工作区与代码生成**：代码编辑与 Java / 资源生成移到 v0.3（见 [PLAN.md](PLAN.md)），当前版本的构建仍由用户在 IDEA 中完成；
 - 不做完整 IDE：不实现编译、运行、调试、反编译；
 - 不做云端同步或多人协作；
 - v0.1.0 不修改用户的 Java、gradle、`mods.toml` 等工程文件（导入时只读取）；v0.3 起仅在作者确认后写入生成区块与资源 JSON。
@@ -217,19 +247,34 @@
 
 ## 5. 验证状态
 
-已通过自动化 / 接口级验证：
+已通过自动化验证（`npm test`，**14 个文件、144 项全部通过**）：
+
+| 层 | 覆盖 | 手段 |
+| --- | --- | --- |
+| Host 业务 | 96 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
+| 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
+| 客户端加载 | 8 项 | 假 `__ModuleLoader__` + 假 React，验证加载、模块 id、座位注册 |
+| 渲染结构 | 15 项 | 假 React 渲染组件，断言文本、按钮、条件分支 |
+| schema 一致性 | 2 项 | 比对 `schema.js` 与 `data/schema.json` |
+
+接口级验证：
 
 - 接口：`boot`、项目创建与打开、物品保存、文档导出、贴图上传、模型生成；
 - 导入：Fabric 工程与 Forge 工程均能识别 modid、版本、贴图与 Java 注册名；
-- 数据：画布坐标持久化、快照生成、注册表读写；
+- 数据：画布坐标持久化、快照生成、注册表读写、摘要重建；
+- Agent：17 个工具全部注册到宿主，`agent.tools` 返回 17 工具 / 32 动作；
 - 槽位：`main`、`sidebar.panellist`、`sidebar.right.pane.tab` 均已确认注册且处于激活状态；
 - 安装：bundle 安装与卸载、接口新旧路径切换。
 
-尚未验证：
+尚未验证（需人工确认）：
 
-- 页面视觉渲染（当前环境无浏览器控制，只能验证到注册与加载层）；
+- **页面视觉效果**：样式数值、间距、配色、布局对齐；
+- **鼠标交互**：拖拽手感、悬停反馈、弹窗动画；
 - 右侧栏「开始」页引导卡片的实际显示效果；
 - 真实 IDEA + Gradle 构建流程（未实际执行 `gradlew build`）。
+
+> 渲染测试只验证「渲染出哪些元素」，不执行 CSS，样式问题仍需在页面上人工核对。
 
 ## 6. 维护约定
 

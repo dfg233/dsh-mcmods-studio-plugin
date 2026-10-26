@@ -6,7 +6,7 @@
 ┌──────────────────────────────────────────────────────────┐
 │ 使用方                                                     │
 │   用户 → DSH Web UI（浏览器）                              │
-│   Agent → 工具调用（规划中，见 plans/AGENT-PLAN.md）        │
+│   Agent → 17 个原生工具（mcmods_*）或 HTTP 动作             │
 └───────────────────────┬──────────────────────────────────┘
                         │ POST /mcmods-studio/api
                         ▼
@@ -16,9 +16,10 @@
 │   main: key = mc-mod-studio        →  「模组工坊」页面     │
 │      ├─ 项目      （项目列表 / 新建 / 扫描 / 导入）        │
 │      ├─ 构想      （构想条目 CRUD）                        │
-│      ├─ 物品      （列表 / 画布 / 属性编辑）               │
-│      ├─ 贴图与模型（上传 / 预览 / 模型 JSON）              │
+│      ├─ 物品      （列表 / 画布 / 属性编辑 / 校验提示）    │
+│      ├─ 贴图与模型（上传/预览/方块面贴图/模型 JSON）       │
 │      └─ 构建教程  （内置 markdown）                        │
+│   sidebar.right.pane.tab: 项目概览与选中物品属性           │
 └───────────────────────┬──────────────────────────────────┘
                         ▲
                         │ POST /mcmods-studio/api
@@ -26,19 +27,28 @@
 ┌──────────────────────────────────────────────────────────┐
 │ DSH Host（Node 进程）                                     │
 │   index.js  →  webServer.register('/mcmods-studio/api')     │
-│   lib/api.js → 动作分派                                   │
+│             →  tools.register(17 个 mcmods_* 工具)        │
+│   lib/api.js → 33 个动作的声明式路由表                     │
 │      ├─ registry.js   注册表（$DSH_HOME/mcmods-studio）     │
-│      ├─ project.js    项目数据 / 扫描 / 导入              │
-│      ├─ gradle.js     gradle.properties 解析              │
-│      ├─ assets.js     贴图 / 模型                        │
-│      └─ docs.js       Markdown 导出                       │
+│      ├─ paths.js      .mcstudio 路径与 id 校验            │
+│      ├─ schema.js     加载器 / 状态 / 类型 / 19 个字段     │
+│      ├─ meta.js       project.json 与 studio.json         │
+│      ├─ entries.js    构想与物品 CRUD、readProject        │
+│      ├─ import.js     识别 / 扫描 / 差异 / 快照           │
+│      ├─ gradle.js     gradle.properties 解析与占位符       │
+│      ├─ assets.js     贴图 / 模型 / 方块面解析            │
+│      ├─ docs.js       Markdown 导出                       │
+│      ├─ summary.js    summary.json（agent 用摘要）        │
+│      └─ validate.js   9 类校验                           │
+│   lib/tool-bridge.js → 把 lib/tools.js 的定义注册为工具    │
 └───────────────────────┬──────────────────────────────────┘
                         ▼
               文件系统（用户的项目目录）
 ```
 
-> 规划中的工具层（`lib/tools.js`、`lib/summary.js`、`lib/validate.js`）会复用上图的业务函数，
-> 不另建一套实现。设计稿见 [plans/AGENT-PLAN.md](plans/AGENT-PLAN.md)。
+> 工具层与 HTTP 层**共用同一批业务函数**，不另建实现：`lib/tools.js` 直接调用
+> `lib/entries.js`、`lib/meta.js`、`lib/summary.js` 等，区别只在入口形态。
+> 设计依据见 [plans/AGENT-PLAN.md](plans/AGENT-PLAN.md)。
 
 ## 2. 为什么走 HTTP 路由而不是 Remote
 
@@ -71,6 +81,7 @@
 - 所有写操作都要求目标目录是已存在的工坊项目（`project.create` 与 `project.import` 例外）；
 - `project.create` / `project.import` 允许任意目录，但要求目录为空或不存在、且工程能被识别，避免误覆盖；
 - 贴图上传限制：PNG 魔数校验、必须正方形、单文件 ≤ 2MB；
+- 方块贴图按 blockstate → 模型 → `parent` 链 → `textures` 解析，不依赖文件名；
 - 物品 id / modid 使用白名单正则，避免路径穿越；
 - JSON 写入采用「临时文件 + rename」的原子写入。
 
@@ -78,8 +89,8 @@
 
 | 需求 | 扩展位置 |
 | --- | --- |
-| 新属性字段 | `lib/project.js` 的 `ITEM_FIELDS` |
+| 新属性字段 | `lib/schema.js` 的 `ITEM_FIELDS` |
 | 新页面视图 | `client.js` 的 `Tabs` 与 `StudioPage` |
-| 新数据文件 | `lib/project.js` + `lib/api.js` |
+| 新数据文件 | `lib/meta.js` / `lib/entries.js` + `lib/api.js` |
 | 新导出文档 | `lib/docs.js` |
 | AI 工具 | `index.js` 中 `ctx.tools.register`，复用 `lib/api.js` 动作 |

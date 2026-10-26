@@ -1,13 +1,31 @@
 # Agent 结合与发展建议
 
 > 文档编号：AGENT-PLAN
-> 状态：**建议稿，未实施**
-> 更新日期：2026-10-23
+> 状态：**建议 1–6 已实施，建议 7–9 待做**（2026-10-25 更新）
+> 更新日期：2026-10-25
 > 配套：[PLAN.md](../PLAN.md)（宗旨与路线）、[STATUS.md](../STATUS.md)（实现状态）、[INDEX.md](../INDEX.md)（代码索引）
+> 实施记录：[refactor/04-agent-modules.md](../refactor/04-agent-modules.md)、[refactor/05-tools-and-notices.md](../refactor/05-tools-and-notices.md)
+
+## 0. 实施状态（2026-10-25）
+
+| 建议 | 内容 | 状态 | 落地 |
+| --- | --- | --- | --- |
+| 1 | 注册为 agent 工具 | **已完成** | 17 个工具，DSH 原生 `mcmods_*`，见 `lib/tools.js`、`lib/tool-bridge.js` |
+| 2 | `summary.json` 聚合 | **已完成** | `lib/summary.js`，写操作后自动刷新 |
+| 3 | 紧凑 / 详细双表示 | **已完成** | `item_list`（约 300 字节 / 12 物品）与 `item_get`（19 字段带标签） |
+| 4 | 字段知识外置 | **已完成** | `data/schema.json` + `scripts/gen-schema.mjs` + 一致性测试 |
+| 5 | 校验器 | **已完成** | `lib/validate.js`，9 类检查，分级 error / warning |
+| 6 | 导入提示 | **已完成** | `notices[]` 随导入与分析返回，界面已展示 |
+| 7 | 关系可视化 | 待做 | 归入 v0.2，需先在构想加 `itemRefs` |
+| 8 | 编辑提效 | 待做 | 内联编辑与批量操作，归入 v0.2 |
+| 9 | 文档双向同步 | 待做 | 后续版本 |
+
+> 下文第 1 节保留立项时的背景描述，作为「为什么做这些」的依据；
+> 当前实际状态以本节和 [STATUS.md](../STATUS.md) 为准。
 
 ## 1. 背景
 
-插件当前是「给用户用的界面」：28 个 HTTP 动作、5 个页签、右侧栏面板。
+立项时插件是「只给用户用的界面」：28 个 HTTP 动作、5 个页签、右侧栏面板。
 Agent 想使用它，只能自己写 `fetch` 脚本、解析 JSON、读 `.mcstudio/*.json`。
 
 这与插件宗旨（见 [PLAN.md](../PLAN.md) 第 1 节）中「为 agent 提供项目上下文」的目标不匹配。
@@ -19,7 +37,7 @@ Agent 想使用它，只能自己写 `fetch` 脚本、解析 JSON、读 `.mcstud
 | 指标 | 现状 | 问题 |
 | --- | --- | --- |
 | `boot` 返回体积 | **7418 字节** | 其中 schema 3765、教程 2846，每次首屏都传 |
-| 字段定义位置 | `lib/project.js` 的 `ITEM_FIELDS` | Agent 要读源码才知道 19 个字段的含义 |
+| 字段定义位置 | `lib/schema.js` 的 `ITEM_FIELDS` | Agent 要读源码才知道 19 个字段的含义 |
 | 项目信息 | 分散在 `project.json`、`features.json`、`items/*.json` | Agent 查全貌需读 N+1 个文件 |
 | 物品表示 | 完整 19 字段 JSON，单条约 400 字节 | 12 个物品就要 5000 字节，只为知道"有什么" |
 | 接口暴露方式 | 仅 HTTP，面向浏览器 | Agent 需自建脚本，token 与出错率双高 |
@@ -69,7 +87,7 @@ Agent 想使用它，只能自己写 `fetch` 脚本、解析 JSON、读 `.mcstud
 
 **约束**：
 
-- 工具内部复用 `lib/project.js` / `lib/assets.js` 的现有函数，不重复实现；
+- 工具内部复用 `lib/entries.js` / `lib/meta.js` / `lib/assets.js` 的现有函数，不重复实现；
 - 全部返回结构化数据，错误用中文说明原因与修复方向；
 - 不传 `project` 时使用「当前打开项目」（与界面共享 `studioState` 的服务端对应物）。
 

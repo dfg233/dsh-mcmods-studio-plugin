@@ -473,6 +473,8 @@ window.__ModuleLoader__.load({
           setProject(data)
           setStudioState({ projectPath: path, itemId: null })
           setAssets(await call('assets.list', { path }))
+          // 记住这个项目，下次进入时恢复；失败不影响打开
+          call('projects.remember', { path }).catch(() => {})
         } catch (err) {
           setError(err.message)
         } finally {
@@ -482,8 +484,12 @@ window.__ModuleLoader__.load({
 
       useEffect(() => {
         refreshBoot().then((data) => {
-          const first = data?.registry?.projects?.find((p) => !p.missing)
-          if (first) open(first.path)
+          // 优先恢复上次打开的项目；不在列表或目录缺失时退回第一个可用项目
+          const projects = data?.registry?.projects || []
+          const last = data?.registry?.lastProject || ''
+          const restored = last ? projects.find((p) => p.path === last && !p.missing) : null
+          const target = restored || projects.find((p) => !p.missing)
+          if (target) open(target.path)
         }).catch((err) => setError(err.message))
       }, [refreshBoot, open])
 
@@ -842,11 +848,27 @@ window.__ModuleLoader__.load({
       useEffect(() => {
         if (!project) return
         let alive = true
-        call('assets.readMany', { path: project.path, ids: items.map((i) => i.id) })
+        // 方块贴图名与 id 不同，按 assets.blocks 的解析结果构造读取规格
+        const blockMap = new Map((assets?.blocks || []).map((entry) => [entry.id, entry]))
+        const specs = items.map((item) => {
+          const block = blockMap.get(item.id)
+          if (block?.primary) return { id: block.primaryId, kind: block.primaryKind, key: block.primary }
+          return { id: item.id, kind: 'item', key: `item/${item.id}` }
+        })
+        call('assets.readMany', { path: project.path, ids: specs })
           .then((data) => { if (alive) setImages(data.images || {}) })
           .catch(() => {})
         return () => { alive = false }
-      }, [project?.path, items.length])
+      }, [project?.path, items.length, assets?.blocks])
+
+      /** 缩略图键：与 assets.readMany 返回的键保持一致。 */
+      const thumbKey = useMemo(() => {
+        const map = new Map()
+        for (const block of assets?.blocks || []) {
+          if (block.primary) map.set(block.id, block.primary)
+        }
+        return (id) => map.get(id) ?? `item/${id}`
+      }, [assets?.blocks])
 
       // 画布位置：首次出现时按顺序排布，之后保留用户拖动过的位置
       useEffect(() => {
@@ -999,8 +1021,8 @@ window.__ModuleLoader__.load({
                   )),
                   h('tbody', null, filtered.map((item) => h('tr', { key: item.id },
                     h('td', { style: S.td },
-                      images[item.id]
-                        ? h('img', { src: images[item.id], width: 24, height: 24, style: { imageRendering: 'pixelated', borderRadius: 4, display: 'block' } })
+                      images[thumbKey(item.id)]
+                        ? h('img', { src: images[thumbKey(item.id)], width: 24, height: 24, style: { imageRendering: 'pixelated', borderRadius: 4, display: 'block' } })
                         : h('span', { style: { ...S.hint, marginTop: 0 } }, '—')),
                     h('td', { style: S.td }, h('code', null, item.id)),
                     h('td', { style: S.td }, item.displayName),
@@ -1068,8 +1090,8 @@ window.__ModuleLoader__.load({
                         border: `1px solid ${C.border}`,
                       },
                     },
-                      images[item.id]
-                        ? h('img', { src: images[item.id], width: 48, height: 48, style: { imageRendering: 'pixelated' } })
+                      images[thumbKey(item.id)]
+                        ? h('img', { src: images[thumbKey(item.id)], width: 48, height: 48, style: { imageRendering: 'pixelated' } })
                         : h('span', { style: { fontSize: 11, color: C.muted } }, '无贴图'),
                     ),
                     h('div', { style: { fontSize: 12.5, fontWeight: 600, textAlign: 'center', wordBreak: 'break-all' } }, item.displayName),
@@ -1223,9 +1245,13 @@ window.__ModuleLoader__.load({
       useEffect(() => {
         if (!project) return
         let alive = true
-        const ids = (assets?.textures || []).map((t) => t.id)
-        if (ids.length === 0) { setImages({}); return }
-        call('assets.readMany', { path: project.path, ids })
+        // 物品按 id 取 textures/item；方块按解析出的主贴图取 textures/block
+        const specs = []
+        for (const texture of assets?.textures || []) {
+          specs.push({ id: texture.id, kind: texture.kind, key: `${texture.kind}/${texture.id}` })
+        }
+        if (specs.length === 0) { setImages({}); return }
+        call('assets.readMany', { path: project.path, ids: specs })
           .then((data) => { if (alive) setImages(data.images || {}) })
           .catch(() => {})
         return () => { alive = false }
@@ -1272,8 +1298,28 @@ window.__ModuleLoader__.load({
         } catch (err) { setError(err.message) }
       }
 
-      const textureIds = new Set(assets.textures.map((t) => t.id))
+      const textureIds = new Set(assets.textures.map((t) => `${t.kind}/${t.id}`))
       const modelIds = new Set(assets.models.map((m) => m.id))
+      /** 方块解析结果，按 id 索引。 */
+      const blockMap = new Map((assets.blocks || []).map((entry) => [entry.id, entry]))
+
+      /** 某个条目是否有可用贴图：方块看解析结果，物品看 textures/item。 */
+      const hasTexture = (item) => {
+        if (blockMap.has(item.id)) return Boolean(blockMap.get(item.id).primary)
+        return textureIds.has(`item/${item.id}`)
+      }
+
+      /**
+       * 缩略图在 `images` 里的键。
+       *
+       * 物品按 `item/<id>`；方块贴图文件名通常与方块 id 不同（如 stone_up），
+       * 要用解析出来的主贴图名，所以键是 `block/<主贴图名>`。
+       */
+      const blockThumbKey = (id) => {
+        const block = blockMap.get(id)
+        if (block?.primary) return block.primary
+        return `item/${id}`
+      }
 
       return h('div', { style: { display: 'flex', flexDirection: 'column', gap: 14 } },
         h('div', { style: { ...S.card, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' } },
@@ -1292,41 +1338,93 @@ window.__ModuleLoader__.load({
         h('div', { style: S.card },
           h('div', { style: S.sectionTitle }, '贴图'),
           h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(132px, 1fr))', gap: 10 } },
-            (project.items || []).map((item) => h('div', {
-              key: item.id,
-              style: {
-                border: `1px solid ${textureIds.has(item.id) ? C.border : C.warn}`,
-                borderRadius: 9, padding: 8, background: C.layer2,
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-              },
-            },
-              h('div', {
+            (project.items || []).map((item) => {
+              const block = blockMap.get(item.id)
+              const ok = hasTexture(item)
+              return h('div', {
+                key: item.id,
                 style: {
-                  width: 64, height: 64, background: C.bg, borderRadius: 6,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: `1px solid ${C.border}`,
+                  border: `1px solid ${ok ? C.border : C.warn}`,
+                  borderRadius: 9, padding: 8, background: C.layer2,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
                 },
               },
-                images[item.id]
-                  ? h('img', { src: images[item.id], width: 48, height: 48, style: { imageRendering: 'pixelated' } })
-                  : h('span', { style: { fontSize: 10.5, color: C.muted } }, '缺失'),
-              ),
-              h('code', { style: { fontSize: 10.5, textAlign: 'center', wordBreak: 'break-all' } }, item.id),
-              h('div', { style: { display: 'flex', gap: 4 } },
-                h('button', { style: S.btn(), onClick: () => {
-                  const input = document.createElement('input')
-                  input.type = 'file'; input.accept = 'image/png'
-                  input.onchange = (event) => upload(item.id, event.target.files && event.target.files[0])
-                  input.click()
-                } }, textureIds.has(item.id) ? '替换' : '上传'),
-                textureIds.has(item.id) ? h('button', {
-                  style: { ...S.btn('ghost'), color: C.danger }, onClick: () => removeTexture(item.id),
-                }, '删除') : null,
-              ),
-            )),
+                h('div', {
+                  style: {
+                    width: 64, height: 64, background: C.bg, borderRadius: 6,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: `1px solid ${C.border}`,
+                  },
+                },
+                  images[blockThumbKey(item.id)]
+                    ? h('img', { src: images[blockThumbKey(item.id)], width: 48, height: 48, style: { imageRendering: 'pixelated' } })
+                    : h('span', { style: { fontSize: 10.5, color: C.muted } }, '缺失'),
+                ),
+                h('code', { style: { fontSize: 10.5, textAlign: 'center', wordBreak: 'break-all' } }, item.id),
+
+                // 方块：显示面贴图摘要（相同则只提示一张）
+                block
+                  ? h('div', { style: { fontSize: 10, color: C.muted, textAlign: 'center', lineHeight: 1.5 } },
+                      block.uniform
+                        ? `六面同图 · ${block.textures.length} 张`
+                        : `${block.faces.length} 面用 ${block.textures.length} 张贴图`,
+                      block.hasBlockstate ? '' : '（无 blockstate）',
+                    )
+                  : null,
+
+                h('div', { style: { display: 'flex', gap: 4 } },
+                  h('button', { style: S.btn(), onClick: () => {
+                    const input = document.createElement('input')
+                    input.type = 'file'; input.accept = 'image/png'
+                    input.onchange = (event) => upload(item.id, event.target.files && event.target.files[0])
+                    input.click()
+                  } }, ok ? '替换' : '上传'),
+                  ok ? h('button', {
+                    style: { ...S.btn('ghost'), color: C.danger }, onClick: () => removeTexture(item.id),
+                  }, '删除') : null,
+                ),
+              )
+            }),
           ),
           (project.items || []).length === 0 ? h('div', { style: S.empty }, '还没有物品，先去「物品」页新建。') : null,
         ),
+
+        // 方块面贴图明细：只对有多个面的方块展开，避免占满页面
+        (assets.blocks || []).filter((block) => block.faces.length > 0 && !block.uniform).length
+          ? h('div', { style: S.card },
+              h('div', { style: S.sectionTitle }, '方块面贴图'),
+              h('div', { style: { ...S.hint, marginTop: 0 } },
+                '按 blockstate → 模型 → 贴图的顺序解析。六面相同的方块只显示一张。'),
+              ...(assets.blocks || [])
+                .filter((block) => block.faces.length > 0)
+                .map((block) => h('div', {
+                  key: block.id,
+                  style: { marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}` },
+                },
+                  h('div', { style: { ...S.row, gap: 8, marginBottom: 6 } },
+                    h('code', { style: { fontSize: 12 } }, block.id),
+                    h('span', { style: S.badge(block.uniform ? 'idle' : 'warn') },
+                      block.uniform ? '六面同图' : `${block.textures.length} 张贴图`),
+                    block.hasBlockstate ? null : h('span', { style: S.badge('warn') }, '无 blockstate'),
+                  ),
+                  block.uniform
+                    ? h('div', { style: { ...S.hint, marginTop: 0, fontFamily: 'monospace' } },
+                        block.textures[0])
+                    : h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 6 } },
+                        block.faces.map((face) => h('div', {
+                          key: face.face,
+                          style: {
+                            border: `1px solid ${C.border}`, borderRadius: 7, padding: '5px 8px',
+                            background: C.layer2, minWidth: 96,
+                          },
+                        },
+                          h('div', { style: { fontSize: 10.5, color: C.muted } }, face.label),
+                          h('code', { style: { fontSize: 10.5, wordBreak: 'break-all' } }, face.texture),
+                        )),
+                      ),
+                )),
+            )
+          : null,
 
         h('div', { style: S.card },
           h('div', { style: S.sectionTitle }, '模型'),
@@ -1449,7 +1547,13 @@ window.__ModuleLoader__.load({
                   onImportNew: () => setImportTarget({ path: '', name: '', modid: '' }),
                   onImport: (candidate) => setImportTarget(candidate),
                   onReimport: (item) => setReimportTarget(item),
-                  onCloseProject: () => { setProject(null); setAssets(null); setStudioState({ projectPath: null, itemId: null }) },
+                  onCloseProject: () => {
+                    setProject(null)
+                    setAssets(null)
+                    setStudioState({ projectPath: null, itemId: null })
+                    // 清除「上次打开」，否则下次进入仍会打开它
+                    call('projects.remember', { path: '' }).catch(() => {})
+                  },
                 })
               : tab === 'features'
                 ? h(FeaturesTab, { project, setProject, schema: boot.schema, setError })

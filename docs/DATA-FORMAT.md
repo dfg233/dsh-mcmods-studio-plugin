@@ -11,6 +11,7 @@
 │   ├── studio.json           # 工坊标记：存在即表示已被本插件接管
 │   ├── project.json          # 项目元数据
 │   ├── features.json         # 构想清单
+│   ├── summary.json          # 派生摘要（供 agent 一次读取，可安全删除）
 │   └── items/
 │       ├── ruby.json         # 每个物品一份
 │       └── ruby_sword.json
@@ -222,7 +223,7 @@
 | 标签属性 | `blockTags` | string[] | [] |
 | 兼容性 | `loaderNotes` | string | 空 |
 
-> 字段定义的唯一来源是 `lib/project.js` 的 `ITEM_FIELDS`；
+> 字段定义的唯一来源是 `lib/schema.js` 的 `ITEM_FIELDS`（对外副本为 `data/schema.json`）；
 > 页面表单、校验与文档导出都从该数组生成。
 
 ## 5. 素材
@@ -242,3 +243,90 @@
 - 贴图 / 模型 / 注册名清单。
 
 快照是一次性的只读记录；后续设计变更以 `.mcstudio/` 与重新导出的文档为准。
+
+## 7. summary.json（派生摘要）
+
+供 agent 一次读取掌握项目全貌，避免逐个解析 `project.json`、`features.json`、`items/*.json`。
+
+```json
+{
+  "schemaVersion": 1,
+  "meta": {
+    "name": "示例模组", "modid": "examplemod", "version": "0.1.0",
+    "loader": "neoforge", "minecraft": "1.20.1", "loaderVersion": "NeoForge 47.1.79"
+  },
+  "counts": { "ideas": 8, "ideasDone": 3, "items": 12, "blocks": 5, "totalEntries": 17 },
+  "ideas": [{ "id": "f_1", "name": "宝石挖掘", "status": "planning", "priority": "high" }],
+  "items": [{ "id": "ruby", "name": "红宝石", "type": "material", "texture": true, "model": true }],
+  "missing": { "ids": ["ruby_sword"], "count": 1 },
+  "updatedAt": "2026-10-25T09:00:00.000Z"
+}
+```
+
+**性质**：派生数据，不是事实来源。
+
+- 可以随时删除，下次访问时会重建；
+- 任何标注 `summary: true` 的写操作后自动刷新；
+- 手工修改不影响插件判断，因为真实数据在 `project.json` / `items/` 里；
+- `items[]` 只含最小字段，**不含 19 项属性**——要读属性用 `items/<id>.json` 或 `item_get` 工具。
+
+体积参考：12 个物品 + 8 条构想约 1.2 KB，逐文件读取约 8 KB。
+
+## 7.1 registry.json（插件注册表）
+
+位于 `$DSH_HOME/mcmods-studio/registry.json`，跨项目共享，记录扫描根目录与已登记项目。
+
+```json
+{
+  "schemaVersion": 1,
+  "root": "D:/minecraft-mods",
+  "lastProject": "D:/minecraft-mods/examplemod",
+  "projects": [
+    {
+      "path": "D:/minecraft-mods/examplemod",
+      "name": "示例模组", "modid": "examplemod",
+      "createdAt": "2026-10-20T08:00:00.000Z",
+      "updatedAt": "2026-10-25T09:00:00.000Z"
+    }
+  ]
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `schemaVersion` | number | 数据格式版本，当前为 1 |
+| `root` | string | 扫描默认根目录 |
+| `lastProject` | string | 上次打开的项目路径，供下次进入插件时恢复；空串表示没有 |
+| `projects[]` | array | 已登记项目，按登记顺序 |
+
+**`lastProject` 的容错规则**：
+
+- 写入前校验路径仍在 `projects` 中，不在则忽略（防止写入未登记路径）；
+- 读取时若路径已不在列表里，按空处理，界面回退到第一个可用项目；
+- 移除项目（`projects.remove`）时，若移除的正是它，一并清空；
+- 旧注册表没有该字段时自动按空读取，无需迁移。
+
+## 8. notices（导入判定提示）
+
+`project.import`、`project.reimport` 的 `imported.notices` 与 `project.analyzeImport` 的
+`notices` 字段，记录导入过程中系统做的判断。
+
+```json
+[
+  { "level": "info", "code": "source.descriptor",      "message": "未找到 gradle.properties，元数据取自工程描述文件" },
+  { "level": "info", "code": "loader.gradle",          "message": "加载器由 gradle.properties 判定为 neoforge" },
+  { "level": "info", "code": "descriptor.placeholder", "message": "描述文件中的占位符已用 gradle.properties 解析：${mod_version} → 2.1.0" }
+]
+```
+
+| code | 触发条件 |
+| --- | --- |
+| `source.descriptor` | 没有 `gradle.properties`，元数据来自描述文件 |
+| `loader.gradle` | 加载器由 `gradle.properties` 判定 |
+| `loader.descriptor` | 加载器取自工程描述文件 |
+| `descriptor.placeholder` | 描述文件含 Gradle 占位符并被解析 |
+
+**边界**：身份解析失败（缺 modid / MC 版本 / 加载器版本）时不产生 notices——
+此时结论尚无意义，直接抛错说明缺什么。
+
+notices 只是提示，不写入 `.mcstudio/`，不影响后续操作。
