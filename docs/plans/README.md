@@ -76,6 +76,10 @@
 | 接口 | `POST /mcmods-studio/api` | 统一 `{action, payload}` → `{ok, data\|error}` |
 | 主面板 key | `mc-mod-studio` | 侧栏 id、main key、右侧栏 tab id 三者一致 |
 
+## 参考文档
+
+- [REFERENCE-CUIGENGJI.md](../REFERENCE-CUIGENGJI.md)：对 `dsh-cuigengji-plugin` v0.5.0 源码的模式分析（原子写、事务、导入证明、设置页、图画布、发布验收），用于指导本项目改造；不是模块，不计入编号。
+
 ## 维护约定
 
 - 模块职责、事件、接口发生变化时，同步更新对应 `*-PLAN.md`；

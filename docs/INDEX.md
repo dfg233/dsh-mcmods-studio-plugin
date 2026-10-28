@@ -661,6 +661,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 | 加 agent 工具 | `lib/tools.js` 的 `TOOLS` | 工具自动注册，无需改 `tool-bridge.js` |
 | 加页面页签 | `client.js` 的 `StudioPage` | `Tabs` 渲染分支 |
 | 加设置页 / 改默认行为 | 规划见 [plans/SETTINGS-PLAN.md](plans/SETTINGS-PLAN.md)；实现后改 `lib/settings.js`、`SettingsTab` | 启动恢复、默认页签、删除素材、Agent 默认项目 |
+| 改数据可靠性 / 原子写 / 导入回滚 | 参考 [REFERENCE-CUIGENGJI.md](REFERENCE-CUIGENGJI.md) 第 1、2、11 节 | `lib/registry.js` 的 `writeJson`、`lib/import.js` |
 | 改侧栏顺序 | `apply(ctx)` 的 `order` | 侧栏截图核对 |
 | 改右侧栏内容 | `SidebarStudioPanel` | `studioState` 写入点 |
 | 改导入识别 | `lib/import.js` 的 `detectDescriptor` | 占位符处理、加载器判定、notices |

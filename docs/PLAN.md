@@ -224,6 +224,7 @@
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 分层结构与数据流 |
 | [DATA-FORMAT.md](DATA-FORMAT.md) | `.mcstudio/` 全部文件格式 |
 | [plans/](plans/README.md) | 13 份模块级详细计划 + 索引 |
+| [REFERENCE-CUIGENGJI.md](REFERENCE-CUIGENGJI.md) | 催更姬源码的可借鉴模式与落地顺序 |
 | [refactor/](refactor/) | 5 份重构记录（历史存档，不再更新） |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | 安装、调试、约定 |
 | [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) | MC 工程的标准目录结构 |
