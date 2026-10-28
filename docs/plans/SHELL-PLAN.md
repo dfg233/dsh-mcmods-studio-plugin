@@ -124,18 +124,19 @@ apply(ctx)
 
 ```text
 StudioPage()
-   │  useStudioData() → boot / project / assets
-   │  tab 状态（project / features / items / assets / guide）
+   │  useStudioData() → boot / project / assets / settings
+   │  tab 状态（project / features / items / assets / guide / settings）
    ▼
 头部：图标 + 标题 + 项目摘要（名称 · modid · 加载器 · MC 版本）
    │
    ▼
-Tabs → 对应 Tab 组件
+Tabs（左侧页签 + 最右侧齿轮）→ 对应 Tab 组件
    │  project → ProjectTab
    │  features → FeaturesTab
    │  items → ItemsTab
    │  assets → AssetsTab
    │  guide → GuideTab
+   │  settings → SettingsTab（规划，v0.2）
    ▼
 弹窗层：CreateProjectModal / ImportProjectModal / ImportConfirmModal / ProjectDetailModal / FeatureEditor / ItemEditor
 ```
@@ -174,13 +175,14 @@ useEffect([state.projectPath])
 | 组件 | props |
 | --- | --- |
 | `Icon` | `{size, active}` |
+| `GearIcon` | `{size, active}`（规划，设置入口） |
 | `Modal` | `{title, onClose, footer, children}` |
 | `Field` | `{label, required, hint, children}` |
 | `TextInput` / `NumberInput` / `Textarea` | `{value, onChange, placeholder}` |
 | `Select` | `{value, onChange, options[]}` |
 | `Toggle` | `{value, onChange}` |
 | `TagsInput` | `{value, onChange, placeholder}` |
-| `Tabs` | `{tabs, value, onChange}` |
+| `Tabs` | `{tabs, value, onChange, right?}` |
 | `Markdown` / `renderInline` | `{text}` / `(text)` |
 | `PathField` | `{label, value, onChange, required, hint, placeholder}` |
 | `InfoRow` | `{label, value}` |
@@ -191,6 +193,7 @@ useEffect([state.projectPath])
 | --- | --- |
 | `StudioPage` | 页面框架、页签、弹窗挂载 |
 | `ProjectTab` / `FeaturesTab` / `ItemsTab` / `AssetsTab` / `GuideTab` | 五个页签 |
+| `SettingsTab` | 设置页（规划，v0.2）：启动、物品页、数据、Agent、关于 |
 | `CreateProjectModal` / `ImportProjectModal` | 项目新建 / 导入弹窗 |
 | `ImportConfirmModal` / `ProjectDetailModal` | 导入差异确认 / 项目详情 |
 | `FeatureEditor` / `ItemEditor` | 内容编辑弹窗 |
@@ -219,6 +222,7 @@ useEffect([state.projectPath])
 - 无加载骨架屏，`boot` 期间只显示「正在加载…」；
 - 右侧栏不提供操作按钮（只能看，不能改）；
 - 无主题内自定义（用户无法调整插件配色）；
+- 无设置页（规划中，见 [SETTINGS-PLAN.md](SETTINGS-PLAN.md)）；
 - `studioState` 只在内存，刷新后右侧栏需等主面板重新打开项目。
 
 ## 9. 关联模块
@@ -228,3 +232,4 @@ useEffect([state.projectPath])
 | 上游 | 01 平台基础（接口与 `dispatch`） |
 | 承载 | 02–09 的全部页面与交互 |
 | 协同 | 11 代码工作区（将来新增「代码」页签，复用本模块的组件与样式） |
+| 协同 | 13 设置与偏好（规划：页签栏齿轮入口 + `SettingsTab`，复用 `Tabs.right` 与样式） |

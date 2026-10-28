@@ -28,6 +28,7 @@ Minecraft 适配版本当前固定为 1.20.1，v1.0.0 起先加 1.21.1（见[项
 - **构建教程**：内置 1.20.1 三种加载器的 IDEA 构建流程；
 - **代码结构**：扫描 Java 源码，生成 `.mcstudio/structure.json`，记录文件、类、方法、行号与注册点；
 - **Agent**：21 个原生工具、项目摘要、校验、导入提示与语义注解；
+- **设置**（v0.2 计划中）：页签栏齿轮入口，管理启动恢复、默认页签、物品默认视图、删除素材策略与 Agent 默认项目；
 - **代码工作区**（v0.3 计划中）：浏览与编辑工程源码，生成带标记区块的注册代码与资源 JSON。
 
 完整路线见 [项目计划书](docs/PLAN.md)，当前进度见 [项目状态](docs/STATUS.md)。
@@ -46,6 +47,7 @@ plugin_manager install_bundle  target: D:\program\dsh-mcmods-studio-plugin
 | --- | --- |
 | 插件代码 | `D:\program\dsh-mcmods-studio-plugin` |
 | 项目索引 | `$DSH_HOME/mcmods-studio/registry.json` |
+| 插件设置（v0.2 规划） | `$DSH_HOME/mcmods-studio/settings.json` |
 | 项目设计数据 | `<项目>/.mcstudio/` |
 | 导出文档 | `<项目>/docs/` |
 

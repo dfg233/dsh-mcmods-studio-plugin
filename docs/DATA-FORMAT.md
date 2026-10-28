@@ -398,6 +398,43 @@
 - 移除项目（`projects.remove`）时，若移除的正是它，一并清空；
 - 旧注册表没有该字段时自动按空读取，无需迁移。
 
+## 7.3 settings.json（插件设置，规划中）
+
+> **状态：规划中，v0.2.0 才会创建此文件。** 当前版本没有 `settings.json`，行为使用默认值。
+
+位于 `$DSH_HOME/mcmods-studio/settings.json`，与注册表同目录，跨项目共享。
+
+```json
+{
+  "schemaVersion": 1,
+  "restoreLastProject": true,
+  "defaultTab": "project",
+  "defaultItemsView": "list",
+  "deleteAssetsWithItem": true,
+  "defaultProject": "",
+  "updatedAt": "2026-10-28T07:40:00.000Z"
+}
+```
+
+| 字段 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `schemaVersion` | number | `1` | 设置文件结构版本 |
+| `restoreLastProject` | boolean | `true` | 启动时恢复上次项目；`false` 则停在项目列表 |
+| `defaultTab` | string | `"project"` | 启动自动打开项目后的默认页签 |
+| `defaultItemsView` | string | `"list"` | 物品页默认视图（`list` / `canvas`） |
+| `deleteAssetsWithItem` | boolean | `true` | 删除物品时是否同时删除贴图、模型与 blockstate |
+| `defaultProject` | string | `""` | Agent 工具省略 `project` 时的默认项目；空串表示自动 |
+| `updatedAt` | string | — | 最后写入时间，仅供诊断 |
+
+容错规则：
+
+- 文件不存在或损坏时全部按默认值处理，不阻塞启动；
+- 非法字段单独回退默认值；保存时非法枚举直接报错；
+- `defaultProject` 非空时必须是已登记项目，否则保存报错；
+- 未知字段忽略，便于新旧版本共存。
+
+完整设计见 [plans/SETTINGS-PLAN.md](plans/SETTINGS-PLAN.md)。
+
 ## 8. notices（导入判定提示）
 
 `project.import`、`project.reimport` 的 `imported.notices` 与 `project.analyzeImport` 的

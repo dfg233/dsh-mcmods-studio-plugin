@@ -21,6 +21,7 @@
 | 10 | 界面外壳 | [SHELL-PLAN.md](SHELL-PLAN.md) | 已实现 | `client.js` 全文件 |
 | 11 | 代码工作区 | [CODEGEN-PLAN.md](CODEGEN-PLAN.md) | **规划中（v0.3）** | 拟新增 `lib/files.js`、`lib/codegen.js` |
 | 12 | Agent 接入 | [AGENT-PLAN.md](AGENT-PLAN.md) | **部分实现** | `lib/tools.js`、`lib/tool-bridge.js`、`lib/summary.js`、`lib/validate.js`、`lib/structure.js`、`data/schema.json` |
+| 13 | 设置与偏好 | [SETTINGS-PLAN.md](SETTINGS-PLAN.md) | **规划中（v0.2）** | 拟新增 `lib/settings.js`、`SettingsTab`、`GearIcon` |
 
 > 模块 12 不是独立功能，而是横切改进：它把 01–11 的能力以工具与紧凑数据的形式重新暴露给 agent。
 > 方向依据见 [../PLAN.md](../PLAN.md) 第 0 节「插件宗旨」。
@@ -54,10 +55,12 @@
  │                                              08 文档导出 / 09 构建教程
  │
  └─ 10 界面外壳（承载全部页面与三个座位）
+      ├─ 13 设置与偏好（规划：齿轮入口 + 全局设置页）
       └─ 11 代码工作区（规划，复用外壳组件，数据来自 06/07）
 
 12 Agent 接入（横切）：复用 02–08 的业务函数，向 agent 暴露工具与紧凑数据
       依赖 02 项目、05 构想、06 物品、07 素材、08 导出
+      13 设置（规划）可指定 agent 的默认项目
 ```
 
 ## 关键概念速查
