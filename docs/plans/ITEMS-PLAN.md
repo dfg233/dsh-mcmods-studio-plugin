@@ -1,7 +1,7 @@
 # 物品管理模块计划
 
 > 模块编号：06
-> 适用插件版本：v0.1.1
+> 适用插件版本：v0.1.2
 > 代码位置：`lib/schema.js` 的 `ITEM_FIELDS`/`ITEM_TYPES`/`itemSchema`/`defaultProperties`；`lib/entries.js` 的 `listItems`/`normalizeItem`/`saveItem`/`deleteItem`；`lib/paths.js` 的 `itemsDir`；`client.js` 的 `ItemsTab`、`ItemEditor`、`renderField`、`defaultSlot`
 > 状态：已实现
 > 最后更新：2026-10-28

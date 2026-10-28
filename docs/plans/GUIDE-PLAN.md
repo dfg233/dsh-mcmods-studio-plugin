@@ -1,7 +1,7 @@
 # 构建教程模块计划
 
 > 模块编号：09
-> 适用插件版本：v0.1.1
+> 适用插件版本：v0.1.2
 > 代码位置：`lib/api.js` 的 `readGuide`/`guide` 动作与 `boot` 的 `guide` 字段；`client.js` 的 `GuideTab`、`Markdown`、`renderInline`；内容文件 `docs/BUILD-GUIDE.md`
 > 状态：已实现
 > 最后更新：2026-10-28

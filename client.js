@@ -41,6 +41,18 @@ window.__ModuleLoader__.load({
     const h = React.createElement
     const { useState, useEffect, useMemo, useRef, useCallback } = React
 
+    // 测试用的极简 React 没有 Component；真实 React 走原生类。
+    const Component = React.Component || class {
+      constructor(props) {
+        this.props = props
+        this.state = {}
+      }
+
+      setState(next) {
+        this.state = { ...this.state, ...(typeof next === 'function' ? next(this.state) : next) }
+      }
+    }
+
     const API = '/mcmods-studio/api'
     const KEY = 'mc-mod-studio'
     const STYLE_ID = 'mcmods-studio-styles'
@@ -102,6 +114,69 @@ window.__ModuleLoader__.load({
       const json = await response.json().catch(() => ({ ok: false, error: '响应解析失败' }))
       if (!json.ok) throw new Error(json.error || '请求失败')
       return json.data
+    }
+
+    // ── 编辑器草稿 ───────────────────────────────────────────
+    // 草稿只是本地保护，不写进 .mcstudio/；保存成功或取消时清除。
+
+    const DRAFT_PREFIX = 'mcmods:draft:v1'
+
+    function draftKey(projectPath, kind, id) {
+      return `${DRAFT_PREFIX}:${projectPath}:${kind}:${id || 'new'}`
+    }
+
+    function readDraft(key, fallback) {
+      try {
+        if (typeof localStorage === 'undefined') return fallback
+        const raw = localStorage.getItem(key)
+        if (!raw) return fallback
+        const parsed = JSON.parse(raw)
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : fallback
+      } catch {
+        return fallback
+      }
+    }
+
+    function writeDraft(key, value) {
+      try {
+        if (typeof localStorage !== 'undefined') localStorage.setItem(key, JSON.stringify(value))
+      } catch {
+        // 浏览器禁用 localStorage 时静默降级，编辑本身不受影响。
+      }
+    }
+
+    function clearDraft(key) {
+      try {
+        if (typeof localStorage !== 'undefined') localStorage.removeItem(key)
+      } catch {}
+    }
+
+    /** 带 localStorage 恢复与离开提示的表单草稿。 */
+    function useDraftState(key, initial) {
+      const restored = useRef(false)
+      const [value, setValue] = useState(() => {
+        const saved = readDraft(key, initial)
+        restored.current = JSON.stringify(saved) !== JSON.stringify(initial)
+        return saved
+      })
+      const dirty = useMemo(() => JSON.stringify(value) !== JSON.stringify(initial), [value, initial])
+
+      useEffect(() => {
+        if (dirty) writeDraft(key, value)
+        else clearDraft(key)
+      }, [key, value, dirty])
+
+      useEffect(() => {
+        if (!dirty) return undefined
+        const warn = (event) => {
+          event.preventDefault()
+          event.returnValue = ''
+        }
+        window.addEventListener('beforeunload', warn)
+        return () => window.removeEventListener('beforeunload', warn)
+      }, [dirty])
+
+      return { value, setValue, dirty, restored: restored.current, clear: () => clearDraft(key) }
     }
 
     const C = {
@@ -715,7 +790,11 @@ window.__ModuleLoader__.load({
           next.push(result.feature)
           setProject({ ...project, features: next })
           setEditing(null)
-        } catch (err) { setError(err.message) }
+          return true
+        } catch (err) {
+          setError(err.message)
+          return false
+        }
       }
 
       const remove = async (id) => {
@@ -758,6 +837,7 @@ window.__ModuleLoader__.load({
         editing ? h(FeatureEditor, {
           feature: editing,
           schema,
+          project,
           onCancel: () => setEditing(null),
           onSave: save,
         }) : null,
@@ -765,16 +845,42 @@ window.__ModuleLoader__.load({
     }
 
     function FeatureEditor(props) {
-      const [draft, setDraft] = useState(() => ({ ...props.feature }))
-      const set = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }))
+      const [saving, setSaving] = useState(false)
+      const draftState = useDraftState(
+        draftKey(props.project?.path || '', 'feature', props.feature.id),
+        { ...props.feature },
+      )
+      const draft = draftState.value
+      const set = (key, value) => draftState.setValue((prev) => ({ ...prev, [key]: value }))
+
+      const cancel = () => {
+        if (draftState.dirty && !window.confirm('放弃未保存的草稿？')) return
+        draftState.clear()
+        props.onCancel()
+      }
+
+      const save = async () => {
+        if (saving) return
+        setSaving(true)
+        try {
+          const ok = await props.onSave(draft)
+          if (ok !== false) draftState.clear()
+        } finally {
+          setSaving(false)
+        }
+      }
+
       return h(Modal, {
         title: props.feature.id ? '编辑构想' : '新增构想',
-        onClose: props.onCancel,
+        onClose: cancel,
         footer: [
-          h('button', { key: 'cancel', style: S.btn('ghost'), onClick: props.onCancel }, '取消'),
-          h('button', { key: 'save', style: S.btn(), onClick: () => props.onSave(draft) }, '保存'),
+          h('button', { key: 'cancel', style: S.btn('ghost'), onClick: cancel }, '取消'),
+          h('button', { key: 'save', style: S.btn(), disabled: saving, onClick: save }, saving ? '保存中…' : '保存'),
         ],
       },
+        draftState.restored
+          ? h('div', { style: { ...S.hint, marginBottom: 8 } }, '已恢复上次未保存的草稿。')
+          : null,
         h(Field, { label: '构想名称', required: true },
           h(TextInput, { value: draft.name, onChange: (v) => set('name', v), placeholder: '例如：红宝石系列工具' })),
         h(Field, { label: '构想说明' },
@@ -933,7 +1039,11 @@ window.__ModuleLoader__.load({
           setProject({ ...project, items: next })
           setEditing(null)
           reloadAssets()
-        } catch (err) { setError(err.message) }
+          return true
+        } catch (err) {
+          setError(err.message)
+          return false
+        }
       }
 
       const removeItem = async (id) => {
@@ -1119,14 +1229,36 @@ window.__ModuleLoader__.load({
 
     function ItemEditor(props) {
       const { schema, item, project, images, setError } = props
-      const [draft, setDraft] = useState(() => JSON.parse(JSON.stringify(item)))
+      const draftState = useDraftState(
+        draftKey(project.path, 'item', item.id),
+        JSON.parse(JSON.stringify(item)),
+      )
+      const draft = draftState.value
       const [uploading, setUploading] = useState(false)
+      const [saving, setSaving] = useState(false)
       const fileRef = useRef(null)
 
-      const set = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }))
-      const setProperty = (key, value) => setDraft((prev) => ({
+      const set = (key, value) => draftState.setValue((prev) => ({ ...prev, [key]: value }))
+      const setProperty = (key, value) => draftState.setValue((prev) => ({
         ...prev, properties: { ...prev.properties, [key]: value },
       }))
+
+      const cancel = () => {
+        if (draftState.dirty && !window.confirm('放弃未保存的草稿？')) return
+        draftState.clear()
+        props.onCancel()
+      }
+
+      const save = async () => {
+        if (saving) return
+        setSaving(true)
+        try {
+          const ok = await props.onSave(draft)
+          if (ok !== false) draftState.clear()
+        } finally {
+          setSaving(false)
+        }
+      }
 
       const groups = useMemo(() => {
         const out = []
@@ -1157,12 +1289,15 @@ window.__ModuleLoader__.load({
 
       return h(Modal, {
         title: item.id ? `编辑物品：${item.displayName}` : '新建物品',
-        onClose: props.onCancel,
+        onClose: cancel,
         footer: [
-          h('button', { key: 'cancel', style: S.btn('ghost'), onClick: props.onCancel }, '取消'),
-          h('button', { key: 'save', style: S.btn(), onClick: () => props.onSave(draft) }, '保存'),
+          h('button', { key: 'cancel', style: S.btn('ghost'), onClick: cancel }, '取消'),
+          h('button', { key: 'save', style: S.btn(), disabled: saving, onClick: save }, saving ? '保存中…' : '保存'),
         ],
       },
+        draftState.restored
+          ? h('div', { style: { ...S.hint, marginBottom: 8 } }, '已恢复上次未保存的草稿。')
+          : null,
         h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
           h(Field, { label: '注册名（id）', required: true, hint: '只能包含小写字母、数字和下划线' },
             h(TextInput, { value: draft.id, onChange: (v) => set('id', v.toLowerCase()) })),
@@ -1480,6 +1615,42 @@ window.__ModuleLoader__.load({
 
     // ── 主页面 ───────────────────────────────────────────────
 
+    /**
+     * 渲染错误边界：未捕获的渲染异常会让 DSH 退休整个 main slot，
+     * 这里把错误留在插件内部，并提供重试入口。
+     */
+    class StudioBoundary extends Component {
+      constructor(props) {
+        super(props)
+        this.state = { error: null }
+      }
+
+      static getDerivedStateFromError(error) {
+        return { error: error instanceof Error ? error : new Error(String(error)) }
+      }
+
+      componentDidCatch(error, info) {
+        console.error('[mcmods-studio] 页面渲染失败', error, info?.componentStack)
+      }
+
+      render() {
+        const error = this.state.error
+        if (!error) return this.props.children
+        return h('div', { style: { ...S.page, padding: 28, gap: 12, overflowY: 'auto' } },
+          h('div', { style: S.title }, '模组工坊暂时无法显示'),
+          h('div', { style: S.hint }, '页面遇到了未处理的错误。可以先重试；如果仍然失败，请刷新页面。'),
+          h('div', { style: S.row },
+            h('button', { style: S.btn(), onClick: () => this.setState({ error: null }) }, '重试'),
+            h('button', { style: S.btn('ghost'), onClick: () => window.location.reload() }, '刷新页面'),
+          ),
+          h('details', { style: { marginTop: 8, color: C.muted, fontSize: 12 } },
+            h('summary', null, '错误详情'),
+            h('pre', { style: { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', fontSize: 11.5 } }, error.message),
+          ),
+        )
+      }
+    }
+
     function StudioPage() {
       const data = useStudioData()
       const { boot, project, assets, setProject, setAssets, error, setError, busy, refreshBoot, open } = data
@@ -1593,17 +1764,19 @@ window.__ModuleLoader__.load({
           title: '重新导入',
           confirmText: '开始重新导入',
           onClose: () => setReimportTarget(null),
-          onConfirm: async ({ overwrite }) => {
+          onConfirm: async ({ overwrite, proof }) => {
             const result = await call('project.reimport', {
               path: reimportTarget.path,
               mode: overwrite ? 'overwrite' : 'merge',
+              proof,
             })
             setReimportTarget(null)
             await refreshBoot()
             if (project?.path === result.path) await open(result.path)
             window.alert(
               `重新导入完成：新增 ${result.imported.created.length} 个，`
-              + `改写 ${result.imported.updated.length} 个，保留 ${result.imported.kept.length} 个。`,
+              + `改写 ${result.imported.updated.length} 个，保留 ${result.imported.kept.length} 个。`
+              + (result.imported.backup ? `\n导入前备份：${result.imported.backup}` : ''),
             )
           },
         }) : null,
@@ -1611,6 +1784,11 @@ window.__ModuleLoader__.load({
     }
 
     // ── 目录选择 ─────────────────────────────────────────────
+
+    /** main 座位的根组件：错误边界 + 页面。 */
+    function StudioRoot() {
+      return h(StudioBoundary, null, h(StudioPage))
+    }
 
     /** 客户端上下文（由 apply 注入），用于调用 uiWorkspace 等客户端服务。 */
     let appCtx = null
@@ -1862,7 +2040,7 @@ window.__ModuleLoader__.load({
         setBusy(true)
         setError('')
         try {
-          await props.onConfirm({ overwrite })
+          await props.onConfirm({ overwrite, proof: analysis?.proof })
         } catch (err) {
           setError(err.message)
         } finally {
@@ -2118,7 +2296,7 @@ window.__ModuleLoader__.load({
       ? {
           components: {
             ProjectTab, FeaturesTab, ItemsTab, AssetsTab, GuideTab,
-            StudioPage, SidebarStudioPanel, ItemEditor, FeatureEditor,
+            StudioPage, StudioRoot, SidebarStudioPanel, ItemEditor, FeatureEditor,
             ProjectDetailModal, ImportConfirmModal, Icon, InfoRow, PathField,
           },
           helpers: { call, pickFolder, getStudioState, setStudioState, defaultSlot },
@@ -2135,7 +2313,7 @@ window.__ModuleLoader__.load({
         const slots = ctx.slots || ctx.get('slots')
         if (!slots) return
 
-        slots.inject('main', () => slots.register({ name: 'main', key: KEY }, StudioPage))
+        slots.inject('main', () => slots.register({ name: 'main', key: KEY }, StudioRoot))
 
         // 侧栏图标区（与「上下文洞察」同一区域）
         slots.inject('sidebar.panellist', () => slots.register({

@@ -11,6 +11,34 @@
 - 方块状态与多方块模型的可视化编辑。
 - 设置页：页签栏最右侧齿轮入口，管理启动恢复、默认页签、物品默认视图、删除素材策略与 Agent 默认项目（规划中，见 [plans/SETTINGS-PLAN.md](plans/SETTINGS-PLAN.md)）。
 
+## [0.1.2] - 2026-10-28
+
+### 新增
+
+- 导入前备份与失败回滚：新增 `lib/backup.js`，导入 / 重新导入前把 `.mcstudio/` 与 `docs/mcstudio-snapshot.md` 备份到 `$DSH_HOME/mcmods-studio/backups/`；任一步失败自动恢复，并在结果里返回 `imported.backup` 路径。备份目录不写进项目，避免下次备份递归复制。
+- 导入预览证明：`project.analyzeImport` 返回 `proof`（扫描结果 + 身份信息 + 当前条目状态的 sha256）；`project.reimport` 接收 `proof`，预览后工程内容或条目变化会拒绝执行，提示重新分析。
+- 持久化写入加固：`writeJson` / `writeText` 改为「临时文件 → fsync → rename → 目录 barrier」，临时文件名带随机 UUID，避免崩溃留下空文件或并发临时文件相撞。
+- 页面错误边界：`StudioRoot` 捕获 `StudioPage` 的渲染异常，显示重试 / 刷新入口与错误详情，避免 DSH 因未捕获异常退休整个 main slot。
+- 编辑器草稿：物品与构想编辑器把未保存输入存到 `localStorage`（键含项目路径与实体 id），重新打开自动恢复；关闭页面/刷新时提示，取消时确认放弃。
+
+### 修复
+
+- 导入 / 重新导入中途失败会留下半导入项目；现在失败自动回滚到操作前状态。
+- 预览后工程新增/修改资源不会被发现，仍按旧预览执行；现在 proof 不一致直接拒绝。
+- 两个窗口或「界面 + Agent」同时写同一文件时可能静默覆盖；写入现在带 fsync，降低崩溃后读到空文件/旧内容的概率（完整版本冲突校验留到下一补丁）。
+- 页面渲染异常会导致整个「模组工坊」入口不可用；现在错误留在插件内部并提供重试。
+
+### 变更
+
+- `package.json` 版本由 `0.1.1` 升至 `0.1.2`。
+- `project.reimport` 的 payload 增加可选 `proof`；不传时保持旧行为，界面始终传 proof。
+- 测试新增 `test/16-reliability.mjs`，覆盖持久写入、备份回滚、备份成功保留、proof 失效与重新导入。
+
+### 文档
+
+- 新增 [REFERENCE-CUIGENGJI.md](REFERENCE-CUIGENGJI.md) 的「本轮采纳」状态，明确哪些借鉴点已落地、哪些留到后续。
+- 同步更新 [DATA-FORMAT.md](DATA-FORMAT.md)、[INDEX.md](INDEX.md)、[plans/IMPORT-PLAN.md](plans/IMPORT-PLAN.md) 的备份、proof 与测试计数。
+
 ## [0.1.1] - 2026-10-28
 
 ### 新增

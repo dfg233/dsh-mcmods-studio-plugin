@@ -1,7 +1,7 @@
 # 素材管理模块计划
 
 > 模块编号：07
-> 适用插件版本：v0.1.1
+> 适用插件版本：v0.1.2
 > 代码位置：`lib/assets.js`、`client.js` 的 `AssetsTab`
 > 状态：已实现
 > 依据：[PROJECT-STRUCTURE.md](../PROJECT-STRUCTURE.md) 第 5 节

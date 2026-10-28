@@ -1,6 +1,6 @@
 # 兼容性说明
 
-> 适用版本：v0.1.1
+> 适用版本：v0.1.2
 > 更新日期：2026-10-28
 > 插件版本与 Minecraft 适配版本相互独立；当前插件只适配 Minecraft 1.20.1。
 > 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。

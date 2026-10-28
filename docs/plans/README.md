@@ -1,7 +1,7 @@
 # 模块计划索引
 
 > 本目录存放模组工坊各功能模块的详细计划，用于在改动代码前明确「这个模块做什么、什么时候触发、怎么跑」。
-> 适用插件版本：v0.1.1
+> 适用插件版本：v0.1.2
 > 生成日期：2026-10-22（2026-10-28 更新状态）
 > 配套文档：[VERSION-PLAN.md](../VERSION-PLAN.md)（版本号与发版流程）、[PLAN.md](../PLAN.md)（版本路线）、[STATUS.md](../STATUS.md)（实现状态）、[INDEX.md](../INDEX.md)（代码索引）
 
@@ -12,7 +12,7 @@
 | 01 | 平台基础 | [PLATFORM-PLAN.md](PLATFORM-PLAN.md) | 已实现 | `index.js`、`lib/registry.js`、`lib/api.js` |
 | 02 | 项目管理 | [PROJECT-PLAN.md](PROJECT-PLAN.md) | 已实现 | `lib/meta.js`、`lib/entries.js`、`ProjectTab`、`CreateProjectModal` |
 | 03 | 扫描发现 | [SCAN-PLAN.md](SCAN-PLAN.md) | 已实现 | `scanCandidates`、`ProjectTab` 扫描区 |
-| 04 | 工程导入 | [IMPORT-PLAN.md](IMPORT-PLAN.md) | 已实现 | `detectDescriptor`、`scanProjectAssets`、`importProject` |
+| 04 | 工程导入 | [IMPORT-PLAN.md](IMPORT-PLAN.md) | 已实现 | `detectDescriptor`、`scanProjectAssets`、`importProject`、`lib/backup.js` |
 | 05 | 构想 | [FEATURES-PLAN.md](FEATURES-PLAN.md) | 已实现 | `features.*`、`FeaturesTab`、`FeatureEditor` |
 | 06 | 物品管理 | [ITEMS-PLAN.md](ITEMS-PLAN.md) | 已实现 | `items.*`、`ItemsTab`、`ItemEditor` |
 | 07 | 素材管理 | [ASSETS-PLAN.md](ASSETS-PLAN.md) | 已实现 | `lib/assets.js`、`AssetsTab` |

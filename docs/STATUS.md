@@ -1,6 +1,6 @@
 # 项目状态：已实现、未实现与要求
 
-> 适用版本：模组工坊（`dsh-mcmods-studio-plugin`）v0.1.1
+> 适用版本：模组工坊（`dsh-mcmods-studio-plugin`）v0.1.2
 > 更新日期：2026-10-28
 > 本文档回答三个问题：**现在能做什么**、**还不能做什么**、**必须遵守什么**。
 > 历史变更见 [CHANGELOG.md](CHANGELOG.md)，版本规则与发版流程见 [VERSION-PLAN.md](VERSION-PLAN.md)，开发方式见 [DEVELOPMENT.md](DEVELOPMENT.md)，版本路线与宗旨见 [PLAN.md](PLAN.md)，代码索引见 [INDEX.md](INDEX.md)。
@@ -58,6 +58,7 @@
 - 导入三分支判定：在项目列表中 → 抛「该目录已经是工坊项目，可直接打开」；有工坊数据但不在列表（曾被移除）→ 走添加流程并补登记；全新目录 → 正常导入；
 - 导入确认：点击「下一步」先调用 `project.analyzeImport` 展示将新增的条目、已存在条目、类型冲突与无对应资源的条目，确认后才写入；
 - 重新导入：项目列表每行提供「重新导入」按钮，确认后按差异同步——新增条目自动创建，已有条目默认保留（可选按扫描结果改写类型冲突项）；
+- 导入安全：导入 / 重新导入前把 `.mcstudio/` 与 `docs/mcstudio-snapshot.md` 备份到插件数据目录，失败自动回滚；分析结果带 `proof`，预览后工程有变化会拒绝执行并要求重新分析；
 - 项目详情：列表每行提供「详情」按钮，默认只显示 modid、Minecraft 版本、加载器；作者、许可证、包名、版本范围等收在「更多信息」里；
 - 导入分类：有 blockstate / 方块模型 / 方块贴图的条目归为「方块」，其余归为「物品」；语言文件名（`zh_cn`、`en_us`）不作为条目；
 - 加载器识别：`fabric.mod.json` 直接判定 Fabric；`mods.toml` 因 1.20.1 的 Forge 与 NeoForge 共用文件名，改由 `build.gradle` / `gradle.properties` 中的 `net.neoforged` / `neo_version` 区分；
@@ -69,7 +70,8 @@
 
 - 构想条目增删改；
 - 字段：名称、说明、状态（构思 / 规划中 / 实现中 / 已完成）、优先级（高 / 中 / 低）、目标版本、备注；
-- 导出 `docs/FEATURES.md`（按状态分组）。
+- 导出 `docs/FEATURES.md`（按状态分组）；
+- 编辑草稿：未保存输入存 localStorage，重新打开自动恢复；离开页面提示、取消确认。
 
 ### 2.3 物品管理
 
@@ -84,6 +86,7 @@
   - 兼容性：加载器差异备注；
 - 物品类型：普通物品、方块、工具、武器、盔甲、食物、材料；
 - 删除物品；
+- 编辑草稿：未保存输入存 localStorage，重新打开自动恢复；离开页面提示、取消确认；
 - 导出 `docs/ITEMS.md`（总览）与 `docs/ITEMS/<id>.md`（单件详情）。
 
 ### 2.4 贴图与模型
@@ -126,6 +129,7 @@
 - 项目数据：`<项目>/.mcstudio/project.json`、`features.json`、`items/<id>.json`、
   `studio.json`（工坊标记）、`summary.json`（派生摘要）、`structure.json`（派生代码结构）；
 - 插件注册表：`$DSH_HOME/mcmods-studio/registry.json`（记录扫描根目录与项目列表）；
+- 导入前备份：`$DSH_HOME/mcmods-studio/backups/`（`.mcstudio/` 与快照，失败时回滚）；
 - Host 接口：`POST /mcmods-studio/api`，共 **37 个动作**：
 
 | 分组 | 动作 |
@@ -216,9 +220,20 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | 摘要同步 | `lib/tools.js` | `structure_refresh` / `structure_annotate` 工具路径与 HTTP 动作一致，写后刷新 `summary.json` |
 | 文档校准 | `docs/` 全量 | 工具 21、动作 37、测试 159、版本 v0.1.1；修复 `VERSION-PLAN.md` 死链 |
 
+### 3.0.4 v0.1.2 可靠性补丁（已完成）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| 持久写入 | `lib/registry.js` | `writeJson` / `writeText` 改为临时文件 + fsync + rename + 目录 barrier；随机临时名，避免崩溃空文件与并发相撞 |
+| 导入备份 | `lib/backup.js` | 导入 / 重新导入前备份 `.mcstudio/` 与 `docs/mcstudio-snapshot.md`；失败自动回滚，成功返回 `imported.backup` |
+| 导入 proof | `lib/import.js` | `analyzeImport` 返回 proof；`reimport` 校验 proof，预览后工程变化会拒绝执行 |
+| 错误边界 | `client.js` 的 `StudioRoot` | 捕获 `StudioPage` 渲染异常，提供重试 / 刷新，避免 DSH 退休 main slot |
+| 编辑器草稿 | `client.js` 的 `useDraftState` | 物品 / 构想草稿存 localStorage，重新打开恢复；离开提示与取消确认 |
+| 测试 | `test/16-reliability.mjs` | 持久写入、备份回滚、备份保留、首次导入清理、proof 失效；总计 16 个文件 / 164 项 |
+
 ### 3.1 计划中（按优先级）
 
-> 优先级口径：P0 = 渲染层测试与代码结构文档（**已完成**）；P1 = v0.2 关系视图、编辑效率与设置；P2 = v0.3 代码工作区与生成；P3 = v0.4 图形化；P4 = v0.5 质量与效率。
+> 优先级口径：P0 = 渲染层测试、代码结构文档与 v0.1.2 可靠性补丁（**已完成**）；P1 = v0.2 关系视图、编辑效率与设置；P2 = v0.3 代码工作区与生成；P3 = v0.4 图形化；P4 = v0.5 质量与效率。
 
 | 优先级 | 功能 | 说明 |
 | --- | --- | --- |
@@ -290,7 +305,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**15 个文件、159 项全部通过**）：
+已通过自动化验证（`npm test`，**16 个文件、164 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
@@ -298,6 +313,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
 | 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |
+| 可靠性 | 5 项 | 持久写入无临时残留、备份失败回滚、备份成功保留、首次导入失败清理、导入 proof 失效与重新导入 |
 | 客户端加载 | 8 项 | 假 `__ModuleLoader__` + 假 React，验证加载、模块 id、座位注册 |
 | 渲染结构 | 15 项 | 假 React 渲染组件，断言文本、按钮、条件分支 |
 | schema 一致性 | 2 项 | 比对 `schema.js` 与 `data/schema.json` |
@@ -306,6 +322,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 - 接口：`boot`、项目创建与打开、物品保存、文档导出、贴图上传、模型生成；
 - 导入：Fabric 工程与 Forge 工程均能识别 modid、版本、贴图与 Java 注册名；
+- 可靠性：导入前备份、失败回滚、proof 拒绝过期预览均有自动化用例；
 - 数据：画布坐标持久化、快照生成、注册表读写、摘要重建；
 - 代码结构：真实 Forge 工程扫描 14 文件 / 15 类 / 38 方法，注册点按 `items` 归类；
 - Agent：21 个工具全部注册到宿主，`agent.tools` 返回 21 工具 / 37 动作；

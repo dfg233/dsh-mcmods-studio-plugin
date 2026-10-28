@@ -1,6 +1,6 @@
 # 代码索引
 
-> 适用版本：v0.1.1
+> 适用版本：v0.1.2
 > 更新日期：2026-10-28
 > 用途：修改插件代码前先查这里，按「文件 → 函数 → 参数 → 返回」定位，不必通读源码。
 > 说明：行号为编写时的位置，改动后会偏移，**优先按名称搜索**。发版与升版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
@@ -26,17 +26,18 @@
 | `package.json` | bundle 清单：版本、包名、`dsh.bundle.patch`、`dsh.client` | 46 |
 | `cordis.patch.yml` | 向 Loader 插入 `id: mc-mod-studio` | 12 |
 | `index.js` | Host 入口：HTTP 路由、原生工具注册、卸载清理 | 121 |
-| `client.js` | 浏览器半：全部 UI（单文件模块） | 2175 |
+| `client.js` | 浏览器半：全部 UI（单文件模块） | 2353 |
 | `lib/api.js` | 37 个动作的声明式路由表与分派 | 572 |
 | `lib/paths.js` | `.mcstudio/` 路径、id 校验、路径归属 | 75 |
 | `lib/schema.js` | 加载器、构想状态、物品类型、19 个字段 | 182 |
 | `lib/meta.js` | `project.json` 与 `studio.json` 读写、项目创建 | 217 |
 | `lib/entries.js` | 构想与物品 CRUD、字段纠偏、`readProject` | 194 |
-| `lib/import.js` | 工程识别、资源扫描、身份解析、差异、快照 | 760 |
+| `lib/import.js` | 工程识别、资源扫描、身份解析、差异、快照、导入 proof | 818 |
 | `lib/gradle.js` | `gradle.properties` 解析、占位符处理 | 205 |
 | `lib/assets.js` | 贴图与模型：路径、PNG 校验、上传、读取、方块面解析 | 528 |
 | `lib/docs.js` | 五份 Markdown 的渲染 | 256 |
-| `lib/registry.js` | 插件注册表、路径展开、原子写入 | 207 |
+| `lib/registry.js` | 插件注册表、路径展开、持久原子写入 | 243 |
+| `lib/backup.js` | 导入前项目备份、失败回滚、备份路径 | 109 |
 | `lib/summary.js` | `.mcstudio/summary.json` 的构建 | 109 |
 | `lib/validate.js` | 9 类项目校验 | 171 |
 | `lib/tools.js` | 21 个 agent 工具的定义与调用 | 468 |
@@ -45,7 +46,7 @@
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
 | `data/schema.json` | 字段定义的对外副本（生成物） | 8.0 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：15 个文件、159 项 | 3434 |
+| `test/*.mjs` | 回归测试：16 个文件、164 项 | 3654 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 
 > `lib/project.js` 是 2026-10-24 拆分后保留的转发层，`api.js`、`assets.js`、`docs.js`、
@@ -65,8 +66,8 @@
 | `expandPath(input)` | 展开 `~`、转绝对路径 | 路径字符串；空输入返回 `''` |
 | `isInside(parent, child)` | 子路径是否在父目录内 | `boolean` |
 | `readJson(file, fallback)` | 读 JSON | 文件缺失或**内容损坏**都返回 fallback |
-| `writeJson(file, value)` | 原子写 JSON | 先写临时文件再 rename |
-| `writeText(file, text)` | 原子写文本 | 同上 |
+| `writeJson(file, value)` | 持久原子写 JSON | 临时文件 + fsync + rename + 目录 barrier |
+| `writeText(file, text)` | 持久原子写文本 | 同上 |
 | `isDirectory(p)` / `isFile(p)` | 类型判断 | `boolean`，不抛错 |
 | `readRegistry()` | 读注册表并补默认值 | `{schemaVersion, root, projects[]}` |
 | `saveRegistry(registry)` | 写回注册表 | 写入后的对象 |
@@ -160,9 +161,9 @@
 | 函数 | 用途 | 返回 |
 | --- | --- | --- |
 | `scanCandidates(root)` | 扫描一级子目录 | 候选数组，含 `imported` / `legacy` |
-| `importProject(input)` | 首次导入 | 项目数据 + `imported{assets,created,notices,snapshot}` |
-| `reimportProject(input)` | 重新导入，`mode` 为 `merge` / `overwrite` | 同上 |
-| `analyzeImport(input)` | 只分析不写盘 | `{kind, identity, diff, notices}` |
+| `importProject(input)` | 首次导入 | 项目数据 + `imported{assets,created,notices,snapshot,backup}` |
+| `reimportProject(input)` | 重新导入，`mode` 为 `merge` / `overwrite`，`proof` 校验过期预览 | 同上 |
+| `analyzeImport(input)` | 只分析不写盘 | `{kind, identity, diff, notices, proof}` |
 | `writeSnapshot(path, info)` | 写导入快照 | 相对路径 |
 
 内部函数（不导出）：
@@ -177,6 +178,7 @@
 | `resolveIdentity(path, input)` | 合并三处信息，冲突或缺必需项时抛错 |
 | `diffEntries(assets, names, items)` | 算新增 / 保留 / 类型冲突 / 无资源 |
 | `syncEntries(path, modid, {mode})` | 按差异写入条目 |
+| `importProof(analysis)` | 把扫描结果与项目状态压成 sha256，供 `reimport` 校验 |
 
 ### 2.8 `lib/assets.js`（13 个导出）
 
@@ -318,6 +320,16 @@ export * from './entries.js'
 export * from './import.js'
 ```
 
+### 2.16 `lib/backup.js`（3 个导出）
+
+导入 / 重新导入前的项目备份与失败回滚。备份位于 `$DSH_HOME/mcmods-studio/backups/<项目名>-<路径摘要>/<时间>-<原因>/`，包含 `mcstudio/` 与可选的 `docs/mcstudio-snapshot.md`。
+
+| 函数 | 用途 | 返回 |
+| --- | --- | --- |
+| `createProjectBackup(projectPath, reason)` | 复制 `.mcstudio/` 与快照；无工坊数据返回 `null` | 备份目录 |
+| `restoreProjectBackup(projectPath, backupDir)` | 用备份覆盖当前数据；备份里没有快照时移除本次新建的快照 | `undefined` |
+| `runWithProjectBackup(projectPath, fn, reason)` | 备份后执行 `fn`，失败自动回滚并把原始错误抛出 | `{result, backupDir}` |
+
 ## 3. 接口层
 
 ### 3.1 HTTP 约定
@@ -351,8 +363,8 @@ export * from './import.js'
 | `project.create` | `{path,name,modid,version,description,loader}` | 项目数据 | none |
 | `project.open` | `{path}` | `{path, meta, features, items}` | project |
 | `project.import` | `{path,modid?,name?,version?,force?}` | 项目数据 + `imported` | none |
-| `project.analyzeImport` | `{path,...}` | `{kind, identity, diff, notices}` | none |
-| `project.reimport` | `{path, mode?}` | 项目数据 + `imported` | none |
+| `project.analyzeImport` | `{path,...}` | `{kind, identity, diff, notices, proof}` | none |
+| `project.reimport` | `{path, mode?, proof?}` | 项目数据 + `imported` | none |
 | `project.saveMeta` | `{path, patch}` | `meta` | studio |
 
 #### 构想与物品
@@ -482,6 +494,7 @@ window.__ModuleLoader__.load({
 | `Markdown` / `renderInline` | `{text}` / `(text)` |
 | `PathField` | `{label, value, onChange, required, hint, placeholder}` |
 | `InfoRow` | `{label, value}` |
+| `useDraftState`（hook） | 返回 `{value,setValue,dirty,restored,clear}`；localStorage 草稿、beforeunload |
 
 ### 5.4 页面组件
 
@@ -489,11 +502,12 @@ window.__ModuleLoader__.load({
 | --- | --- | --- |
 | `ProjectTab` | 项目列表、扫描区、行内操作 | `{boot,project,refreshBoot,open,onCreate,onImport,onReimport,onCloseProject,setError}` |
 | `FeaturesTab` | 构想列表 | `{project,setProject,schema,setError}` |
-| `FeatureEditor` | 构想编辑弹窗 | `{feature,onSave,onCancel}` |
+| `FeatureEditor` | 构想编辑弹窗（带草稿恢复） | `{feature,schema,project,onSave,onCancel}` |
 | `ItemsTab` | 列表 / 画布、搜索、校验提示条 | `{project,setProject,assets,schema,setError,reloadAssets}` |
-| `ItemEditor` | 19 字段分组编辑 | `{schema,item,project,images,setError,onSave,onCancel}` |
+| `ItemEditor` | 19 字段分组编辑（带草稿恢复） | `{schema,item,project,images,setError,onSave,onCancel}` |
 | `AssetsTab` | 上传、预览、模型编辑 | `{project,assets,reloadAssets,setError}` |
 | `GuideTab` | 构建教程 | `{guide}` |
+| `StudioRoot` | 错误边界 + `StudioPage` | — |
 | `StudioPage` | 页面框架与页签 | — |
 | `SidebarStudioPanel` | 右侧栏项目概览 | 读 `studioState` |
 | `ProjectDetailModal` | 项目详情 | `{item,onClose,setError}` |
@@ -679,7 +693,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（15 个文件、159 项）
+# 全部测试（16 个文件、164 项）
 npm test
 
 # 只跑某一组
@@ -735,5 +749,6 @@ client.js
 | `13-block-assets.mjs` | 方块面贴图解析 | 7 |
 | `14-persist.mjs` | 项目切换持久化 | 10 |
 | `15-structure.mjs` | 代码结构文档 | 15 |
+| `16-reliability.mjs` | 持久写入、备份回滚、首次导入清理、导入 proof | 5 |
 | `helpers.mjs` | 工作区、断言、PNG 生成 | — |
 | `render-harness.mjs` | 渲染装置 | — |

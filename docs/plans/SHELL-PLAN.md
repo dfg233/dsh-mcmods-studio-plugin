@@ -1,7 +1,7 @@
 # 界面外壳模块计划
 
 > 模块编号：10
-> 适用插件版本：v0.1.1
+> 适用插件版本：v0.1.2
 > 代码位置：`client.js` 全文件（主题常量、通用组件、`StudioPage`、`SidebarStudioPanel`、`PathField`、`ensureStyles`、`studioState`、座位注册）
 > 状态：已实现
 > 最后更新：2026-10-28
@@ -191,6 +191,7 @@ useEffect([state.projectPath])
 
 | 组件 | 职责 |
 | --- | --- |
+| `StudioRoot` | `StudioBoundary` + `StudioPage`；渲染异常时显示重试 / 刷新 |
 | `StudioPage` | 页面框架、页签、弹窗挂载 |
 | `ProjectTab` / `FeaturesTab` / `ItemsTab` / `AssetsTab` / `GuideTab` | 五个页签 |
 | `SettingsTab` | 设置页（规划，v0.2）：启动、物品页、数据、Agent、关于 |
@@ -212,7 +213,7 @@ useEffect([state.projectPath])
 
 ## 8. 现状与缺口
 
-**已实现**：三处座位注册与卸载、主题化样式、按钮悬停/按下/聚焦、跨面板状态、目录选择器、路径字段组件、轻量 Markdown、导入两步确认与项目详情弹窗、物品页校验条与右侧栏缺失素材统计。
+**已实现**：三处座位注册与卸载、主题化样式、按钮悬停/按下/聚焦、跨面板状态、目录选择器、路径字段组件、轻量 Markdown、导入两步确认与项目详情弹窗、物品页校验条与右侧栏缺失素材统计、`StudioRoot` 错误边界、物品/构想编辑器草稿恢复与离开提示。
 
 **已知缺口**：
 

@@ -33,9 +33,10 @@ node test/04-entries.mjs # 单跑某个文件（输出更详细）
 | `13-block-assets.mjs` | 方块贴图按 blockstate → 模型 → parent 链 → 面解析 | 7 |
 | `14-persist.mjs` | 上次打开项目持久化、恢复、清理与旧格式兼容 | 10 |
 | `15-structure.mjs` | Java 结构解析、注册反查、跨行字段、泛型方法、缓存失效、注解 | 15 |
+| `16-reliability.mjs` | 持久写入、导入前备份与回滚、首次导入清理、导入 proof 失效 | 5 |
 | `render-harness.mjs` | 渲染测试装置（假 React + 元素树查询） | — |
 
-合计 **159 项**。
+合计 **164 项**。
 
 ## 设计要点
 

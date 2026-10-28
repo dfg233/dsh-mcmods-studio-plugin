@@ -1,7 +1,7 @@
 # 构想模块计划
 
 > 模块编号：05
-> 适用插件版本：v0.1.1
+> 适用插件版本：v0.1.2
 > 代码位置：`lib/entries.js` 的 `listFeatures`/`saveFeature`/`deleteFeature`；`lib/paths.js` 的 `featuresFile`；`lib/schema.js` 的 `FEATURE_STATUS`/`FEATURE_PRIORITY`；`client.js` 的 `FeaturesTab`、`FeatureEditor`；`lib/docs.js` 的 `renderFeatures`
 > 状态：已实现
 > 最后更新：2026-10-28

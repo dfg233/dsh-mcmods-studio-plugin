@@ -25,6 +25,23 @@
 > 结论：最值得先借的是**数据可靠性与导入安全**，其次是**设置页交互细节**和**图/批量编辑**；
 > 桌宠、MCP、技能系统与 1.1 万行单文件客户端不适合照搬。
 
+## 0.1 本轮采纳（v0.1.2）
+
+| 借鉴点 | 状态 | 本项目落地 |
+| --- | --- | --- |
+| 原子写 + fsync + 目录 barrier（第 1 节） | **部分采纳** | `writeJson` / `writeText` 改为临时文件 + fsync + rename + barrier；尚未加跨进程文件锁与 pending 恢复 |
+| 多文件事务日志（第 2 节） | 暂不照搬 | 用「导入前整目录备份 + 失败回滚」达到同等用户效果，代码量更小；完整 journal 留给后续 |
+| 导入「预览 → 证明 → 导入」（第 11 节） | **已采纳** | `analyzeImport` 返回 `proof`，`reimport` 校验；导入前自动备份 |
+| 设置页行级交互（第 4 节） | 已写入方案 | 单项 ↺、作用域标签、自动保存状态、复制诊断；v0.2 实现 |
+| 版本号 / 请求幂等（第 5 节） | 未采纳 | 物品/构想仍无 `revision`；已记入下一补丁，不与本补丁混做 |
+| 草稿缓存与离开保护（第 6 节） | **已采纳** | `useDraftState`：localStorage 草稿、重新打开恢复、beforeunload、取消确认 |
+| 渲染错误边界（第 10 节） | **已采纳** | `StudioRoot` 捕获渲染异常，提供重试 / 刷新 |
+| 图画布 / 批量管理（第 8、9 节） | 未采纳 | 归入 v0.2 关系图与批量操作 |
+| 项目切换门（第 7 节） | 未采纳 | 当前编辑器为模态，切换入口被遮挡；后续做项目级门禁 |
+| 升级协调器 / 发布验收（第 3、12 节） | 未采纳 | 等第一次真正的数据格式迁移与发版自动化 |
+
+> 下一补丁优先处理：物品 / 构想 `revision` 与 `requestId`、跨进程文件锁、项目切换门禁。
+
 ## 1. 原子写与文件锁（P0）
 
 **催更姬做法**（`src/infrastructure/persistence/atomic-store.ts`）：
@@ -36,22 +53,22 @@
 - `save()` 写临时文件 → `fsync` → `rename` 到 pending → 目录 barrier → `rename` 到正式文件；
 - Windows 不支持目录 `fsync` 时，把 `EPERM/EISDIR/ENOTSUP` 当尽力而为，其他错误照常抛出。
 
-**本项目现状**：`lib/registry.js` 的 `writeJson` 已经「临时文件 + rename」，比直接覆盖好，但还缺：
+**本项目现状（v0.1.2）**：`writeJson` / `writeText` 已改为「临时文件 + fsync + rename + 目录 barrier」，随机临时名避免并发相撞。仍缺：
 
-- 没有 `fsync`，断电/崩溃时可能留下空文件或旧内容；
-- 没有锁，两个窗口或「界面保存 + Agent 工具」同时写 `project.json` / `items/<id>.json` 会互相覆盖；
-- 没有 pending 恢复，rename 前崩溃只能靠临时文件人工处理。
+- 没有跨进程锁，两个窗口或「界面保存 + Agent 工具」同时写 `project.json` / `items/<id>.json` 仍可能后写覆盖；
+- 没有 pending 恢复，rename 前崩溃留下的临时文件需人工判断；
+- 导入这种多文件写入靠备份回滚，不靠事务日志（见第 2 节）。
 
-**建议**：新增 `lib/atomic.js`，先做小：
+**建议（下一步）**：把当前实现抽成 `lib/atomic.js`，补上锁与 pending：
 
 ```js
-export async function writeJsonDurable(file, value)   // 临时文件 + fsync + rename
-export async function withFileLock(dir, fn, options)  // 单文件/单目录锁
-export async function readJsonWithPending(file, pending)
+export async function writeJsonDurable(file, value)   // 已有，建议抽离
+export async function withFileLock(dir, fn, options)  // 待补：单文件/单目录锁
+export async function readJsonWithPending(file, pending) // 待补：崩溃恢复
 ```
 
 用在：`registry.json`、`settings.json`、`project.json`、`items/*.json`、`features.json`。
-导入这种多文件场景不要靠单文件锁硬拼，改用下一节的批量事务。
+导入这种多文件场景当前用「备份 + 回滚」，不靠单文件锁硬拼；以后需要单文件级恢复时再引入事务日志。
 
 **不照搬的部分**：它把整个工作库放在一个 `store.json` 里，本项目是分文件存储，锁粒度应是「项目目录」或「单文件」，不需要全局大锁。
 
@@ -65,7 +82,7 @@ export async function readJsonWithPending(file, pending)
 - 删除文件排在写入之前，避免同名文件互相覆盖；
 - 支持目录移动与删除，且把目录整体暂存到事务目录，恢复可跨 rename。
 
-**本项目现状**：`importProject` / `reimportProject` 会连续写 `project.json`、`features.json`、`items/*.json`、快照、结构文档；中途失败会留下**半导入项目**。目前没有事务，也没有导入前备份。
+**本项目现状（v0.1.2）**：`importProject` / `reimportProject` 已用 `runWithProjectBackup` 在操作前备份 `.mcstudio/` 与快照，失败自动恢复；没有引入 journal，因此恢复粒度是整目录，而不是单文件事务。
 
 **建议**：
 
@@ -142,7 +159,7 @@ export async function readJsonWithPending(file, pending)
 - 重新拉取服务端数据时用 `rebase` 保留本地修改，不直接覆盖；
 - localStorage 写失败只提示「本次会话仍生效」，不阻断编辑。
 
-**本项目现状**：`ItemEditor` / `FeatureEditor` 是弹窗表单，保存前没有本地草稿；切换项目、切页签或关页面会丢失未保存输入。项目切换也没有「正在编辑」门禁。
+**本项目现状（v0.1.2）**：`ItemEditor` / `FeatureEditor` 已用 `useDraftState` 存 localStorage 草稿，重新打开自动恢复；关闭页面/刷新会提示，取消时确认放弃。项目切换门禁仍未做，因为编辑器是模态、切换入口被遮挡。
 
 **建议**：
 
@@ -210,7 +227,7 @@ export async function readJsonWithPending(file, pending)
 - `Modal` 用原生 `<dialog>`、恢复焦点、Esc 取消、阻止事件冒泡；
 - 异步操作普遍带 `AbortSignal`，卸载即取消。
 
-**本项目现状**：`StudioPage` 没有错误边界；`call()` 失败只显示错误条；没有请求竞态守卫；Modal 是自绘 div，Esc 有处理但没有焦点恢复。
+**本项目现状（v0.1.2）**：`StudioRoot` 已加错误边界；`call()` 仍不重试写请求；列表/摘要没有请求序号守卫；Modal 仍是自绘 div，Esc 有处理但没有焦点恢复。
 
 **建议**：
 
@@ -229,7 +246,7 @@ export async function readJsonWithPending(file, pending)
 - 同一文件重复导入用 receipt key 防重复；
 - 导入失败保留冲突清单，不部分写入。
 
-**本项目现状**：`project.analyzeImport` 已能返回新增/变更/冲突，`reimport` 有 `merge/overwrite`；但没有 proof，预览与执行之间文件变化不会被发现；导入前没有自动备份。
+**本项目现状（v0.1.2）**：`project.analyzeImport` 返回 `proof`，`reimport` 会校验；导入前自动备份，失败回滚，结果返回 `imported.backup`。proof 目前只覆盖扫描列表与条目状态，不覆盖素材文件内容。
 
 **建议**：
 

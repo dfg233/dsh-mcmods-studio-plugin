@@ -1,6 +1,6 @@
 # 架构说明
 
-> 适用版本：v0.1.1
+> 适用版本：v0.1.2
 > 更新日期：2026-10-28
 > 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)，实现状态见 [STATUS.md](STATUS.md)。
 
@@ -38,7 +38,8 @@
 │      ├─ schema.js     加载器 / 状态 / 类型 / 19 个字段     │
 │      ├─ meta.js       project.json 与 studio.json         │
 │      ├─ entries.js    构想与物品 CRUD、readProject        │
-│      ├─ import.js     识别 / 扫描 / 差异 / 快照           │
+│      ├─ import.js     识别 / 扫描 / 差异 / 快照 / proof    │
+│      ├─ backup.js     导入前备份与失败回滚                  │
 │      ├─ gradle.js     gradle.properties 解析与占位符       │
 │      ├─ assets.js     贴图 / 模型 / 方块面解析            │
 │      ├─ docs.js       Markdown 导出                       │
@@ -75,6 +76,7 @@
 | --- | --- | --- | --- |
 | 插件代码 | `D:\program\dsh-mcmods-studio-plugin` | 是 | 本仓库 |
 | 插件注册表 | `$DSH_HOME/mcmods-studio/registry.json` | 否 | 本机项目索引与默认根目录 |
+| 导入前备份 | `$DSH_HOME/mcmods-studio/backups/` | 否 | `.mcstudio/` 与快照的副本，失败时回滚 |
 | 项目设计数据 | `<项目>/.mcstudio/` | 建议是 | 元数据、构想、物品、工坊标记 |
 | 项目素材 | `<项目>/src/main/resources/assets/` | 是 | 贴图与模型（标准路径） |
 | 导出文档 | `<项目>/docs/` | 是 | 人读的 Markdown |

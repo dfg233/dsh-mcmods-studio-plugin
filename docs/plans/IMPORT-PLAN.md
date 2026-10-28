@@ -1,8 +1,8 @@
 # 工程导入模块计划
 
 > 模块编号：04
-> 适用插件版本：v0.1.1
-> 代码位置：`lib/gradle.js`；`lib/import.js` 的 `resolveIdentity`、`diffEntries`、`syncEntries`、`importProject`、`reimportProject`、`analyzeImport`、`detectDescriptor`、`scanProjectAssets`、`scanRegistryNames`、`writeSnapshot`；`client.js` 的 `ImportProjectModal`、`ImportConfirmModal`、`ProjectDetailModal`
+> 适用插件版本：v0.1.2
+> 代码位置：`lib/gradle.js`；`lib/import.js` 的 `resolveIdentity`、`diffEntries`、`syncEntries`、`importProject`、`reimportProject`、`analyzeImport`、`importProof`、`detectDescriptor`、`scanProjectAssets`、`scanRegistryNames`、`writeSnapshot`；`lib/backup.js` 的 `runWithProjectBackup`；`client.js` 的 `ImportProjectModal`、`ImportConfirmModal`、`ProjectDetailModal`
 > 状态：已实现
 > 依据：[PROJECT-STRUCTURE.md](../PROJECT-STRUCTURE.md)
 > 最后更新：2026-10-28
@@ -179,22 +179,25 @@ client: refreshBoot() → open(path) → setTab('project')
 点列表行「重新导入」
    │
    ▼
-ImportConfirmModal（同分析接口）
+ImportConfirmModal（调分析接口，拿到 proof）
    │  用户可勾选「按扫描结果改写类型冲突项」
    ▼
-call('project.reimport', { path, mode: 'merge' | 'overwrite' })
+call('project.reimport', { path, mode: 'merge' | 'overwrite', proof })
    │
    ▼
 reimportProject
    │  ① requireProjectPath + readProjectMeta（必须已是工坊项目）
-   │  ② resolveIdentity 刷新元数据（冲突仍会抛错）
-   │  ③ 合并写回 project.json（保留 createdAt）
-   │  ④ syncEntries(mode)
+   │  ② proof 非空时重算分析并比对；工程已变化则拒绝，要求重新分析
+   │  ③ resolveIdentity 刷新元数据（冲突仍会抛错）
+   │  ④ 备份 .mcstudio/ 与 docs/mcstudio-snapshot.md
+   │  ⑤ 合并写回 project.json（保留 createdAt）
+   │  ⑥ syncEntries(mode)
    │      · merge：只新增；overwrite：另把类型冲突项改成扫描结果
-   │  ⑤ writeStudioMarker(source:'reimport')
-   │  ⑥ writeSnapshot
+   │  ⑦ writeStudioMarker(source:'reimport')
+   │  ⑧ writeSnapshot
+   │  ⑨ 任一步失败：用备份恢复，再把错误抛出
    ▼
-前端提示：新增 N 个、改写 M 个、保留 K 个
+前端提示：新增 N 个、改写 M 个、保留 K 个、备份路径
 ```
 
 ### 4.3 条目创建规则
@@ -218,9 +221,9 @@ reimportProject
 
 | action | payload | 返回 |
 | --- | --- | --- |
-| `project.analyzeImport` | `{path, modid?, name?, version?}` | `{kind, registered, hasStudioData, marker, identity, identityError, conflicts, missing, meta, scan, diff, notices}` |
+| `project.analyzeImport` | `{path, modid?, name?, version?}` | `{kind, registered, hasStudioData, marker, identity, identityError, conflicts, missing, meta, scan, diff, notices, proof}` |
 | `project.import` | `{path, modid?, name?, version?, force?}` | `{path, meta, features, items, imported:{assets, registryNames, created, updated, kept, typeConflicts, missing, blocks, mode, snapshot, structure, notices}}` |
-| `project.reimport` | `{path, mode?}` | 同上 |
+| `project.reimport` | `{path, mode?, proof?}` | 同上 |
 
 > `notices` 记录元数据来源、加载器判定、占位符解析等系统判断（只提示，不写盘）。
 > `structure` 是导入后自动生成的结构摘要：文件 / 类 / 方法计数与注册点，明细在
@@ -262,7 +265,7 @@ reimportProject
 
 ## 8. 现状与缺口
 
-**已实现**：加载器识别（含 1.20.1 NeoForge 共用 `mods.toml` 的处理）、`gradle.properties` 解析与占位符处理、三处身份冲突校验、11 类资源扫描、方块/物品分类、语言文件排除、命名空间记录、注册名提取、快照生成、标记写入、`notices[]` 判定提示、导入后自动生成代码结构文档、`analyzeImport` / `reimport` 的条目差异对比。
+**已实现**：加载器识别（含 1.20.1 NeoForge 共用 `mods.toml` 的处理）、`gradle.properties` 解析与占位符处理、三处身份冲突校验、11 类资源扫描、方块/物品分类、语言文件排除、命名空间记录、注册名提取、快照生成、标记写入、`notices[]` 判定提示、导入后自动生成代码结构文档、`analyzeImport` / `reimport` 的条目差异对比、导入前备份与失败回滚、重新导入的 `proof` 校验。
 
 **已知缺口**：
 
@@ -272,7 +275,7 @@ reimportProject
 - 注册名提取是正则匹配，无法覆盖 `DeferredRegister` 之外的复杂写法（如变量传入、自定义辅助方法）；
 - 不导入 `data/<modid>/worldgen`、`damage_type`、`enchantments` 等新目录；
 - 不识别 `pack.mcmeta`；
-- 差异对比只覆盖条目与注册名，不比较素材文件内容。
+- 差异对比只覆盖条目与注册名，不比较素材文件内容；`proof` 也因此只覆盖扫描列表与条目状态，不覆盖 PNG/JSON 的内容变化。
 
 ## 9. 关联模块
 

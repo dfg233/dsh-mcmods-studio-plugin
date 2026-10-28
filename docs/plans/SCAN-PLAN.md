@@ -1,7 +1,7 @@
 # 扫描发现模块计划
 
 > 模块编号：03
-> 适用插件版本：v0.1.1
+> 适用插件版本：v0.1.2
 > 代码位置：`lib/import.js` 的 `scanCandidates`；`lib/meta.js` 的 `isStudioProject`、`readStudioMarker`；`client.js` 的 `ProjectTab` 扫描区
 > 状态：已实现
 > 最后更新：2026-10-28

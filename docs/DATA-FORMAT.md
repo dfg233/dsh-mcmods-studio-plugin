@@ -1,6 +1,6 @@
 # 数据格式
 
-> 适用版本：v0.1.1
+> 适用版本：v0.1.2
 > 更新日期：2026-10-28
 > 数据文件内的 `schemaVersion` 与插件版本号相互独立；插件升级不自动改写数据格式。
 > 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
@@ -434,6 +434,26 @@
 - 未知字段忽略，便于新旧版本共存。
 
 完整设计见 [plans/SETTINGS-PLAN.md](plans/SETTINGS-PLAN.md)。
+
+## 7.4 backups（导入前备份）
+
+导入与重新导入会重写多个 `.mcstudio/` 文件与 `docs/mcstudio-snapshot.md`。操作前插件会把它们备份到：
+
+```text
+$DSH_HOME/mcmods-studio/backups/
+  <项目目录名>-<项目路径摘要>/
+    2026-10-28T09-00-00-000Z-import/
+      mcstudio/                 # 原 .mcstudio 的完整副本
+      docs/mcstudio-snapshot.md # 原快照（存在时）
+```
+
+规则：
+
+- 备份放在插件数据目录，不写进项目，避免下次备份递归复制；
+- 备份失败会中止导入，不会在没有保护的情况下继续写；
+- 操作失败自动用备份恢复；成功则保留备份，路径通过 `imported.backup` 返回；
+- 目前不自动清理旧备份，可由用户手动删除；
+- 备份只覆盖 `.mcstudio/` 与快照，不复制 `src/main/resources` 里的素材。
 
 ## 8. notices（导入判定提示）
 
