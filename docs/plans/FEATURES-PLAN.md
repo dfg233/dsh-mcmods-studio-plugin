@@ -1,9 +1,10 @@
 # 构想模块计划
 
 > 模块编号：05
-> 代码位置：`lib/project.js` 的 `listFeatures`/`saveFeature`/`deleteFeature`/`featuresFile`；`client.js` 的 `FeaturesTab`、`FeatureEditor`；`lib/docs.js` 的 `renderFeatures`
+> 适用插件版本：v0.1.1
+> 代码位置：`lib/entries.js` 的 `listFeatures`/`saveFeature`/`deleteFeature`；`lib/paths.js` 的 `featuresFile`；`lib/schema.js` 的 `FEATURE_STATUS`/`FEATURE_PRIORITY`；`client.js` 的 `FeaturesTab`、`FeatureEditor`；`lib/docs.js` 的 `renderFeatures`
 > 状态：已实现
-> 最后更新：2026-10-22
+> 最后更新：2026-10-28
 
 ## 1. 模块职责
 
@@ -15,7 +16,7 @@
 
 **不负责**：
 
-- 功能与物品、素材之间的引用关系（当前无关联字段）；
+- 功能与素材之间的引用关系（物品已通过 `items` 字段关联，素材尚未关联）；
 - 功能排期、工时、甘特图；
 - 多人协作与评论。
 
@@ -44,7 +45,7 @@
 }
 ```
 
-### 2.2 枚举定义（`lib/project.js`）
+### 2.2 枚举定义（`lib/schema.js`）
 
 | 常量 | 值 | 说明 |
 | --- | --- | --- |
@@ -155,11 +156,12 @@ client: 用返回值替换/追加到 project.features，关闭弹窗
 
 ## 8. 现状与缺口
 
-**已实现**：六字段 CRUD、状态四档带颜色、优先级三档、按状态分组导出、打开项目自动加载。
+**已实现**：六字段 CRUD（名称、说明、状态、优先级、目标版本、备注）、状态四档带颜色、优先级三档、按状态分组导出、打开项目自动加载；`items` 字段记录关联物品 id，编辑器可编辑。
 
 **已知缺口**：
 
-- 无「功能 ↔ 物品/方块」关联字段（无法从功能跳到对应内容）；
+- `items` 关联已存在，但未校验引用的物品 id 是否存在，也没有从功能跳到物品的入口；
+- 无「功能 ↔ 素材」关联；
 - 无排序（固定按更新时间倒序）；
 - 无筛选与搜索；
 - 无批量操作；

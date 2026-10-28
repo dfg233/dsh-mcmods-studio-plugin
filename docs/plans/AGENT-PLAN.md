@@ -1,27 +1,30 @@
 # Agent 结合与发展建议
 
 > 文档编号：AGENT-PLAN
-> 状态：**建议 1–6 已实施，建议 7–9 待做**（2026-10-25 更新）
-> 更新日期：2026-10-25
-> 配套：[PLAN.md](../PLAN.md)（宗旨与路线）、[STATUS.md](../STATUS.md)（实现状态）、[INDEX.md](../INDEX.md)（代码索引）
+> 适用版本：v0.1.1
+> 状态：**建议 1–6 与代码结构文档已实施，建议 7–9 待做**（2026-10-28 更新）
+> 更新日期：2026-10-28
+> 配套：[VERSION-PLAN.md](../VERSION-PLAN.md)（版本规则）、[PLAN.md](../PLAN.md)（宗旨与路线）、[STATUS.md](../STATUS.md)（实现状态）、[INDEX.md](../INDEX.md)（代码索引）
 > 实施记录：[refactor/04-agent-modules.md](../refactor/04-agent-modules.md)、[refactor/05-tools-and-notices.md](../refactor/05-tools-and-notices.md)
 
-## 0. 实施状态（2026-10-25）
+## 0. 实施状态（2026-10-28）
 
 | 建议 | 内容 | 状态 | 落地 |
 | --- | --- | --- | --- |
-| 1 | 注册为 agent 工具 | **已完成** | 17 个工具，DSH 原生 `mcmods_*`，见 `lib/tools.js`、`lib/tool-bridge.js` |
+| 1 | 注册为 agent 工具 | **已完成** | 21 个工具，DSH 原生 `mcmods_*`，见 `lib/tools.js`、`lib/tool-bridge.js` |
 | 2 | `summary.json` 聚合 | **已完成** | `lib/summary.js`，写操作后自动刷新 |
 | 3 | 紧凑 / 详细双表示 | **已完成** | `item_list`（约 300 字节 / 12 物品）与 `item_get`（19 字段带标签） |
 | 4 | 字段知识外置 | **已完成** | `data/schema.json` + `scripts/gen-schema.mjs` + 一致性测试 |
 | 5 | 校验器 | **已完成** | `lib/validate.js`，9 类检查，分级 error / warning |
 | 6 | 导入提示 | **已完成** | `notices[]` 随导入与分析返回，界面已展示 |
-| 7 | 关系可视化 | 待做 | 归入 v0.2，需先在构想加 `itemRefs` |
+| 附加 | 代码结构文档 | **已完成（v0.1.1）** | `lib/structure.js` + 4 个动作 + 4 个工具；按文件哈希增量，支持 agent 注解 |
+| 7 | 关系可视化 | 待做 | 归入 v0.2，复用构想已有的 `items` 关联字段 |
 | 8 | 编辑提效 | 待做 | 内联编辑与批量操作，归入 v0.2 |
 | 9 | 文档双向同步 | 待做 | 后续版本 |
 
 > 下文第 1 节保留立项时的背景描述，作为「为什么做这些」的依据；
-> 当前实际状态以本节和 [STATUS.md](../STATUS.md) 为准。
+> 当前实际状态以本节和 [STATUS.md](../STATUS.md) 为准。工具命名最终采用 `mcmods_` 前缀，
+> 下文第 4.1 节保留立项时的 `mcsi_` 命名，仅作历史参考。
 
 ## 1. 背景
 
@@ -76,14 +79,14 @@ Agent 想使用它，只能自己写 `fetch` 脚本、解析 JSON、读 `.mcstud
 
 | 工具 | 参数 | 返回 | 替代的现状 |
 | --- | --- | --- | --- |
-| `mcsi_project_summary` | 无 | 项目全貌摘要（mounted 项目、计数、缺失概览） | 读 4–5 个文件 |
-| `mcsi_item_list` | `{project?, type?, query?}` | 紧凑列表，每项 `id/名称/类型` | 读全部 `items/*.json` |
-| `mcsi_item_get` | `{project?, id}` | 单物品完整属性，字段带中文名与单位 | 读 JSON 再对照 schema |
-| `mcsi_item_save` | `{project?, item}` | 保存结果 + 校验告警 | 写 HTTP 脚本 |
-| `mcsi_idea_list` / `mcsi_idea_save` | `{project?, ...}` | 构想清单操作 | 同上 |
-| `mcsi_schema` | `{compact?}` | 字段定义；`compact` 只给 key + 类型 | 读 `project.js` |
-| `mcsi_validate` | `{project?}` | 问题清单 | 无此能力（新增） |
-| `mcsi_doc_export` | `{project?}` | 导出文件清单 | 写脚本 |
+| `mcmods_project_summary` | 无 | 项目全貌摘要（mounted 项目、计数、缺失概览） | 读 4–5 个文件 |
+| `mcmods_item_list` | `{project?, type?, query?}` | 紧凑列表，每项 `id/名称/类型` | 读全部 `items/*.json` |
+| `mcmods_item_get` | `{project?, id}` | 单物品完整属性，字段带中文名与单位 | 读 JSON 再对照 schema |
+| `mcmods_item_save` | `{project?, item}` | 保存结果 + 校验告警 | 写 HTTP 脚本 |
+| `mcmods_idea_list` / `mcmods_idea_save` | `{project?, ...}` | 构想清单操作 | 同上 |
+| `mcmods_schema_get` | `{compact?}` | 字段定义；`compact` 只给 key + 类型 | 读 `lib/schema.js` |
+| `mcmods_validate` | `{project?}` | 问题清单 | 无此能力（新增） |
+| `mcmods_doc_export` | `{project?}` | 导出文件清单 | 写脚本 |
 
 **约束**：
 
@@ -113,14 +116,24 @@ Agent 想使用它，只能自己写 `fetch` 脚本、解析 JSON、读 `.mcstud
   "ideas": [
     { "id": "f_1", "name": "宝石挖掘", "status": "planning", "priority": "high" }
   ],
-  "missing": { "textures": ["ruby_sword"], "models": ["ruby_sword"], "langKeys": 4 },
+  "missing": { "ids": ["ruby_sword"], "count": 1 },
+  "code": {
+    "mode": "scan",
+    "files": 14,
+    "classes": 15,
+    "methods": 38,
+    "annotated": 0,
+    "stale": 0,
+    "registrations": { "items": [{ "id": "ruby", "file": "ModItems.java", "line": 15 }] }
+  },
   "updatedAt": "2026-10-23T12:00:00.000Z"
 }
 ```
 
 **体积估算**：12 物品 + 8 构想约 **1.2 KB**，替代原来读 20 个文件（约 8 KB）。
+`code` 只放注册点与计数，文件级明细留在 `structure.json`，避免摘要变大。
 
-**维护时机**：`items.save/delete`、`features.save/delete`、`assets.upload/delete`、`project.open`、`project.import` 之后重写。
+**维护时机**：`items.save/delete`、`features.save/delete`、`assets.upload/delete`、`project.open`、`project.import/reimport`、`structure.refresh/annotate` 之后重写。
 
 **一致性**：`summary.json` 是派生数据，损坏或缺失时可由 `boot` 重建，不作为唯一事实来源。
 
@@ -139,16 +152,17 @@ Agent 想使用它，只能自己写 `fetch` 脚本、解析 JSON、读 `.mcstud
 
 **现状**：`ITEM_FIELDS`（19 个字段的 label、type、min/max、unit、hint）硬编码在 `lib/project.js` 内。
 
-**方案**：抽到 `data/schema.json`，`lib/project.js` 改为读取它。
+**方案**：字段定义保留在 `lib/schema.js`（唯一来源），由 `scripts/gen-schema.mjs` 生成
+`data/schema.json` 对外副本；工具 `mcmods_schema_get` 直接返回该副本。
 
 **收益**：
 
 | 方面 | 收益 |
 | --- | --- |
 | Agent | 可直接读该文件理解字段，不必读源码 |
-| 工具 | `mcsi_schema` 直接返回该文件内容 |
+| 工具 | `mcmods_schema_get` 返回字段定义，`compact` 只给 key 与类型 |
 | 多版本 | 每个 MC 版本一份 schema，切换只需换文件 |
-| 维护 | 改字段不动代码，降低回归风险 |
+| 维护 | 改字段只动 `schema.js`，副本由脚本生成并由一致性测试守护 |
 
 ### 4.5 建议 5：校验器（P1）
 
@@ -212,9 +226,11 @@ Agent 生成内容后最需要的是「能不能用」的判断。
 | **第三阶段** | 建议 7 + 8 | 用户侧体验，工作量大 |
 | **第四阶段** | 建议 6 + 9 | 锦上添花 |
 
-### 5.1 与现有 v0.2 计划的关系（重要）
+### 5.1 与版本路线的关系（重要）
 
-现有 [PLAN.md](../PLAN.md) 的 v0.2 是「代码工作区 + 代码生成」，走「替用户写代码」的路子。这与「与 agent 深度结合」存在张力：
+立项时 [PLAN.md](../PLAN.md) 的 v0.2 曾是「代码工作区 + 代码生成」，走「替用户写代码」的路子。
+在确立「上下文优先于生成」后，v0.2 调整为关系视图与编辑效率，代码工作区顺延到 v0.3；
+路线选择本身不受影响：
 
 | 路线 | 前提 | 插件职责 |
 | --- | --- | --- |
@@ -247,12 +263,13 @@ Agent 生成内容后最需要的是「能不能用」的判断。
 | 工具与 HTTP 动作重复实现 | 二者共用 `lib/` 下的业务函数，工具只做参数适配 |
 | `summary.json` 与真实数据不一致 | 视为派生数据，可随时由源数据重建；写入后立即刷新 |
 | schema 外置导致读取开销 | 进程内缓存，文件变更时失效 |
-| 工具数量过多增加认知负担 | 控制在 8 个以内，按「项目 / 条目 / 校验 / 导出」四类划分 |
-| 破坏既有 HTTP 接口 | 工具是新增能力，不改动现有 28 个动作 |
+| 工具数量过多增加认知负担 | 按「项目 / 条目 / 结构 / 校验 / 导出」五类划分，当前 21 个；工具说明面向用途而非实现 |
+| 破坏既有 HTTP 接口 | 工具是新增能力，不改动已有动作；动作总数 37 |
 
-## 8. 待确认
+## 8. 已确认事项（2026-10-28）
 
-1. 工具命名前缀用 `mcsi_`（modcraft studio）还是不带前缀？
-2. `summary.json` 是否需要同时提供给界面使用（减少界面自身请求）？
-3. 第一阶段是否与 v0.2 合并，还是先于 v0.2 完成？
-4. 校验器是独立工具，还是作为保存操作的返回值附带告警？
+1. 工具命名前缀采用 `mcmods_`，由 `lib/tool-bridge.js` 统一添加；
+2. `summary.json` 由 agent 与工具层使用，界面仍走原有动作，不额外读取摘要；
+3. 第一阶段（工具化）已在 v0.1 完成，早于 v0.2，不再与 v0.2 合并；
+4. 校验器保留为独立工具 `project_validate`，保存操作不附带全量校验告警；
+5. 代码结构文档作为附加能力在 v0.1.1 落地，补齐「功能由哪些代码实现」的上下文。

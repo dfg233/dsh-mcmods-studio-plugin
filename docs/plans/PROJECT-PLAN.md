@@ -1,9 +1,10 @@
 # 项目管理模块计划
 
 > 模块编号：02
-> 代码位置：`lib/project.js`（项目部分）、`client.js` 的 `ProjectTab`、`CreateProjectModal`、`useStudioData`
+> 适用插件版本：v0.1.1
+> 代码位置：`lib/meta.js` 的 `project.json` / `studio.json` / `createProject`，`lib/entries.js` 的 `readProject`，`lib/paths.js` 的路径函数；`client.js` 的 `ProjectTab`、`CreateProjectModal`、`useStudioData`
 > 状态：已实现
-> 最后更新：2026-10-22
+> 最后更新：2026-10-28
 
 ## 1. 模块职责
 
@@ -47,7 +48,7 @@
 | `projectId` | 首次接管生成，之后不变 |
 | `importedAt` | 首次导入时间，不覆盖 |
 | `importedBy` | 固定 `dsh-mcmods-studio-plugin` |
-| `source` | `create` / `import` / `add` / `open` / `migrate` |
+| `source` | `create` / `import` / `reimport` / `add` / `open` / `migrate` |
 | `path` | 最近写入时的绝对路径，仅参考 |
 | `mcVersion` | 写入时的目标版本 |
 
@@ -176,15 +177,14 @@ client: refreshBoot() → open(path) → setTab('project')
 
 ## 8. 现状与缺口
 
-**已实现**：列表与缺失标记、任意目录新建、打开/关闭、元数据读写、标记补写、README 生成。
+**已实现**：列表与缺失标记、任意目录新建、打开/关闭、元数据读写、标记补写、README 生成、上次打开项目持久化（`registry.lastProject`，由 `projects.remember` 写入，`boot` 读回，移除项目时清理）。
 
 **已知缺口**：
 
 - 无删除项目功能（只有「移除登记」）；
 - 无项目重命名 / 修改 modid 的独立入口（只能改 `project.json` 或走 `saveMeta`，前端未暴露）；
 - 无项目复制/模板；
-- 无「最近打开」排序，列表按注册表顺序；
-- 关闭项目不持久化「上次打开的项目」，靠 `boot` 取第一个。
+- 无「最近打开」排序，列表仍按注册表顺序；上次打开的项目只用于启动恢复，不改变列表顺序。
 
 ## 9. 关联模块
 

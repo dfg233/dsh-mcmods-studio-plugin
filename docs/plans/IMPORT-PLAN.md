@@ -1,10 +1,11 @@
 # 工程导入模块计划
 
 > 模块编号：04
-> 代码位置：`lib/gradle.js`；`lib/project.js` 的 `resolveIdentity`、`diffEntries`、`syncEntries`、`importProject`、`reimportProject`、`analyzeImport`、`detectDescriptor`、`scanProjectAssets`、`scanRegistryNames`、`writeSnapshot`；`client.js` 的 `ImportProjectModal`、`ImportConfirmModal`、`ProjectDetailModal`
+> 适用插件版本：v0.1.1
+> 代码位置：`lib/gradle.js`；`lib/import.js` 的 `resolveIdentity`、`diffEntries`、`syncEntries`、`importProject`、`reimportProject`、`analyzeImport`、`detectDescriptor`、`scanProjectAssets`、`scanRegistryNames`、`writeSnapshot`；`client.js` 的 `ImportProjectModal`、`ImportConfirmModal`、`ProjectDetailModal`
 > 状态：已实现
 > 依据：[PROJECT-STRUCTURE.md](../PROJECT-STRUCTURE.md)
-> 最后更新：2026-10-22
+> 最后更新：2026-10-28
 
 ## 1. 模块职责
 
@@ -217,9 +218,13 @@ reimportProject
 
 | action | payload | 返回 |
 | --- | --- | --- |
-| `project.analyzeImport` | `{path, modid?, name?, version?}` | `{kind, registered, hasStudioData, marker, identity, identityError, conflicts, missing, meta, scan, diff}` |
-| `project.import` | `{path, modid?, name?, version?, force?}` | `{path, meta, features, items, imported:{assets, registryNames, created, updated, kept, typeConflicts, missing, blocks, mode, snapshot}}` |
+| `project.analyzeImport` | `{path, modid?, name?, version?}` | `{kind, registered, hasStudioData, marker, identity, identityError, conflicts, missing, meta, scan, diff, notices}` |
+| `project.import` | `{path, modid?, name?, version?, force?}` | `{path, meta, features, items, imported:{assets, registryNames, created, updated, kept, typeConflicts, missing, blocks, mode, snapshot, structure, notices}}` |
 | `project.reimport` | `{path, mode?}` | 同上 |
+
+> `notices` 记录元数据来源、加载器判定、占位符解析等系统判断（只提示，不写盘）。
+> `structure` 是导入后自动生成的结构摘要：文件 / 类 / 方法计数与注册点，明细在
+> `.mcstudio/structure.json`；结构扫描失败不影响导入主流程。
 
 `kind` 取值：`registered`（在项目列表）/ `orphan`（有工坊数据但不在列表）/ `new`（全新目录）。
 
@@ -257,17 +262,17 @@ reimportProject
 
 ## 8. 现状与缺口
 
-**已实现**：加载器识别（含 1.20.1 NeoForge 共用 `mods.toml` 的处理）、11 类资源扫描、方块/物品分类、语言文件排除、命名空间记录、注册名提取、快照生成、标记写入。
+**已实现**：加载器识别（含 1.20.1 NeoForge 共用 `mods.toml` 的处理）、`gradle.properties` 解析与占位符处理、三处身份冲突校验、11 类资源扫描、方块/物品分类、语言文件排除、命名空间记录、注册名提取、快照生成、标记写入、`notices[]` 判定提示、导入后自动生成代码结构文档、`analyzeImport` / `reimport` 的条目差异对比。
 
 **已知缺口**：
 
 - 不解析 `.jar`；
 - 不扫描 `src/client/resources`（Fabric 分源集）；
-- 不解析 `models/block` 与 `blockstates` 之间的引用关系，只按文件名建条目；
-- 注册名提取是正则匹配，无法覆盖 `DeferredRegister` 之外的复杂写法（如变量传入）；
+- 导入建条目时只按文件名判断方块/物品，不解析 `models/block` 与 `blockstates` 的引用链（素材页展示时会解析）；
+- 注册名提取是正则匹配，无法覆盖 `DeferredRegister` 之外的复杂写法（如变量传入、自定义辅助方法）；
 - 不导入 `data/<modid>/worldgen`、`damage_type`、`enchantments` 等新目录；
 - 不识别 `pack.mcmeta`；
-- 导入后不提供「差异对比」（重新扫描时新增/删除的资源）。
+- 差异对比只覆盖条目与注册名，不比较素材文件内容。
 
 ## 9. 关联模块
 

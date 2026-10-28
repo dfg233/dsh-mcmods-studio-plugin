@@ -1,9 +1,12 @@
 # 构建教程（Minecraft 1.20.1）
 
-> 本插件负责**模组设计、属性文档、素材管理与代码编写辅助**。
-> v0.1.0 不生成也不编译 gradle 工程，请按下文在 IDEA 中完成实际构建；
+> 适用版本：v0.1.1
+> 更新日期：2026-10-28
+> 本插件负责**模组设计、属性文档、素材管理、代码结构索引与代码编写辅助**。
+> v0.1.x 不生成也不编译 gradle 工程，请按下文在 IDEA 中完成实际构建；
 > v0.3 起可生成带标记区块的 Java 注册代码与资源 JSON（见 [PLAN.md](PLAN.md)）。
 > 当前仅支持 Minecraft **1.20.1**。
+> 插件版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
 
 ## 一、准备环境
 
@@ -85,6 +88,8 @@ Windows 下如提示找不到 `gradlew`，使用 `.\gradlew.bat build`。
 2. 在「构想」梳理玩法，在「物品」页填写属性；
 3. 在「贴图与模型」页上传 16×16 PNG、编辑模型 JSON；
 4. 点击「导出文档」，把 `docs/` 提交进 git；
-5. 在 IDEA 中依据文档实现 Java 注册代码。
+5. 选中项目后刷新代码结构（HTTP 动作 `structure.refresh` 或工具 `mcmods_structure_refresh`），
+   插件会生成 `.mcstudio/structure.json`，供 agent 查「注册代码在哪」；
+6. 在 IDEA 中依据文档实现 Java 注册代码。
 
-> 插件不修改 `src/main/java` 与 gradle 文件，因此可以安全地在设计阶段与编码阶段并行使用。
+> 插件不修改 `src/main/java` 与 gradle 文件（结构扫描只读），因此可以安全地在设计阶段与编码阶段并行使用。

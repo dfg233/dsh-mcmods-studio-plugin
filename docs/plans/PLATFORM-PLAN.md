@@ -1,9 +1,10 @@
 # 平台基础模块计划
 
 > 模块编号：01
+> 适用插件版本：v0.1.1
 > 代码位置：`index.js`、`lib/registry.js`、`lib/api.js`（分派部分）
 > 状态：已实现
-> 最后更新：2026-10-22
+> 最后更新：2026-10-28
 
 ## 1. 模块职责
 
@@ -16,7 +17,7 @@
 
 **不负责**：
 
-- 任何业务规则（项目如何创建、物品有哪些字段）——交给 `lib/project.js`；
+- 任何业务规则（项目如何创建、物品有哪些字段）——交给 `lib/meta.js`、`lib/schema.js`、`lib/entries.js` 等业务模块；
 - 界面渲染——交给 `client.js`；
 - 权限与鉴权——沿用 DSH 自身的会话与路由机制。
 
@@ -105,7 +106,7 @@ lib/api.js  dispatch(action, payload)
    │  ④ actions[action] 查找，未命中抛错
    │  ⑤ requireStudio(path) —— 校验目录存在且是工坊项目
    ▼
-lib/project.js / assets.js / docs.js
+lib/meta.js / entries.js / import.js / assets.js / docs.js
    │  ⑥ 执行业务逻辑，读写 .mcstudio/ 或工程资源
    ▼
 返回 data
@@ -134,16 +135,17 @@ index.js  sendJson(res, 200, {ok:true,data})
 | `setPluginRoot(dir)` | 注入插件目录，供读取内置教程 |
 | `setGraphProvider(fn)` | 注入客户端模块图读取器，仅诊断用 |
 
-动作清单（共 33 个）按前缀归属：
+动作清单（共 37 个）按前缀归属：
 
 | 前缀 | 动作 |
 | --- | --- |
-| `projects.` | `scan`、`add`、`remove` |
+| `projects.` | `scan`、`add`、`remember`、`remove` |
 | `registry.` | `setRoot` |
 | `project.` | `create`、`open`、`import`、`analyzeImport`、`reimport`、`saveMeta` |
 | `features.` | `list`、`save`、`delete` |
 | `items.` | `list`、`save`、`delete` |
 | `assets.` | `list`、`upload`、`read`、`readMany`、`delete`、`model.get`、`model.save`、`root` |
+| `structure.` | `refresh`、`get`、`find`、`annotate` |
 | `agent.` | `summary`、`validate`、`tools`、`call` |
 | 其他 | `boot`、`docs.export`、`guide`、`debug.clientGraph` |
 

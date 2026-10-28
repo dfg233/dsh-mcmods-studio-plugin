@@ -1,12 +1,16 @@
 # 架构说明
 
+> 适用版本：v0.1.1
+> 更新日期：2026-10-28
+> 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)，实现状态见 [STATUS.md](STATUS.md)。
+
 ## 1. 总体结构
 
 ```text
 ┌──────────────────────────────────────────────────────────┐
 │ 使用方                                                     │
 │   用户 → DSH Web UI（浏览器）                              │
-│   Agent → 17 个原生工具（mcmods_*）或 HTTP 动作             │
+│   Agent → 21 个原生工具（mcmods_*）或 HTTP 动作             │
 └───────────────────────┬──────────────────────────────────┘
                         │ POST /mcmods-studio/api
                         ▼
@@ -27,8 +31,8 @@
 ┌──────────────────────────────────────────────────────────┐
 │ DSH Host（Node 进程）                                     │
 │   index.js  →  webServer.register('/mcmods-studio/api')     │
-│             →  tools.register(17 个 mcmods_* 工具)        │
-│   lib/api.js → 33 个动作的声明式路由表                     │
+│             →  tools.register(21 个 mcmods_* 工具)        │
+│   lib/api.js → 37 个动作的声明式路由表                     │
 │      ├─ registry.js   注册表（$DSH_HOME/mcmods-studio）     │
 │      ├─ paths.js      .mcstudio 路径与 id 校验            │
 │      ├─ schema.js     加载器 / 状态 / 类型 / 19 个字段     │
@@ -39,6 +43,7 @@
 │      ├─ assets.js     贴图 / 模型 / 方块面解析            │
 │      ├─ docs.js       Markdown 导出                       │
 │      ├─ summary.js    summary.json（agent 用摘要）        │
+│      ├─ structure.js  Java 代码结构解析与增量注解          │
 │      └─ validate.js   9 类校验                           │
 │   lib/tool-bridge.js → 把 lib/tools.js 的定义注册为工具    │
 └───────────────────────┬──────────────────────────────────┘

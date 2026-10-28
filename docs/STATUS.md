@@ -1,9 +1,9 @@
 # 项目状态：已实现、未实现与要求
 
-> 适用版本：模组工坊（`dsh-mcmods-studio-plugin`）v0.1.0
-> 更新日期：2026-10-25
+> 适用版本：模组工坊（`dsh-mcmods-studio-plugin`）v0.1.1
+> 更新日期：2026-10-28
 > 本文档回答三个问题：**现在能做什么**、**还不能做什么**、**必须遵守什么**。
-> 历史变更见 [CHANGELOG.md](CHANGELOG.md)，开发方式见 [DEVELOPMENT.md](DEVELOPMENT.md)，版本路线与宗旨见 [PLAN.md](PLAN.md)，代码索引见 [INDEX.md](INDEX.md)。
+> 历史变更见 [CHANGELOG.md](CHANGELOG.md)，版本规则与发版流程见 [VERSION-PLAN.md](VERSION-PLAN.md)，开发方式见 [DEVELOPMENT.md](DEVELOPMENT.md)，版本路线与宗旨见 [PLAN.md](PLAN.md)，代码索引见 [INDEX.md](INDEX.md)。
 
 ## 0. 设计目的
 
@@ -16,7 +16,7 @@
 
 当前承担的三件事：
 
-1. **为 agent 提供上下文**（**已完成**）：17 个 DSH 原生工具、项目摘要 `summary.json`、
+1. **为 agent 提供上下文**（**已完成**）：21 个 DSH 原生工具、项目摘要 `summary.json`、
    schema 外置 `data/schema.json`、9 类校验器、导入判定提示；
 2. **为用户提供直观平台**（**大部分完成**）：构想清单、物品属性、贴图模型、文档集中在一处，
    可画布与列表浏览；缺依赖图、时间线与内联编辑；
@@ -31,8 +31,8 @@
 | 3 | 清晰明了的物品属性文档 | 已实现 | 19 个字段、五组分类的属性编辑器；导出 `docs/ITEMS/<id>.md` |
 | 4 | 贴图、模型管理页面 | 已实现 | 「贴图与模型」页；上传、预览、模型 JSON 编辑、缺失统计 |
 | 5 | 工程文件格式清晰，`docs/` 下存放 Markdown 更新日志与开发文档 | 已实现 | 项目数据集中在 `.mcstudio/`；插件自身文档在 `docs/` |
-| 6 | 允许编写代码（浏览 / 编辑源码、生成注册代码） | 计划中（v0.3） | 见 [PLAN.md](PLAN.md) 第 3 节；当前版本不含代码工作区 |
-| 7 | 图形化创建与修改模组内容（物品 / 方块 / 配方等） | 部分实现 | 物品已支持图形化创建与编辑；方块、配方、语言文件在 v0.3 计划 |
+| 6 | 允许编写代码（浏览 / 编辑源码、生成注册代码） | 计划中（v0.3） | 见 [PLAN.md](PLAN.md) 第 4 节 v0.3.0；当前版本不含代码工作区 |
+| 7 | 图形化创建与修改模组内容（物品 / 方块 / 配方等） | 部分实现 | 物品已支持图形化创建与编辑；方块、配方、语言文件在 v0.4 计划 |
 
 后续追加的需求：
 
@@ -124,28 +124,29 @@
 ### 2.8 运行与数据
 
 - 项目数据：`<项目>/.mcstudio/project.json`、`features.json`、`items/<id>.json`、
-  `studio.json`（工坊标记）、`summary.json`（派生摘要）；
+  `studio.json`（工坊标记）、`summary.json`（派生摘要）、`structure.json`（派生代码结构）；
 - 插件注册表：`$DSH_HOME/mcmods-studio/registry.json`（记录扫描根目录与项目列表）；
-- Host 接口：`POST /mcmods-studio/api`，共 **33 个动作**：
+- Host 接口：`POST /mcmods-studio/api`，共 **37 个动作**：
 
 | 分组 | 动作 |
 | --- | --- |
 | 项目与注册表 | `boot`、`projects.scan`、`projects.add`、`projects.remove`、`projects.remember`、`registry.setRoot`、`project.create`、`project.open`、`project.import`、`project.analyzeImport`、`project.reimport`、`project.saveMeta` |
 | 构想与物品 | `features.list`、`features.save`、`features.delete`、`items.list`、`items.save`、`items.delete` |
 | 素材与文档 | `assets.list`、`assets.upload`、`assets.read`、`assets.readMany`、`assets.delete`、`assets.model.get`、`assets.model.save`、`assets.root`、`docs.export`、`guide` |
+| 代码结构 | `structure.refresh`、`structure.get`、`structure.find`、`structure.annotate` |
 | Agent 与诊断 | `agent.summary`、`agent.validate`、`agent.tools`、`agent.call`、`debug.clientGraph` |
 
-- Agent 工具：17 个，注册为 DSH 原生 `mcmods_*` 工具，清单见 [INDEX.md](INDEX.md) 第 4 节。
+- Agent 工具：21 个，注册为 DSH 原生 `mcmods_*` 工具，清单见 [INDEX.md](INDEX.md) 第 4 节。
 
 ## 3. 未实现功能
 
 ### 3.0 Agent 接入（已完成）
 
-v0.1.0 已补齐面向 agent 的能力层，不再需要自写脚本探测项目。
+v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目。
 
 | 能力 | 落地 | 说明 |
 | --- | --- | --- |
-| 原生工具 | `lib/tools.js` + `lib/tool-bridge.js` | 17 个工具，注册为 DSH 原生 `mcmods_*` 工具，agent 可直接调用 |
+| 原生工具 | `lib/tools.js` + `lib/tool-bridge.js` | 21 个工具，注册为 DSH 原生 `mcmods_*` 工具，agent 可直接调用 |
 | 项目摘要 | `lib/summary.js` | `.mcstudio/summary.json`，12 物品约 1.2 KB，写操作后自动刷新 |
 | 紧凑 / 详细双表示 | `item_list` / `item_get` | 列举仅回 id / 名称 / 类型（12 物品约 300 字节）；详情才回 19 个字段 |
 | schema 外置 | `data/schema.json` | 由 `lib/schema.js` 生成，`test/10-schema-sync.mjs` 守住一致性 |
@@ -164,7 +165,7 @@ v0.1.0 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | --- | --- | --- |
 | 方块贴图不显示 | `listAssets` 只扫 `textures/item` 与 `models/item`，完全没看 `textures/block`、`models/block`、`blockstates` | 新增 `describeBlock` 按「blockstate → 模型 → parent 链 → 贴图」解析，素材页新增「方块面贴图」区块 |
 | 项目切换不持久化 | `StudioPage` 挂载时无条件打开列表第一个未缺失项目 | 注册表新增 `lastProject`，新动作 `projects.remember`，启动时优先恢复上次项目 |
-| 工程结构文档 | 缺少结构解析与实时更新机制 | **留到下一轮**：需先确定更新时机（全量重建或增量补丁）与 `summary.json` 的职责边界 |
+| 工程结构文档 | 缺少结构解析与实时更新机制 | 已在 3.0.2 完成 |
 
 方块解析的具体规则：读 `blockstates/<id>.json` 收集 `variants` 与 `multipart`
 引用的模型；沿 `parent` 链自下而上合并 `textures`；展开 `#all` 这类变量引用
@@ -175,14 +176,53 @@ v0.1.0 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 资源不在工程内，只按模型声明的 `textures` 归类。此时 `faces` 可能为空，界面
 退回按 id 显示缩略图。
 
+### 3.0.2 代码结构文档（已完成）
+
+让 agent 不必反复 grep 源码：一次读出「哪段代码实现什么」「功能由哪些代码实现」。
+
+| 层 | 落地 | 说明 |
+| --- | --- | --- |
+| 确定性扫描 | `lib/structure.js` 的 `parseJava` | 解析包、导入、类、字段、方法、注册调用，每项带行号；不调用模型 |
+| 增量更新 | `refreshStructure` | 按文件哈希：未变整条复用（含注解），变了重扫并标记 `stale` |
+| 语义注解 | `setAnnotation` | agent 写「这段代码实现什么」，只改指定文件 |
+| 注册反查 | `findRegistration` | 回答「`ruby` 注册在哪个文件哪一行」 |
+| 接入导入 | `importProject` / `reimportProject` | 导入后自动生成初版，失败不影响导入 |
+| 合并摘要 | `summary.json` 的 `code` 字段 | 只放注册点与计数，明细留在 `structure.json` |
+| 对外能力 | 4 个 HTTP 动作 + 4 个 agent 工具 | `structure.refresh/get/find/annotate` |
+
+**为什么扫描不调模型**：
+
+- 导入原本 1 秒级，调模型会变成分钟级；
+- 同一份源码两次导入应得到同样的结构，否则破坏「事实只有一份」；
+- 没有网络或未配置凭据时导入不能失败。
+
+因此「功能由哪些代码实现」用确定性扫描，「这段代码实现什么功能」由 agent
+在对话中按需补写，写进 `annotation`。
+
+**解析边界**：按行浅解析，不建 AST。目标定位是「找得到」而非编译级准确，
+跨行复杂泛型、匿名内部类里的方法可能漏掉。字符串与注释会先被掩码成空格，
+避免把注释里的 `register("fake")` 当成真实注册。已支持「声明单行、初始化换行」
+的常见字段写法与带类型形参的泛型方法；字段只从类体顶层收集，方法体局部变量
+不会被误记。通过 `registerBlocks("id", ...)` 这类自定义辅助方法间接注册的
+条目仍识别不到（调用处没有字符串字面量 id）。
+
+### 3.0.3 版本规划与 v0.1.1 维护补丁（已完成）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| 版本规则 | 新增 [VERSION-PLAN.md](VERSION-PLAN.md) | 每次优化或修复 bug 后 PATCH +1（`0.1.0` → `0.1.1`）；MINOR 按路线阶段；MAJOR 用于稳定版与破坏性变更 |
+| 发版流程 | 同上，第 3 节 | 测试 → 版本号 → CHANGELOG → 全部文档 → 版本历史 → 提交 |
+| 结构扫描修复 | `lib/structure.js` | 跨行字段声明、泛型方法与局部变量误判、`BlockEntity` 归类顺序、含 `/` 的注册 id |
+| 摘要同步 | `lib/tools.js` | `structure_refresh` / `structure_annotate` 工具路径与 HTTP 动作一致，写后刷新 `summary.json` |
+| 文档校准 | `docs/` 全量 | 工具 21、动作 37、测试 159、版本 v0.1.1；修复 `VERSION-PLAN.md` 死链 |
+
 ### 3.1 计划中（按优先级）
 
-> 优先级口径：P0 = 渲染层测试（**已完成**）；P1 = v0.2 关系视图与编辑效率；P2 = v0.3 代码工作区与生成；P3 = v0.4 图形化；P4 = v0.5 质量与效率。
+> 优先级口径：P0 = 渲染层测试与代码结构文档（**已完成**）；P1 = v0.2 关系视图与编辑效率；P2 = v0.3 代码工作区与生成；P3 = v0.4 图形化；P4 = v0.5 质量与效率。
 
 | 优先级 | 功能 | 说明 |
 | --- | --- | --- |
-| P1 | 工程结构文档 | 解析 Java 包结构、注册类、依赖清单写入 `.mcstudio/`，并在后续写操作后实时更新；需先定更新时机与 `summary.json` 的职责边界 |
-| P1 | 关系视图 | 构想 → 物品 → 素材的依赖图、缺失面板、变更时间线；需先在构想上增加 `itemRefs` 字段 |
+| P1 | 关系视图 | 构想 → 物品 → 素材的依赖图、缺失面板、变更时间线；复用构想上已有的 `items` 关联字段（`FeatureEditor` 可编辑），不再新增 `itemRefs` |
 | P1 | 内联编辑 | 列表内直接改名称、类型、堆叠，不必打开弹窗 |
 | P1 | 批量操作 | 多选后统一改类型或标签 |
 | P2 | 代码工作区 | 工程文件树 + 文本编辑器（行号、未保存提示、`Ctrl+S`），路径限定在工程内 |
@@ -206,17 +246,17 @@ v0.1.0 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ### 3.2 当前版本不做
 
-- **v0.1.0 不含代码工作区与代码生成**：代码编辑与 Java / 资源生成移到 v0.3（见 [PLAN.md](PLAN.md)），当前版本的构建仍由用户在 IDEA 中完成；
+- **当前版本（v0.1.x）不含代码工作区与代码生成**：代码编辑与 Java / 资源生成移到 v0.3（见 [PLAN.md](PLAN.md)），当前版本的构建仍由用户在 IDEA 中完成；
 - 不做完整 IDE：不实现编译、运行、调试、反编译；
 - 不做云端同步或多人协作；
-- v0.1.0 不修改用户的 Java、gradle、`mods.toml` 等工程文件（导入时只读取）；v0.3 起仅在作者确认后写入生成区块与资源 JSON。
+- 当前版本不修改用户的 Java、gradle、`mods.toml` 等工程文件（导入与结构扫描只读取）；v0.3 起仅在作者确认后写入生成区块与资源 JSON。
 
 ## 4. 项目要求
 
 ### 4.1 目标平台
 
 - **当前适配：Minecraft 1.20.1（唯一版本）**；其他版本在后续版本中逐步适配，路线见 [PLAN.md](PLAN.md) 第 2 节；
-- v0.1.0 – v0.4.0 只保证 1.20.1，不提供跨版本兼容；
+- v0.1.0 – v0.5.0 只保证 1.20.1，不提供跨版本兼容；
 - v1.0.0 起新增 1.21.1，之后按需扩展 1.19.2 / 1.16.5 等候选版本；
 - Forge 47.x、NeoForge 47.1.x、Fabric Loader 0.15.x + Fabric API（均对应 1.20.1）。
 
@@ -247,13 +287,14 @@ v0.1.0 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**14 个文件、144 项全部通过**）：
+已通过自动化验证（`npm test`，**15 个文件、159 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
-| Host 业务 | 96 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| Host 业务 | 102 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
+| 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |
 | 客户端加载 | 8 项 | 假 `__ModuleLoader__` + 假 React，验证加载、模块 id、座位注册 |
 | 渲染结构 | 15 项 | 假 React 渲染组件，断言文本、按钮、条件分支 |
 | schema 一致性 | 2 项 | 比对 `schema.js` 与 `data/schema.json` |
@@ -263,7 +304,8 @@ v0.1.0 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 - 接口：`boot`、项目创建与打开、物品保存、文档导出、贴图上传、模型生成；
 - 导入：Fabric 工程与 Forge 工程均能识别 modid、版本、贴图与 Java 注册名；
 - 数据：画布坐标持久化、快照生成、注册表读写、摘要重建；
-- Agent：17 个工具全部注册到宿主，`agent.tools` 返回 17 工具 / 32 动作；
+- 代码结构：真实 Forge 工程扫描 14 文件 / 15 类 / 38 方法，注册点按 `items` 归类；
+- Agent：21 个工具全部注册到宿主，`agent.tools` 返回 21 工具 / 37 动作；
 - 槽位：`main`、`sidebar.panellist`、`sidebar.right.pane.tab` 均已确认注册且处于激活状态；
 - 安装：bundle 安装与卸载、接口新旧路径切换。
 
@@ -279,5 +321,6 @@ v0.1.0 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 ## 6. 维护约定
 
 - 功能完成、取消或调整优先级时，同步更新本文档与 [CHANGELOG.md](CHANGELOG.md)；
+- 每次优化或修复 bug 后按 [VERSION-PLAN.md](VERSION-PLAN.md) 升 PATCH 版本，并同步全部文档；
 - 本文档只描述**当前状态**，不记录历史；
 - 需求变更时先改第 1 节对照表，再改代码。

@@ -1,10 +1,10 @@
 # 项目计划书
 
 > 项目：模组工坊（`dsh-mcmods-studio-plugin`）
-> 当前版本：v0.1.0（已交付并运行）
+> 当前版本：v0.1.1（已交付并运行）
 > 当前适配：**仅 Minecraft 1.20.1**（Forge / NeoForge / Fabric）
-> 更新日期：2026-10-25
-> 本文档描述**方向与路线**。实现细节见 [STATUS.md](STATUS.md)，代码索引见 [INDEX.md](INDEX.md)。
+> 更新日期：2026-10-28
+> 本文档描述**方向与路线**。实现细节见 [STATUS.md](STATUS.md)，代码索引见 [INDEX.md](INDEX.md)，版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
 
 ## 0. 插件宗旨
 
@@ -31,7 +31,7 @@
 
 | 宗旨要求 | 现状 | 落地方式 |
 | --- | --- | --- |
-| agent 能直接使用 | **已达成** | 17 个 DSH 原生工具（`mcmods_*`）+ 33 个 HTTP 动作 |
+| agent 能直接使用 | **已达成** | 21 个 DSH 原生工具（`mcmods_*`）+ 37 个 HTTP 动作 |
 | 上下文紧凑 | **已达成** | `summary.json`（12 物品约 1.2 KB）、`item_list` 紧凑格式 |
 | 可校验 | **已达成** | 9 类校验，分级 error / warning |
 | 字段知识可读 | **已达成** | `data/schema.json` 对外副本 |
@@ -90,6 +90,13 @@
 - **界面**：左侧图标区、主面板五页签、右侧栏项目概览；
 - **Agent**：17 个原生工具、项目摘要、9 类校验、导入判定提示。
 
+### v0.1.1 —— 维护补丁（已完成）
+
+- **代码结构文档**：`structure.json` 记录 Java 文件、类、方法、行号与注册点；按文件哈希增量；agent 可写语义注解；4 个 HTTP 动作 + 4 个原生工具（工具总数 21）；导入后自动生成；
+- **版本规划**：新增 [VERSION-PLAN.md](VERSION-PLAN.md)，每次优化或修复 bug 后 PATCH +1，并规定发版流程与全部文档的同步清单；
+- **扫描修复**：跨行字段声明、泛型方法与局部变量误判、`BlockEntity` 归类顺序、含 `/` 的注册 id、解析器版本缓存；工具路径写后同步 `summary.json`；
+- **文档校准**：工具 21、动作 37、测试 159、模块计划与重构记录的死链/过时描述。
+
 ### v0.2.0 —— 关系视图与编辑效率（下一阶段）
 
 按宗旨第 2 条，补齐「用户看不到关系」与「编辑成本高」两块。
@@ -105,7 +112,7 @@
 
 **验收标准**
 
-- 从某个构想能一键看到它关联的物品（需先在构想上增加 `itemRefs` 字段）；
+- 从某个构想能一键看到它关联的物品（构想上已有 `items` 关联字段，直接复用）；
 - 缺素材的物品在一个页面内全部可见，并可点击跳转；
 - 列表内改一个字段不需要打开弹窗。
 
@@ -163,12 +170,12 @@
 
 ## 6. 技术路线
 
-当前实现（v0.1.0）的分层：
+当前实现（v0.1.1）的分层：
 
 | 层 | 模块 | 职责 |
 | --- | --- | --- |
 | 入口 | `index.js` | HTTP 路由、原生工具注册、卸载清理 |
-| 分派 | `lib/api.js` | 33 个动作的声明式路由表 |
+| 分派 | `lib/api.js` | 37 个动作的声明式路由表 |
 | 路径 | `lib/paths.js` | `.mcstudio/` 路径、id 校验、路径归属 |
 | 定义 | `lib/schema.js` | 加载器、状态、类型、19 个字段 |
 | 元数据 | `lib/meta.js` | `project.json` 与 `studio.json` |
@@ -179,7 +186,7 @@
 | 导出 | `lib/docs.js` | 五份 Markdown |
 | 摘要 | `lib/summary.js` | `summary.json` |
 | 校验 | `lib/validate.js` | 9 类检查 |
-| 工具 | `lib/tools.js` + `lib/tool-bridge.js` | 17 个工具定义与 DSH 注册 |
+| 工具 | `lib/tools.js` + `lib/tool-bridge.js` | 21 个工具定义与 DSH 注册 |
 | 兼容 | `lib/project.js` | 转发层，保持既有 import 路径 |
 
 规划中的新增：
@@ -208,11 +215,12 @@
 
 | 文档 | 内容 |
 | --- | --- |
+| [VERSION-PLAN.md](VERSION-PLAN.md) | 版本号规则、发版流程、版本历史与路线 |
 | [STATUS.md](STATUS.md) | 逐项实现状态、未实现清单、项目要求 |
 | [INDEX.md](INDEX.md) | 文件地图、函数表、动作表、组件表 |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 分层结构与数据流 |
 | [DATA-FORMAT.md](DATA-FORMAT.md) | `.mcstudio/` 全部文件格式 |
-| [plans/](plans/README.md) | 13 份模块级详细计划 |
+| [plans/](plans/README.md) | 12 份模块级详细计划 + 索引 |
 | [refactor/](refactor/) | 5 份重构记录（历史存档，不再更新） |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | 安装、调试、约定 |
 | [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) | MC 工程的标准目录结构 |

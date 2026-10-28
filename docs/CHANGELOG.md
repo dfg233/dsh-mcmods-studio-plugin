@@ -7,11 +7,41 @@
 ### 计划中
 
 - 批量导入贴图（多选拖放）。
-- 项目快照的差异对比（导入后与当前数据的变更）。
-- 供 AI Agent 调用的工具集（通过对话创建物品、导出文档）。
+- 素材文件内容级差异对比（重新导入时目前只比较条目与注册名）。
 - 方块状态与多方块模型的可视化编辑。
 
-## [0.1.0] - 2026-10-20
+## [0.1.1] - 2026-10-28
+
+### 新增
+
+- 代码结构文档：新增 `lib/structure.js`，用确定性浅解析提取 Java 包、导入、类、字段、方法、注册点与行号，写入 `.mcstudio/structure.json`；按文件哈希增量刷新，未变文件整条复用，变了的文件旧注解标记 `stale`。
+- Agent 语义注解：支持按文件写「这段代码实现什么功能」，`members` 键为类名或「类名#方法名」，只覆盖指定文件。
+- 对外能力：新增 `structure.refresh`、`structure.get`、`structure.find`、`structure.annotate` 4 个 HTTP 动作，以及 `mcmods_structure_refresh/get/find/annotate` 4 个原生工具。
+- 导入集成：`project.import` / `project.reimport` 完成后自动生成初版结构文档，失败不影响导入主流程。
+- 摘要集成：`summary.json` 新增 `code` 字段，只放注册点与计数，明细留在 `structure.json`。
+- 版本规划：新增 [VERSION-PLAN.md](VERSION-PLAN.md)，规定每次优化或修复 bug 后 PATCH 版本 +1（如 `0.1.0` → `0.1.1`），并明确发版流程与全部文档的同步清单。
+
+### 修复
+
+- 跨行字段声明（`public static final DeferredRegister<Item> ITEMS =` 换行到下一行）无法被解析，导致该注册表下的全部注册点被归为 `other`；现在会收集续行并在分号处落库。
+- 泛型方法声明（`private static <T extends Block> RegistryObject<T> ...`）未被识别为方法，导致方法体的局部变量与 `return` 语句被误记成类字段；现在先剥离类型形参再匹配，并且字段识别只发生在类体顶层。
+- `DeferredRegister<BlockEntity>` 曾被宽泛的 `<Block` 规则抢先归类为 `blocks`；调整匹配顺序，先判断 `Item` / `BlockItem` / `BlockEntity` / `Fluid`，再判断 `Block`。
+- 注册 id 中含 `/`（例如 `material/cardboard`）时未被识别为注册点，现已纳入匹配范围。
+- 通过工具调用 `structure_refresh` / `structure_annotate` 时不会刷新 `summary.json`；现在与 HTTP 动作的 `summary: true` 行为一致。
+- 结构文档没有解析器版本，升级插件后文件哈希未变时会继续复用旧解析结果；现在写入 `parserVersion`，与当前实现不符时整份重扫，并保留旧注解（标记失效）。
+
+### 变更
+
+- `package.json` 版本由 `0.1.0` 升至 `0.1.1`；插件版本、项目 `mcVersion`、数据 `schemaVersion` 三者保持独立。
+- `structure.annotate` 动作补充 `summary: true`，写入注解后同步摘要中的 `mode` 与 `annotated` 计数。
+
+### 文档
+
+- 全量校准所有文档的版本、日期、工具数（21）、动作数（37）、测试数（159）与模块状态。
+- 修复 5 份重构记录指向不存在的 `VERSION-PLAN.md` 的死链。
+- 校准 FEATURES-PLAN（关联物品字段已存在）、ASSETS-PLAN（方块面解析已实现）、IMPORT-PLAN（notices 与结构文档）、PROJECT-PLAN（lastProject）、SHELL-PLAN（新增弹窗）、PLATFORM-PLAN（动作表漏项）、AGENT-PLAN（工具前缀与数量）等过时描述。
+
+## [0.1.0] - 2026-10-26
 
 ### 新增
 

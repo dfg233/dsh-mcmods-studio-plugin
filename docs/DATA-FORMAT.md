@@ -1,5 +1,10 @@
 # 数据格式
 
+> 适用版本：v0.1.1
+> 更新日期：2026-10-28
+> 数据文件内的 `schemaVersion` 与插件版本号相互独立；插件升级不自动改写数据格式。
+> 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
+
 插件在项目根下使用 `.mcstudio/` 保存设计数据。所有文件均为 UTF-8 JSON，
 缩进 2 空格，字段顺序稳定，便于 git diff。
 
@@ -12,6 +17,7 @@
 │   ├── project.json          # 项目元数据
 │   ├── features.json         # 构想清单
 │   ├── summary.json          # 派生摘要（供 agent 一次读取，可安全删除）
+│   ├── structure.json        # 代码结构文档（按文件哈希增量，可重建）
 │   └── items/
 │       ├── ruby.json         # 每个物品一份
 │       └── ruby_sword.json
@@ -259,6 +265,10 @@
   "ideas": [{ "id": "f_1", "name": "宝石挖掘", "status": "planning", "priority": "high" }],
   "items": [{ "id": "ruby", "name": "红宝石", "type": "material", "texture": true, "model": true }],
   "missing": { "ids": ["ruby_sword"], "count": 1 },
+  "code": {
+    "mode": "annotated", "files": 6, "classes": 8, "methods": 34, "annotated": 4, "stale": 1,
+    "registrations": { "items": [{ "id": "ruby", "file": "src/main/java/com/example/ModItems.java", "line": 13 }] }
+  },
   "updatedAt": "2026-10-25T09:00:00.000Z"
 }
 ```
@@ -268,11 +278,93 @@
 - 可以随时删除，下次访问时会重建；
 - 任何标注 `summary: true` 的写操作后自动刷新；
 - 手工修改不影响插件判断，因为真实数据在 `project.json` / `items/` 里；
-- `items[]` 只含最小字段，**不含 19 项属性**——要读属性用 `items/<id>.json` 或 `item_get` 工具。
+- `items[]` 只含最小字段，**不含 19 项属性**——要读属性用 `items/<id>.json` 或 `item_get` 工具；
+- `code` 只含注册点与计数，文件级明细在 `structure.json`（见 7.1），避免摘要膨胀。
 
 体积参考：12 个物品 + 8 条构想约 1.2 KB，逐文件读取约 8 KB。
 
-## 7.1 registry.json（插件注册表）
+## 7.1 structure.json（代码结构文档）
+
+回答「哪段代码实现什么」「功能由哪些代码实现」，让 agent 不必反复 grep 源码。
+与 `summary.json` 分工：summary 描述设计层，structure 描述实现层。
+
+```json
+{
+  "schemaVersion": 1,
+  "parserVersion": 2,
+  "generatedAt": "2026-10-27T12:00:00.000Z",
+  "modid": "examplemod",
+  "mode": "annotated",
+  "source": "src/main/java",
+  "totals": { "files": 6, "classes": 8, "methods": 34, "annotated": 4, "stale": 1 },
+  "incremental": { "reused": 5, "rescanned": 1, "removed": [] },
+  "index": {
+    "registrations": {
+      "items": [{ "id": "ruby", "file": "src/main/java/com/example/ModItems.java", "line": 13, "class": "ModItems", "field": "ITEMS" }]
+    },
+    "packages": { "com.example": ["src/main/java/com/example/ModItems.java"] }
+  },
+  "files": [
+    {
+      "path": "src/main/java/com/example/ModItems.java",
+      "hash": "3f2a1b8c9d4e5f60",
+      "bytes": 1820,
+      "lines": 48,
+      "package": "com.example",
+      "imports": ["net.minecraft.world.item.Item"],
+      "classes": [
+        {
+          "name": "ModItems", "kind": "class", "line": 9, "endLine": 46,
+          "modifiers": ["public"], "extends": "", "implements": [],
+          "javadoc": "物品注册表。",
+          "fields": [{ "name": "ITEMS", "type": "DeferredRegister<Item>", "line": 11, "init": "...", "javadoc": "物品注册表实例" }],
+          "methods": [{ "name": "register", "kind": "method", "line": 38, "endLine": 42, "returns": "void", "signature": "register(IEventBus bus)", "javadoc": "注册全部物品。" }],
+          "registrations": [{ "registry": "ITEMS", "id": "ruby", "line": 13, "kind": "items", "field": "ITEMS" }]
+        }
+      ],
+      "annotation": {
+        "hash": "3f2a1b8c9d4e5f60",
+        "summary": "物品注册表，集中登记全部物品",
+        "members": { "ModItems": "物品注册表", "ModItems#register": "注册全部物品" },
+        "stale": false,
+        "annotatedAt": "2026-10-27T12:05:00.000Z"
+      }
+    }
+  ]
+}
+```
+
+**性质**：派生数据，可删除重建。
+
+| 字段 | 含义 |
+| --- | --- |
+| `mode` | `scan` 仅有结构；`annotated` 含 agent 注解 |
+| `parserVersion` | 解析器版本；与当前实现不一致时忽略旧缓存、整份重扫 |
+| `totals.annotated` | 注解有效（未失效）的文件数 |
+| `totals.stale` | 文件已改动、注解待重新确认的文件数 |
+| `incremental` | 上次刷新的复用 / 重扫 / 移除统计 |
+
+**增量规则**：以文件 `hash` 为准。
+
+| 情况 | 处理 |
+| --- | --- |
+| `parserVersion` 与当前实现不符 | 忽略全部旧条目，整份重扫（即使文件哈希未变）；旧注解保留并标记 `stale` |
+| 哈希未变 | 整条复用，注解原样保留 |
+| 哈希改变 | 重新扫描，旧注解保留但标 `stale: true` |
+| 新增文件 | 全量扫描 |
+| 文件删除 | 从 `files[]` 移除，记入 `incremental.removed` |
+
+**注解的 `members` 键**：类名（如 `ModItems`）或「类名#方法名」
+（如 `ModItems#register`）。`stale` 为真时旧文本仍保留供参考，但不计入
+`totals.annotated`，也不算 `mode: annotated` 的依据。
+
+**解析边界**：按行浅解析，不构建 AST。字符串与注释先被掩码成空格，
+因此注释里的 `register("fake")` 不会被当成真实注册；代价是跨行复杂泛型、
+匿名内部类里的方法可能漏掉。已支持「声明单行、初始化换行」的字段写法与
+带类型形参的泛型方法；字段只从类体顶层收集，局部变量不会误记。通过
+`registerBlocks("id", ...)` 这类自定义辅助方法间接注册的条目仍识别不到。
+
+## 7.2 registry.json（插件注册表）
 
 位于 `$DSH_HOME/mcmods-studio/registry.json`，跨项目共享，记录扫描根目录与已登记项目。
 

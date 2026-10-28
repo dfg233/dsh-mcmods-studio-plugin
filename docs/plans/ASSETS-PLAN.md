@@ -1,10 +1,11 @@
 # 素材管理模块计划
 
 > 模块编号：07
+> 适用插件版本：v0.1.1
 > 代码位置：`lib/assets.js`、`client.js` 的 `AssetsTab`
 > 状态：已实现
 > 依据：[PROJECT-STRUCTURE.md](../PROJECT-STRUCTURE.md) 第 5 节
-> 最后更新：2026-10-22
+> 最后更新：2026-10-28
 
 ## 1. 模块职责
 
@@ -36,10 +37,14 @@
 
 | 资源 | 路径 |
 | --- | --- |
-| 贴图 | `<root>/textures/item/<id>.png` |
-| 模型 | `<root>/models/item/<id>.json` |
+| 物品贴图 | `<root>/textures/item/<id>.png` |
+| 物品模型 | `<root>/models/item/<id>.json` |
+| 方块贴图 | `<root>/textures/block/`（只读解析，按 blockstate → 模型 → parent 链） |
+| 方块模型 | `<root>/models/block/`（只读解析） |
+| 方块状态 | `<root>/blockstates/`（只读解析） |
 
-> 当前只处理 `item` 子目录；`block`、`blockstates`、`lang` 由导入模块读取，但素材页不提供上传。
+> 上传与模型编辑只支持 `item` 子目录；`block`、`blockstates`、`lang` 由导入模块读取，
+> 其中方块贴图已能按面解析展示，但素材页不提供上传与编辑。
 
 ### 2.3 校验规则
 
@@ -184,11 +189,11 @@ listAssets
 
 ## 8. 现状与缺口
 
-**已实现**：目录回退策略、PNG 三重校验、上传/删除/读取、批量预览、模型查看与编辑、默认模型生成、缺失统计。
+**已实现**：目录回退策略、PNG 三重校验、上传/删除/读取、批量预览、模型查看与编辑、默认模型生成、缺失统计、方块贴图按 blockstate → 模型 → parent 链 → 面解析。
 
 **已知缺口**：
 
-- 只能管理 `textures/item` 与 `models/item`，不支持 `block`、`blockstates`、`lang`、`sounds`；
+- 上传与模型编辑只支持 `textures/item` 与 `models/item`；`block`、`blockstates`、`lang`、`sounds` 只能读取，不能上传或编辑；
 - 无批量上传、拖拽上传；
 - 无图片裁剪/缩放/背景透明化；
 - 无动画 `.mcmeta` 编辑；

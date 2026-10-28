@@ -1,9 +1,10 @@
 # 界面外壳模块计划
 
 > 模块编号：10
+> 适用插件版本：v0.1.1
 > 代码位置：`client.js` 全文件（主题常量、通用组件、`StudioPage`、`SidebarStudioPanel`、`PathField`、`ensureStyles`、`studioState`、座位注册）
 > 状态：已实现
-> 最后更新：2026-10-22
+> 最后更新：2026-10-28
 
 ## 1. 模块职责
 
@@ -136,7 +137,7 @@ Tabs → 对应 Tab 组件
    │  assets → AssetsTab
    │  guide → GuideTab
    ▼
-弹窗层：CreateProjectModal / ImportProjectModal / FeatureEditor / ItemEditor
+弹窗层：CreateProjectModal / ImportProjectModal / ImportConfirmModal / ProjectDetailModal / FeatureEditor / ItemEditor
 ```
 
 ### 4.3 右侧栏联动
@@ -190,9 +191,10 @@ useEffect([state.projectPath])
 | --- | --- |
 | `StudioPage` | 页面框架、页签、弹窗挂载 |
 | `ProjectTab` / `FeaturesTab` / `ItemsTab` / `AssetsTab` / `GuideTab` | 五个页签 |
-| `CreateProjectModal` / `ImportProjectModal` | 项目弹窗 |
+| `CreateProjectModal` / `ImportProjectModal` | 项目新建 / 导入弹窗 |
+| `ImportConfirmModal` / `ProjectDetailModal` | 导入差异确认 / 项目详情 |
 | `FeatureEditor` / `ItemEditor` | 内容编辑弹窗 |
-| `SidebarStudioPanel` | 右侧栏面板 |
+| `SidebarStudioPanel` | 右侧栏面板（项目概览、选中物品、缺失素材数） |
 
 ## 7. 边界与错误
 
@@ -207,7 +209,7 @@ useEffect([state.projectPath])
 
 ## 8. 现状与缺口
 
-**已实现**：三处座位注册与卸载、主题化样式、按钮悬停/按下/聚焦、跨面板状态、目录选择器、路径字段组件、轻量 Markdown。
+**已实现**：三处座位注册与卸载、主题化样式、按钮悬停/按下/聚焦、跨面板状态、目录选择器、路径字段组件、轻量 Markdown、导入两步确认与项目详情弹窗、物品页校验条与右侧栏缺失素材统计。
 
 **已知缺口**：
 

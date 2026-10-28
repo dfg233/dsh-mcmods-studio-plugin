@@ -1,6 +1,9 @@
 # MC 模组项目文件结构（Minecraft 1.20.1）
 
+> 适用版本：v0.1.1
+> 更新日期：2026-10-28
 > 本文描述一个标准模组工程里**代码放哪、素材放哪、元数据放哪**，作为插件写入文件时的依据。
+> 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
 > 来源：Forge、Fabric 官方文档，以及 NeoForge 源码仓库（见第 7 节，附链接与访问日期）。
 > **注意：NeoForge 官方文档站最低只到 1.20.4，没有 1.20.1 的页面**，1.20.1 的结论由源码分支佐证，见第 8 节。
 
@@ -152,6 +155,8 @@
 | 工坊标记 | `.mcstudio/studio.json` | 否 |
 | 构想清单 | `.mcstudio/features.json` | 否 |
 | 物品属性 | `.mcstudio/items/<id>.json` | 否 |
+| 摘要 | `.mcstudio/summary.json` | 否，派生数据 |
+| 代码结构 | `.mcstudio/structure.json` | 否，派生数据 |
 | 贴图 | 优先 `src/main/resources/assets/<modid>/textures/item/<id>.png` | 是（打进 JAR） |
 | 模型 | 优先 `src/main/resources/assets/<modid>/models/item/<id>.json` | 是 |
 | 导出文档 | `docs/*.md` | 否 |

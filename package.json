@@ -1,6 +1,6 @@
 {
   "name": "dsh-mcmods-studio-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "模组工坊：面向 Minecraft 1.20.1（Forge / NeoForge / Fabric）的模组设计、物品属性文档与贴图模型管理插件",

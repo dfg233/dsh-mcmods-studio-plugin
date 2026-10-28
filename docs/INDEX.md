@@ -1,9 +1,9 @@
 # 代码索引
 
-> 适用版本：v0.1.0
-> 更新日期：2026-10-25
+> 适用版本：v0.1.1
+> 更新日期：2026-10-28
 > 用途：修改插件代码前先查这里，按「文件 → 函数 → 参数 → 返回」定位，不必通读源码。
-> 说明：行号为编写时的位置，改动后会偏移，**优先按名称搜索**。
+> 说明：行号为编写时的位置，改动后会偏移，**优先按名称搜索**。发版与升版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
 
 ## 0. 怎么用这份文档
 
@@ -16,34 +16,36 @@
 | 改侧栏入口 | 5.6 座位注册 |
 | 改导入识别规则 | 2.7 `import.js` |
 | 改数据文件结构 | 6 数据结构 |
+| 发版 / 升版本 | [VERSION-PLAN.md](VERSION-PLAN.md) 第 3–4 节 |
 | 排查「改了没生效」 | 8 验证与排查 |
 
 ## 1. 文件地图
 
 | 文件 | 职责 | 行数 |
 | --- | --- | --- |
-| `package.json` | bundle 清单：包名、`dsh.bundle.patch`、`dsh.client` | 43 |
+| `package.json` | bundle 清单：版本、包名、`dsh.bundle.patch`、`dsh.client` | 46 |
 | `cordis.patch.yml` | 向 Loader 插入 `id: mc-mod-studio` | 12 |
 | `index.js` | Host 入口：HTTP 路由、原生工具注册、卸载清理 | 121 |
-| `client.js` | 浏览器半：全部 UI（单文件模块） | 2075 |
-| `lib/api.js` | 33 个动作的声明式路由表与分派 | 499 |
+| `client.js` | 浏览器半：全部 UI（单文件模块） | 2175 |
+| `lib/api.js` | 37 个动作的声明式路由表与分派 | 572 |
 | `lib/paths.js` | `.mcstudio/` 路径、id 校验、路径归属 | 75 |
 | `lib/schema.js` | 加载器、构想状态、物品类型、19 个字段 | 182 |
 | `lib/meta.js` | `project.json` 与 `studio.json` 读写、项目创建 | 217 |
 | `lib/entries.js` | 构想与物品 CRUD、字段纠偏、`readProject` | 194 |
-| `lib/import.js` | 工程识别、资源扫描、身份解析、差异、快照 | 738 |
+| `lib/import.js` | 工程识别、资源扫描、身份解析、差异、快照 | 760 |
 | `lib/gradle.js` | `gradle.properties` 解析、占位符处理 | 205 |
-| `lib/assets.js` | 贴图与模型：路径、PNG 校验、上传、读取、方块面解析 | 465 |
+| `lib/assets.js` | 贴图与模型：路径、PNG 校验、上传、读取、方块面解析 | 528 |
 | `lib/docs.js` | 五份 Markdown 的渲染 | 256 |
 | `lib/registry.js` | 插件注册表、路径展开、原子写入 | 207 |
-| `lib/summary.js` | `.mcstudio/summary.json` 的构建 | 81 |
+| `lib/summary.js` | `.mcstudio/summary.json` 的构建 | 109 |
 | `lib/validate.js` | 9 类项目校验 | 171 |
-| `lib/tools.js` | 17 个 agent 工具的定义与调用 | 380 |
+| `lib/tools.js` | 21 个 agent 工具的定义与调用 | 468 |
+| `lib/structure.js` | Java 源码结构解析、按哈希增量、注解读写 | 794 |
 | `lib/tool-bridge.js` | 把工具注册为 DSH 原生工具 | 87 |
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
-| `data/schema.json` | 字段定义的对外副本（生成物） | 7.4 KB |
+| `data/schema.json` | 字段定义的对外副本（生成物） | 8.0 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：12 个文件、117 项 | 2092 |
+| `test/*.mjs` | 回归测试：15 个文件、159 项 | 3434 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 
 > `lib/project.js` 是 2026-10-24 拆分后保留的转发层，`api.js`、`assets.js`、`docs.js`、
@@ -238,9 +240,49 @@
 | `summaryFile(path)` | 绝对路径 |
 | `rebuildSummary(path)` | 重建并写盘，返回摘要对象 |
 
-摘要只含最小字段：`meta`、`counts`、`ideas[]`、`items[]`（id/名称/类型/有无素材）、`missing`。
+摘要只含最小字段：`meta`、`counts`、`ideas[]`、`items[]`（id/名称/类型/有无素材）、
+`missing`、`code`（代码结构摘要，取自 structure.json，见 2.11）。
 
-### 2.11 `lib/validate.js`（1 个导出）
+### 2.11 `lib/structure.js`（12 个导出）
+
+代码结构文档：回答「哪段代码实现什么」「功能由哪些代码实现」。
+
+| 函数 | 用途 |
+| --- | --- |
+| `STRUCTURE_FILE = 'structure.json'` | 文件名 |
+| `PARSER_VERSION = 2` | 解析器版本；变化时旧缓存整份失效，与文件哈希无关 |
+| `structureFile(path)` | 绝对路径 |
+| `maskSource(text)` | 把注释与字符串替换成空格，长度不变，行号仍对得上 |
+| `extractJavadocs(text)` | 提取注释，返回「声明行号 → 文本」 |
+| `parseJava(text)` | 解析出包、导入、类、字段、方法、注册调用，每项带行号 |
+| `refreshStructure(path, {force})` | 扫描并**增量**更新；未变文件整条复用（含注解） |
+| `readStructure(path)` | 读取，缺失返回 `null` |
+| `setAnnotation(path, input)` | 写 agent 语义注解，只改指定文件 |
+| `findRegistration(structure, id)` | 按注册 id 反查文件与行号 |
+| `compactStructure(structure)` | 精简视图：只留位置与签名，省 token |
+| `validateAnnotationKeys(file, members)` | 校验注解键是否真实存在 |
+
+**增量规则**（按文件哈希）：
+
+| 情况 | 处理 |
+| --- | --- |
+| `parserVersion` 与当前实现不符 | 忽略旧条目，整份重扫（即使文件哈希未变）；旧注解保留并标 `stale` |
+| 哈希未变 | 整条复用，保留已有 `annotation` |
+| 哈希改变 | 重新扫描，旧注解搬运过来但标记 `stale: true` |
+| 新增文件 | 全量扫描 |
+| 文件删除 | 从文档移除，记入 `incremental.removed` |
+
+**解析的边界**：按行做浅解析，不构建 AST。目标定位是「找得到」而不是
+编译级准确：跨行声明的复杂泛型、匿名内部类里的方法可能漏掉。已支持
+「单行声明、初始化表达式换行」的常见字段写法（`DeferredRegister<Item> ITEMS =`
+换行到下一行），也能识别带类型形参的泛型方法（`<T extends Block>`）；
+字段只从类体顶层收集，方法体的局部变量与 `return` 不会误记。通过自定义
+辅助方法间接注册（如 `registerBlocks("id", ...)`）目前仍识别不到，因为
+注册调用里没有字符串字面量 id。
+
+**不调用模型**：扫描是确定性的，同一份源码两次扫描结果一致。
+
+### 2.12 `lib/validate.js`（1 个导出）
 
 | 函数 | 用途 |
 | --- | --- |
@@ -249,24 +291,24 @@
 检查项：`item.id`、`item.property`（数值范围）、`model.reference`、`asset.texture`、
 `asset.model`、`asset.blockstate`、`lang.missing`、`asset.orphan`、`item.type`。
 
-### 2.12 `lib/tools.js`（3 个导出）
+### 2.13 `lib/tools.js`（3 个导出）
 
 | 导出 | 用途 |
 | --- | --- |
-| `TOOLS` | 17 个工具定义的数组 |
+| `TOOLS` | 21 个工具定义的数组 |
 | `listTools()` | 精简清单（name / description / input） |
 | `callTool(name, args)` | 按名调用，未知工具抛错 |
 
 工具清单见第 4 节。
 
-### 2.13 `lib/tool-bridge.js`（2 个导出）
+### 2.14 `lib/tool-bridge.js`（2 个导出）
 
 | 函数 | 用途 |
 | --- | --- |
 | `registerTools(ctx)` | 注册为 DSH 工具，返回 disposer 数组；无 `tools` 服务时抛错 |
 | `toolNames()` | 返回 `mcmods_*` 名称列表 |
 
-### 2.14 `lib/project.js`（5 个导出，转发层）
+### 2.15 `lib/project.js`（5 个导出，转发层）
 
 ```js
 export * from './paths.js'
@@ -285,7 +327,7 @@ export * from './import.js'
 - 成功：`{"ok": true, "data": ...}`；失败：`{"ok": false, "error": "中文信息"}`；
 - 非 POST 返回 405；未知 action 抛 `未知动作：xxx`。
 
-### 3.2 动作表（33 个）
+### 3.2 动作表（37 个）
 
 **路由声明**：`lib/api.js` 的 `routes` 对象，每个动作声明 `scope` 与 `run`，
 可选 `summary: true` 在执行后刷新摘要。
@@ -324,6 +366,15 @@ export * from './import.js'
 | `items.save` | `{path, item, ensureModel?}` | `{item}` | studio |
 | `items.delete` | `{path, id}` | `{ok:true}` | studio |
 
+#### 代码结构
+
+| action | payload | 返回 | scope |
+| --- | --- | --- | --- |
+| `structure.refresh` | `{path, force?}` | `{mode, totals, incremental, registrations, index}` | studio |
+| `structure.get` | `{path, compact?}` | `{structure}` | studio |
+| `structure.find` | `{path, id}` | `{id, hits[]}` | studio |
+| `structure.annotate` | `{path, file, summary?, members?}` | `{file, annotation, totals}` | studio |
+
 #### 素材与文档
 
 | action | payload | 返回 | scope |
@@ -357,7 +408,7 @@ export * from './import.js'
 4. 前端用 `call('your.action', {...})`；
 5. 若也想暴露给 agent，在 `lib/tools.js` 的 `TOOLS` 加一项。
 
-## 4. Agent 工具（17 个）
+## 4. Agent 工具（21 个）
 
 原生工具名带 `mcmods_` 前缀，与 `TOOLS.name` 一一对应。
 
@@ -380,6 +431,10 @@ export * from './import.js'
 | `project_validate` | 校验项目 | `{project?}` |
 | `doc_export` | 导出文档 | `{project?}` |
 | `schema_get` | 字段定义 | `{compact?}` |
+| `structure_refresh` | 扫描或增量刷新代码结构 | `{project?,force?}` |
+| `structure_get` | 读结构文档 | `{project?,compact?}` |
+| `structure_find` | 按 id 查注册位置 | `{id,project?}` |
+| `structure_annotate` | 写语义注解 | `{file,summary?,members?,project?}` |
 
 所有工具在未传 `project` 时使用注册表中第一个可用项目。
 
@@ -532,9 +587,62 @@ const tabs = [
 
 ### 6.5 `summary.json`（派生）
 
-`{schemaVersion, meta, counts{ideas,ideasDone,items,blocks,totalEntries}, ideas[], items[], missing{ids,count}, updatedAt}`
+`{schemaVersion, meta, counts{ideas,ideasDone,items,blocks,totalEntries}, ideas[], items[], missing{ids,count}, code{...}|null, updatedAt}`
 
-### 6.6 `$DSH_HOME/mcmods-studio/registry.json`
+`code` 只含 `mode / files / classes / methods / annotated / stale / registrations`；
+没有结构文档时为 `null`。
+
+### 6.6 `structure.json`（派生）
+
+代码结构文档，回答「哪段代码实现什么」「功能由哪些代码实现」。
+与 `summary.json` 的分工：summary 描述设计层（构想、物品、素材），
+structure 描述实现层（Java 文件、类、方法、注册点）。
+
+顶层：
+
+| 字段 | 含义 |
+| --- | --- |
+| `schemaVersion` | 格式版本，当前 1 |
+| `parserVersion` | 解析器版本；与当前实现不符时缓存整份失效并重扫 |
+| `mode` | `scan`（仅结构）或 `annotated`（含 agent 注解） |
+| `totals` | `{files, classes, methods, annotated, stale}` |
+| `incremental` | 上次刷新的 `{reused, rescanned, removed[]}` |
+| `index.registrations` | 按类别分组的注册点，见下 |
+| `index.packages` | 包名 → 文件路径数组 |
+| `files[]` | 每个 Java 文件一条，见下 |
+
+`index.registrations` 按 `items` / `blocks` / `blockEntities` / `fluids` / `other` 分组，
+每项 `{id, file, line, class, field}`。无法从字段类型判断注册表类别的（如创造模式标签）
+归入 `other`；通过自定义辅助方法间接注册的条目不产生记录。
+
+`files[]` 每一项：
+
+| 字段 | 含义 |
+| --- | --- |
+| `path` | 相对工程根的路径，如 `src/main/java/com/example/ModItems.java` |
+| `hash` | 内容哈希（sha1 前 16 位），增量判断依据 |
+| `package` / `imports[]` | 包名与导入列表 |
+| `classes[]` | `{name, kind, line, endLine, modifiers[], extends, implements[], javadoc, fields[], methods[], registrations[]}` |
+| `annotation` | agent 写的注解，见下；未写时为 `null` |
+
+`classes[].methods[]` 每项含 `{name, kind, line, endLine, returns, params[], signature, javadoc, annotations[]}`。
+
+`annotation` 结构：
+
+```json
+{
+  "hash": "3f2a1b...",
+  "summary": "物品注册表，集中登记全部物品",
+  "members": { "ModItems": "物品注册表", "ModItems#register": "注册全部物品" },
+  "stale": false,
+  "annotatedAt": "2026-10-27T12:00:00.000Z"
+}
+```
+
+`members` 的键为「类名」或「类名#方法名」。`stale` 为真表示文件已改动、
+注解待重新确认——旧文本仍保留供参考，但不计入 `totals.annotated`。
+
+### 6.7 `$DSH_HOME/mcmods-studio/registry.json`
 
 `{schemaVersion, root, lastProject, projects:[{path,name,modid,createdAt,updatedAt}]}`
 
@@ -556,6 +664,9 @@ const tabs = [
 | 改右侧栏内容 | `SidebarStudioPanel` | `studioState` 写入点 |
 | 改导入识别 | `lib/import.js` 的 `detectDescriptor` | 占位符处理、加载器判定、notices |
 | 改素材路径 | `lib/assets.js` 的 `resolveAssetRoot` | 导入扫描、缺失统计 |
+| 改 Java 解析规则 | `lib/structure.js` 的 `parseJava` 与 `TYPE_RE` 等正则 | 结构文档用例 15 |
+| 改增量策略 | `lib/structure.js` 的 `refreshStructure` | 哈希复用、stale 标记 |
+| 改注解结构 | `lib/structure.js` 的 `setAnnotation` | `compactStructure` 的取值、INDEX 6.6 |
 | 改导出排版 | `lib/docs.js` 的 `render*` | 导出后打开文件核对 |
 | 改校验规则 | `lib/validate.js` | 物品页提示条、agent 校验工具 |
 | 改默认根目录 | `lib/registry.js` 的 `DEFAULT_ROOT` | 已存注册表不会自动改 |
@@ -566,7 +677,7 @@ const tabs = [
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（12 个文件、117 项）
+# 全部测试（15 个文件、159 项）
 npm test
 
 # 只跑某一组
@@ -588,16 +699,20 @@ index.js
   │    ├─ gradle（被 import 使用）
   │    ├─ assets
   │    ├─ docs
-  │    ├─ summary（依赖 meta + entries + assets）
+  │    ├─ summary（依赖 meta + entries + assets + structure）
+  │    ├─ structure（依赖 paths + meta + registry）
   │    └─ validate（依赖 schema + paths + meta + entries + assets）
   └─ lib/tool-bridge.js
-       └─ lib/tools.js（依赖 entries / meta / summary / validate / docs / import）
+       └─ lib/tools.js（依赖 entries / meta / summary / validate / docs / import / structure）
 
 client.js
   └─ POST /mcmods-studio/api → index.js → dispatch(action)
 ```
 
 修改下层函数时注意上层对返回结构的依赖，尤其 `readProject`、`listAssets`、`itemSchema`。
+
+`import.js` 依赖 `structure.js`（导入后生成结构文档），但 `structure.js` 不依赖
+`import.js`，没有循环。`summary.js` 依赖 `structure.js` 读取代码摘要，同样单向。
 
 ## 10. 测试索引
 
@@ -617,5 +732,6 @@ client.js
 | `12-render.mjs` | 渲染结构 | 15 |
 | `13-block-assets.mjs` | 方块面贴图解析 | 7 |
 | `14-persist.mjs` | 项目切换持久化 | 10 |
+| `15-structure.mjs` | 代码结构文档 | 15 |
 | `helpers.mjs` | 工作区、断言、PNG 生成 | — |
 | `render-harness.mjs` | 渲染装置 | — |

@@ -1,8 +1,9 @@
 # 模块计划索引
 
 > 本目录存放模组工坊各功能模块的详细计划，用于在改动代码前明确「这个模块做什么、什么时候触发、怎么跑」。
-> 生成日期：2026-10-22（2026-10-25 更新状态）
-> 配套文档：[PLAN.md](../PLAN.md)（版本路线）、[STATUS.md](../STATUS.md)（实现状态）、[INDEX.md](../INDEX.md)（代码索引）
+> 适用插件版本：v0.1.1
+> 生成日期：2026-10-22（2026-10-28 更新状态）
+> 配套文档：[VERSION-PLAN.md](../VERSION-PLAN.md)（版本号与发版流程）、[PLAN.md](../PLAN.md)（版本路线）、[STATUS.md](../STATUS.md)（实现状态）、[INDEX.md](../INDEX.md)（代码索引）
 
 ## 模块一览
 
@@ -19,14 +20,14 @@
 | 09 | 构建教程 | [GUIDE-PLAN.md](GUIDE-PLAN.md) | 已实现 | `readGuide`、`GuideTab`、`BUILD-GUIDE.md` |
 | 10 | 界面外壳 | [SHELL-PLAN.md](SHELL-PLAN.md) | 已实现 | `client.js` 全文件 |
 | 11 | 代码工作区 | [CODEGEN-PLAN.md](CODEGEN-PLAN.md) | **规划中（v0.3）** | 拟新增 `lib/files.js`、`lib/codegen.js` |
-| 12 | Agent 接入 | [AGENT-PLAN.md](AGENT-PLAN.md) | **已实现** | `lib/tools.js`、`lib/tool-bridge.js`、`lib/summary.js`、`lib/validate.js`、`data/schema.json` |
+| 12 | Agent 接入 | [AGENT-PLAN.md](AGENT-PLAN.md) | **部分实现** | `lib/tools.js`、`lib/tool-bridge.js`、`lib/summary.js`、`lib/validate.js`、`lib/structure.js`、`data/schema.json` |
 
 > 模块 12 不是独立功能，而是横切改进：它把 01–11 的能力以工具与紧凑数据的形式重新暴露给 agent。
 > 方向依据见 [../PLAN.md](../PLAN.md) 第 0 节「插件宗旨」。
 >
 > **模块 12 落地情况**：建议 1（原生工具）、2（摘要）、3（双表示）、4（schema 外置）、5（校验器）、
-> 6（导入提示）已完成；建议 7（关系视图）、8（编辑提效）、9（文档双向同步）仍在计划中，
-> 归入 v0.2 与后续版本。
+> 6（导入提示）已完成，并额外完成代码结构文档（4 个动作 + 4 个工具）；建议 7（关系视图）、
+> 8（编辑提效）、9（文档双向同步）仍在计划中，归入 v0.2 与后续版本。
 
 ## 每份文档的固定结构
 
@@ -66,6 +67,8 @@
 | 工坊标记 `studio.json` | `<项目>/.mcstudio/` | 存在即视为已导入，扫描据此判定 |
 | 项目元数据 `project.json` | `<项目>/.mcstudio/` | 名称、modid、版本、加载器 |
 | 物品条目 `items/<id>.json` | `<项目>/.mcstudio/` | 19 项属性 + 画布坐标 |
+| 代码结构 `structure.json` | `<项目>/.mcstudio/` | Java 文件、类、方法、行号与注册点；按哈希增量 |
+| 派生摘要 `summary.json` | `<项目>/.mcstudio/` | agent 一次读取的全貌，含 `code` 摘要 |
 | 素材根目录 | `src/main/resources/assets/<modid>/` 或 `.mcstudio/assets/<modid>/` | 有标准资源目录时优先前者 |
 | 接口 | `POST /mcmods-studio/api` | 统一 `{action, payload}` → `{ok, data\|error}` |
 | 主面板 key | `mc-mod-studio` | 侧栏 id、main key、右侧栏 tab id 三者一致 |
@@ -73,6 +76,8 @@
 ## 维护约定
 
 - 模块职责、事件、接口发生变化时，同步更新对应 `*-PLAN.md`；
+- 每次优化或修复 bug 后按 [VERSION-PLAN.md](../VERSION-PLAN.md) 升 PATCH 版本，
+  并同步核心文档与本文的版本、状态、计数；
 - 新增模块时在本索引追加一行，并复制固定结构；
 - 状态列只有「已实现 / 规划中 / 部分实现」三种取值；
 - 未实现的内容不得写入「运行过程」，只能出现在「现状与缺口」或标为规划中的模块。
