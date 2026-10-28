@@ -2,7 +2,7 @@
 
 > 文档编号：AGENT-PLAN
 > 适用版本：v0.1.3
-> 状态：**建议 1–6 与代码结构文档已实施，建议 7–9 待做**（2026-10-28 更新）
+> 状态：**建议 1–6 与代码结构文档已实施；建议 7–9 后移，下一步扩展模板/任务/上下文工具**（2026-10-29 更新）
 > 更新日期：2026-10-28
 > 配套：[VERSION-PLAN.md](../VERSION-PLAN.md)（版本规则）、[PLAN.md](../PLAN.md)（宗旨与路线）、[STATUS.md](../STATUS.md)（实现状态）、[INDEX.md](../INDEX.md)（代码索引）
 > 实施记录：[refactor/04-agent-modules.md](../refactor/04-agent-modules.md)、[refactor/05-tools-and-notices.md](../refactor/05-tools-and-notices.md)

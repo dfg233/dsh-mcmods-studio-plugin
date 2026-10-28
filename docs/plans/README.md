@@ -1,5 +1,6 @@
 # 模块计划索引
 
+> 2026-10-29 起，本目录 01–13 作为 v0.1.3 的 as-built 模块计划保留；新主线见 [../PLAN.md](../PLAN.md)，新对象规格见 [../design/](../design/README.md)。
 > 本目录存放模组工坊各功能模块的详细计划，用于在改动代码前明确「这个模块做什么、什么时候触发、怎么跑」。
 > 适用插件版本：v0.1.3
 > 生成日期：2026-10-22（2026-10-28 更新状态）
@@ -13,22 +14,27 @@
 | 02 | 项目管理 | [PROJECT-PLAN.md](PROJECT-PLAN.md) | 已实现 | `lib/meta.js`、`lib/entries.js`、`ProjectTab`、`CreateProjectModal` |
 | 03 | 扫描发现 | [SCAN-PLAN.md](SCAN-PLAN.md) | 已实现 | `scanCandidates`、`ProjectTab` 扫描区 |
 | 04 | 工程导入 | [IMPORT-PLAN.md](IMPORT-PLAN.md) | 已实现 | `detectDescriptor`、`scanProjectAssets`、`importProject`、`lib/backup.js` |
-| 05 | 构想 | [FEATURES-PLAN.md](FEATURES-PLAN.md) | 已实现 | `features.*`、`FeaturesTab`、`FeatureEditor` |
+| 05 | 构想 → 想法卡 | [FEATURES-PLAN.md](FEATURES-PLAN.md) | 已实现（将扩展） | `features.*`、`FeaturesTab`、`FeatureEditor` |
 | 06 | 物品管理 | [ITEMS-PLAN.md](ITEMS-PLAN.md) | 已实现 | `items.*`、`ItemsTab`、`ItemEditor` |
 | 07 | 素材管理 | [ASSETS-PLAN.md](ASSETS-PLAN.md) | 已实现 | `lib/assets.js`、`AssetsTab` |
 | 08 | 文档导出 | [DOCS-PLAN.md](DOCS-PLAN.md) | 已实现 | `lib/docs.js` |
 | 09 | 构建教程 | [GUIDE-PLAN.md](GUIDE-PLAN.md) | 已实现 | `readGuide`、`GuideTab`、`BUILD-GUIDE.md` |
-| 10 | 界面外壳 | [SHELL-PLAN.md](SHELL-PLAN.md) | 已实现 | `client.js` 全文件 |
-| 11 | 代码工作区 | [CODEGEN-PLAN.md](CODEGEN-PLAN.md) | **规划中（v0.3）** | 拟新增 `lib/files.js`、`lib/codegen.js` |
-| 12 | Agent 接入 | [AGENT-PLAN.md](AGENT-PLAN.md) | **部分实现** | `lib/tools.js`、`lib/tool-bridge.js`、`lib/summary.js`、`lib/validate.js`、`lib/structure.js`、`data/schema.json` |
-| 13 | 设置与偏好 | [SETTINGS-PLAN.md](SETTINGS-PLAN.md) | **规划中（v0.2）** | 拟新增 `lib/settings.js`、`SettingsTab`、`GearIcon` |
+| 10 | 界面外壳 | [SHELL-PLAN.md](SHELL-PLAN.md) | 已实现（将重构） | `client.js` 全文件 |
+| 11 | 代码工作区 | [CODEGEN-PLAN.md](CODEGEN-PLAN.md) | **规划中（v0.4）** | 拟新增 `lib/files.js`、`lib/codegen.js` |
+| 12 | Agent 接入 | [AGENT-PLAN.md](AGENT-PLAN.md) | **部分实现（将扩展）** | `lib/tools.js`、`lib/tool-bridge.js`、`lib/summary.js`、`lib/validate.js`、`lib/structure.js`、`data/schema.json` |
+| 13 | 设置与偏好 | [SETTINGS-PLAN.md](SETTINGS-PLAN.md) | **规划中（后移）** | 拟新增 `lib/settings.js`、`SettingsTab`、`GearIcon` |
 
 > 模块 12 不是独立功能，而是横切改进：它把 01–11 的能力以工具与紧凑数据的形式重新暴露给 agent。
-> 方向依据见 [../PLAN.md](../PLAN.md) 第 0 节「插件宗旨」。
+> 方向依据见 [../PLAN.md](../PLAN.md)。
 >
-> **模块 12 落地情况**：建议 1（原生工具）、2（摘要）、3（双表示）、4（schema 外置）、5（校验器）、
-> 6（导入提示）已完成，并额外完成代码结构文档（4 个动作 + 4 个工具）；建议 7（关系视图）、
-> 8（编辑提效）、9（文档双向同步）仍在计划中，归入 v0.2 与后续版本。
+> **2026-10-29 方向调整后的处置**：
+>
+> - **继续复用**：01 平台、02 项目、03 扫描、04 导入、06 物品、07 素材、08 导出、09 教程；
+> - **扩展**：05 构想 → 想法卡；10 外壳 → 想法/计划/内容/验证页面；12 Agent → 模板/任务/上下文工具；
+> - **后移**：11 代码工作区（v0.4）、13 设置页；
+> - **新对象**：想法、系统、模板、任务、检查的规格见 [../design/](../design/README.md)，不占用旧模块编号。
+>
+> 本目录的 01–13 保留为 **v0.1.3 as-built 模块计划**，不整批重写；新能力落地后再追加 14+ 模块计划。
 
 ## 每份文档的固定结构
 

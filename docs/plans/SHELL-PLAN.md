@@ -3,8 +3,8 @@
 > 模块编号：10
 > 适用插件版本：v0.1.3
 > 代码位置：`client.js` 全文件（主题常量、通用组件、`StudioPage`、`SidebarStudioPanel`、`PathField`、`ensureStyles`、`studioState`、座位注册）
-> 状态：已实现
-> 最后更新：2026-10-28
+> 状态：已实现（将按新工作台重构，见 [../PLAN.md](../PLAN.md)）
+> 最后更新：2026-10-29
 
 ## 1. 模块职责
 
@@ -194,7 +194,7 @@ useEffect([state.projectPath])
 | `StudioRoot` | `StudioBoundary` + `StudioPage`；渲染异常时显示重试 / 刷新 |
 | `StudioPage` | 页面框架、页签、弹窗挂载 |
 | `ProjectTab` / `FeaturesTab` / `ItemsTab` / `AssetsTab` / `GuideTab` | 五个页签 |
-| `SettingsTab` | 设置页（规划，v0.2）：启动、物品页、数据、Agent、关于 |
+| `SettingsTab` | 设置页（后移）：启动、物品页、数据、Agent、关于 |
 | `CreateProjectModal` / `ImportProjectModal` | 项目新建 / 导入弹窗 |
 | `ImportConfirmModal` / `ProjectDetailModal` | 导入差异确认 / 项目详情 |
 | `FeatureEditor` / `ItemEditor` | 内容编辑弹窗 |

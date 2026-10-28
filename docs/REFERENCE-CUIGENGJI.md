@@ -15,7 +15,7 @@
 | P0 | 渲染错误边界 | `WorkbenchBoundary.tsx` | `StudioPage` 外层 | v0.1.x |
 | P0 | 草稿缓存与离开保护 | `drafts.js`、`state.js` | `ItemEditor`、`FeatureEditor`、项目切换 | v0.1.x |
 | P0 | 版本号 / 请求幂等 | `application/store.js` | 物品、构想、导入动作 | v0.1.x |
-| P1 | 设置页的分组、作用域、单项重置、自动保存 | `settings/*` | v0.2 设置页 | v0.2 |
+| P1 | 设置页的分组、作用域、单项重置、自动保存 | `settings/*` | 设置页（后移） | 后移 |
 | P1 | 图画布：相机、撤销、套索、失败回滚 | `graph.tsx` | v0.2 依赖图 | v0.2 |
 | P1 | 批量管理条 | `batch-management.tsx` | v0.2 批量操作 | v0.2 |
 | P1 | 项目切换门与迁移校验 | `libraries/service.ts` | 项目切换 / 导入 | v0.2 |
@@ -32,11 +32,11 @@
 | 原子写 + fsync + 目录 barrier（第 1 节） | **部分采纳** | `writeJson` / `writeText` 改为临时文件 + fsync + rename + barrier；尚未加跨进程文件锁与 pending 恢复 |
 | 多文件事务日志（第 2 节） | 暂不照搬 | 用「导入前整目录备份 + 失败回滚」达到同等用户效果，代码量更小；完整 journal 留给后续 |
 | 导入「预览 → 证明 → 导入」（第 11 节） | **已采纳** | `analyzeImport` 返回 `proof`，`reimport` 校验；导入前自动备份 |
-| 设置页行级交互（第 4 节） | 已写入方案 | 单项 ↺、作用域标签、自动保存状态、复制诊断；v0.2 实现 |
+| 设置页行级交互（第 4 节） | 已写入方案 | 单项 ↺、作用域标签、自动保存状态、复制诊断；后移实现 |
 | 版本号 / 请求幂等（第 5 节） | 未采纳 | 物品/构想仍无 `revision`；已记入下一补丁，不与本补丁混做 |
 | 草稿缓存与离开保护（第 6 节） | **已采纳** | `useDraftState`：localStorage 草稿、重新打开恢复、beforeunload、取消确认 |
 | 渲染错误边界（第 10 节） | **已采纳** | `StudioRoot` 捕获渲染异常，提供重试 / 刷新 |
-| 图画布 / 批量管理（第 8、9 节） | 未采纳 | 归入 v0.2 关系图与批量操作 |
+| 图画布 / 批量管理（第 8、9 节） | 未采纳 | 后移；系统依赖视图与批量操作在 v0.3+ 复用 |
 | 项目切换门（第 7 节） | 未采纳 | 当前编辑器为模态，切换入口被遮挡；后续做项目级门禁 |
 | 升级协调器 / 发布验收（第 3、12 节） | 未采纳 | 等第一次真正的数据格式迁移与发版自动化 |
 
@@ -277,23 +277,46 @@ export async function readJsonWithPending(file, pending) // 待补：崩溃恢�
 | 内容 | 原因 |
 | --- | --- |
 | 桌宠、Windows 透明窗口 | 与模组工坊无关 |
-| MCP server / client、Skill 体系 | 本项目已用 DSH 原生工具 + 文档，不需要第二套协议 |
+| MCP server / client、Skill 运行时 | 本项目不引入第二套协议；但可借「按任务加载说明」的组织方式 |
 | 多作品库切换 | 本项目是「多项目列表」，语义不同；只借切换门禁与校验 |
 | localStorage 存全局设置 | Agent 读不到，且换浏览器丢失；本项目用 Host `settings.json` |
 | 1.1 万行单文件客户端 | 本项目受 module loader 限制必须单文件，但应继续按节拆分、控制体积 |
 | TypeScript + esbuild 构建链 | 本项目当前零构建、直接加载源码，引入构建链的收益不足 |
 
-## 14. 建议落地顺序
+## 14. 新路线下的落地顺序
 
-1. **v0.1.x 可靠性补丁**（先于设置页）：
-   - `writeJsonDurable` + 项目级锁；
-   - 导入前备份 + 多文件事务；
-   - `StudioBoundary`；
-   - 编辑器草稿与项目切换保护；
-   - 物品/构想 `revision` 与 `requestId`；
-   - 导入 `proof`。
-2. **v0.2 设置页**：按 [SETTINGS-PLAN.md](plans/SETTINGS-PLAN.md) 实现，采用本文第 4 节的行级交互。
-3. **v0.2 关系图与批量操作**：借第 8、9 节的结构。
-4. **后续**：升级协调器、维护工具、发布验收自动化。
+按 [PLAN.md](PLAN.md) 的里程碑：
+
+1. **M1 / v0.2.0**：内容编辑 MVP（物品属性、配方、标签、语言、模型）+ 想法/系统/任务卡骨架；图形化修改数据；应用预览、备份、回滚。
+2. **M2 / v0.3.0**：模板库、任务上下文包、允许路径/资源/注册检查；把本文第 11 节的 proof/备份思路用于“应用变更”。
+3. **M3 / v0.4.0**：标记区块代码生成 + Lock 试点；借第 1、2 节的持久化与事务思想，保证生成失败可恢复。
+4. **后续**：升级协调器、维护工具、发布验收自动化；设置页与关系图后移。
+
+## 15. 面向 AI 工作台的新借鉴
+
+再次查看 v0.5.0 源码后，以下做法与“想法 → 系统 → 模板 → 任务 → 验证”直接对应：
+
+| 催更姬做法 | 来源 | 新工作台对应 |
+| --- | --- | --- |
+| 按需指引模块：`core/project/write/plan/memory/revise`，返回 `resourceBase`，不常驻注入 | `src/adapters/dsh/guidance.js`、`src/adapters/dsh/skills.js` | 模板/任务说明按需读取；任务只取相关模块，不全量塞提示词 |
+| 任务型 Skill + 共享 Persona：不同任务加载不同 Skill，共享接手规则 | `skills/*/SKILL.md`、`src/adapters/dsh/skills.js` | 「任务型技能包」：每个模板/任务带自己的说明与共享工程契约 |
+| 项目接手说明：只给身份、有限目录和资料索引，不含正文；正文按需读 | `src/application/queries/handoff.js`、`handoff-text.js` | `context.pack`：给索引、摘要、版本与按需读取入口，不塞整仓库 |
+| 原子批量操作：`planning.apply {requestId, operations, refs}`，整批成功/失败 | `src/application/store.js`、`src/domain/planning/operations.ts` | `change.apply`：一次任务一次变更集，支持 ref 关联与回滚 |
+| 层级与状态：stage/子情节、`written` 需正文版本证据 | `src/domain/planning/hierarchy.ts`、`src/application/store.js` | 任务树/系统层级；`done` 必须有检查证据，不能只靠 AI 声明 |
+| 项目级预设：启用/停用、导入预览、按作品隔离 | `docs/presets.md`、`src/client/shared/settings/*` | 项目级模板/预设：启用、预览、只作用于当前项目 |
+| 维护状态与校验：`maintenance.status/verify` | `src/application/maintenance/upgrade.ts` | 项目健康检查：版本、数据根、迁移、完整性 |
+| 设置项标注作用域：此设备/当前作品/作品库/当前会话 | `src/client/shared/settings/model.ts` | 内容/工程设置标注作用域：项目/设备/本次任务 |
+| 操作记录与活动：成功保存才算变化 | `src/application/activity.ts` | 任务进度与变更历史：只记录已应用、有证据的变更 |
+| 目录/画布分离：排序不改坐标，分组不改关系 | `docs/planning-board.md`、`src/domain/canvas/*` | 系统/任务视图分离：分组不改依赖，布局不改任务状态 |
+
+**适配建议**：
+
+- 先借「按需指引 + 项目接手 + 原子 apply + 证据式完成」，这四项直接降低 AI 检索与越界；
+- 模板说明可以按 Skill 的方式组织：一个模板一个 `README` + 参数 + 检查，按需读取；
+- 上下文包沿用 handoff 的原则：**给索引、给摘要、给版本、给读取入口，不给全文**；
+- 任务状态沿用 `written` 的证据原则：**没有检查结果，不标 done**；
+- 画布/目录那套交互只在「系统依赖视图」复用，不把任务做成自由画布。
+
+**仍不照搬**：桌宠、MCP 协议、多作品库、Skill 运行时本身、1.1 万行单文件客户端。借的是模式，不是框架。
 
 > 以上只借模式，不复制代码；催更姬为 MIT，若直接复用少量实现需保留版权声明。

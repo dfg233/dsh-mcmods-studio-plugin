@@ -55,12 +55,12 @@ plugin_manager install_bundle  target: D:\program\dsh-mcmods-studio-plugin
 ## 文档
 
 - [版本规划（版本号规则与发版流程）](docs/VERSION-PLAN.md)
-- [项目计划书（含插件宗旨）](docs/PLAN.md)
+- [项目计划（AI 工作台主线）](docs/PLAN.md)
+- [产品设计规格（想法/系统/模板/任务）](docs/design/README.md)
 - [项目状态（已实现 / 未实现 / 要求）](docs/STATUS.md)
 - [Agent 结合与发展建议](docs/plans/AGENT-PLAN.md)
-- [AI 工作台开发计划（新方向）](docs/WORKBENCH-PLAN.md)
 - [模块计划索引](docs/plans/README.md)
-- [设置页规划（v0.2）](docs/plans/SETTINGS-PLAN.md)
+- [设置页规划（后移）](docs/plans/SETTINGS-PLAN.md)
 - [催更姬插件可借鉴实现](docs/REFERENCE-CUIGENGJI.md)
 - [代码索引（函数与接口）](docs/INDEX.md)
 - [模组项目文件结构（1.20.1）](docs/PROJECT-STRUCTURE.md)

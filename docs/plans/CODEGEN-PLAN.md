@@ -3,8 +3,8 @@
 > 模块编号：11
 > 适用插件版本：v0.1.3
 > 代码位置：规划中，拟新增 `lib/files.js`、`lib/codegen.js`、`lib/codegen/templates/`、`client.js` 的「代码」页签
-> 状态：**未实现（规划）**
-> 目标版本：**v0.3.0**（v0.2 让位于 Agent 接入，见 [AGENT-PLAN.md](AGENT-PLAN.md)）
+> 状态：**未实现（后移至 v0.4）**
+> 目标版本：**v0.4.0**（AI 工作台主线见 [../PLAN.md](../PLAN.md)）
 > 最后更新：2026-10-28
 
 ## 0. 与宗旨的关系

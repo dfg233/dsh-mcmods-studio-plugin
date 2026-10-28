@@ -11,6 +11,11 @@
 - 方块状态与多方块模型的可视化编辑。
 - 设置页：页签栏最右侧齿轮入口，管理启动恢复、默认页签、物品默认视图、删除素材策略与 Agent 默认项目（规划中，见 [plans/SETTINGS-PLAN.md](plans/SETTINGS-PLAN.md)）。
 
+### 文档
+
+- 2026-10-29 产品方向调整：旧版 v0.1 路线归档到 `docs/archive/PLAN-v0.1.md`，`PLAN.md` 改为 AI 工作台主线；新增 `docs/design/` 的想法、系统、模板、任务、内容编辑规格；同步更新 STATUS、VERSION-PLAN、plans/README 与 REFERENCE。
+- 本次只重构文档，不改变 v0.1.3 的代码与测试。
+
 ## [0.1.3] - 2026-10-28
 
 ### 新增
