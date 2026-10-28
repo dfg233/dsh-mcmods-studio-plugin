@@ -11,6 +11,31 @@
 - 方块状态与多方块模型的可视化编辑。
 - 设置页：页签栏最右侧齿轮入口，管理启动恢复、默认页签、物品默认视图、删除素材策略与 Agent 默认项目（规划中，见 [plans/SETTINGS-PLAN.md](plans/SETTINGS-PLAN.md)）。
 
+## [0.1.3] - 2026-10-28
+
+### 新增
+
+- 新增物品类型「创造模式标签」（`creative_tab`）：导入时识别 `DeferredRegister<CreativeModeTab>`、`CreativeModeTab.builder`、`Registries.CREATIVE_MODE_TAB`，把同一 Java 文件里的 `register("id", ...)` 归为标签，不再混入物品。
+- 摘要新增 `counts.creativeTabs` 与 `creativeTabs[]`，`counts.items` 不再把标签算作物品。
+- 导入快照新增「创造模式标签」清单与计数。
+
+### 修复
+
+- 方块只有 `textures/block/<id>.png`、没有 blockstate / 方块模型时，「贴图与模型」页不显示缩略图；现在会回退到同名方块贴图，并支持按 `block` 类型上传 / 删除。
+- `assets.list` 的 `missing` 不再把「有方块贴图但缺模型」的方块误判为「没有贴图」，同时排除创造模式标签。
+- 旧版本把创造模式标签存成普通物品的项目，`merge` 重新导入会自动纠正为 `creative_tab`，不需要手工改数据。
+- 素材页与侧栏不再把创造模式标签当作物品展示/计数；校验器跳过标签的贴图与模型检查。
+
+### 变更
+
+- `package.json` 版本由 `0.1.2` 升至 `0.1.3`。
+- `assets.upload` / `assets.delete` 支持可选 `kind: 'item' | 'block'`，默认仍为 `item`。
+- `data/schema.json` 物品类型由 7 个增至 8 个（新增「创造模式标签」）。
+
+### 文档
+
+- 更新 [DATA-FORMAT.md](DATA-FORMAT.md)、[INDEX.md](INDEX.md)、[STATUS.md](STATUS.md)、[plans/IMPORT-PLAN.md](plans/IMPORT-PLAN.md)、[plans/ITEMS-PLAN.md](plans/ITEMS-PLAN.md) 与测试计数。
+
 ## [0.1.2] - 2026-10-28
 
 ### 新增
@@ -25,7 +50,7 @@
 
 - 导入 / 重新导入中途失败会留下半导入项目；现在失败自动回滚到操作前状态。
 - 预览后工程新增/修改资源不会被发现，仍按旧预览执行；现在 proof 不一致直接拒绝。
-- 两个窗口或「界面 + Agent」同时写同一文件时可能静默覆盖；写入现在带 fsync，降低崩溃后读到空文件/旧内容的概率（完整版本冲突校验留到下一补丁）。
+- 两个窗口或「界面 + Agent」同时写同一文件时可能静默覆盖；写入现在带 fsync，降低崩溃后读到空文件/旧内容的概率（完整版本冲突校验留到后续补丁）。
 - 页面渲染异常会导致整个「模组工坊」入口不可用；现在错误留在插件内部并提供重试。
 
 ### 变更

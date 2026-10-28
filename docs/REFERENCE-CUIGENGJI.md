@@ -25,7 +25,7 @@
 > 结论：最值得先借的是**数据可靠性与导入安全**，其次是**设置页交互细节**和**图/批量编辑**；
 > 桌宠、MCP、技能系统与 1.1 万行单文件客户端不适合照搬。
 
-## 0.1 本轮采纳（v0.1.2）
+## 0.1 本轮采纳（v0.1.3）
 
 | 借鉴点 | 状态 | 本项目落地 |
 | --- | --- | --- |
@@ -53,7 +53,7 @@
 - `save()` 写临时文件 → `fsync` → `rename` 到 pending → 目录 barrier → `rename` 到正式文件；
 - Windows 不支持目录 `fsync` 时，把 `EPERM/EISDIR/ENOTSUP` 当尽力而为，其他错误照常抛出。
 
-**本项目现状（v0.1.2）**：`writeJson` / `writeText` 已改为「临时文件 + fsync + rename + 目录 barrier」，随机临时名避免并发相撞。仍缺：
+**本项目现状（v0.1.3）**：`writeJson` / `writeText` 已改为「临时文件 + fsync + rename + 目录 barrier」，随机临时名避免并发相撞。仍缺：
 
 - 没有跨进程锁，两个窗口或「界面保存 + Agent 工具」同时写 `project.json` / `items/<id>.json` 仍可能后写覆盖；
 - 没有 pending 恢复，rename 前崩溃留下的临时文件需人工判断；
@@ -82,7 +82,7 @@ export async function readJsonWithPending(file, pending) // 待补：崩溃恢�
 - 删除文件排在写入之前，避免同名文件互相覆盖；
 - 支持目录移动与删除，且把目录整体暂存到事务目录，恢复可跨 rename。
 
-**本项目现状（v0.1.2）**：`importProject` / `reimportProject` 已用 `runWithProjectBackup` 在操作前备份 `.mcstudio/` 与快照，失败自动恢复；没有引入 journal，因此恢复粒度是整目录，而不是单文件事务。
+**本项目现状（v0.1.3）**：`importProject` / `reimportProject` 已用 `runWithProjectBackup` 在操作前备份 `.mcstudio/` 与快照，失败自动恢复；没有引入 journal，因此恢复粒度是整目录，而不是单文件事务。
 
 **建议**：
 
@@ -159,7 +159,7 @@ export async function readJsonWithPending(file, pending) // 待补：崩溃恢�
 - 重新拉取服务端数据时用 `rebase` 保留本地修改，不直接覆盖；
 - localStorage 写失败只提示「本次会话仍生效」，不阻断编辑。
 
-**本项目现状（v0.1.2）**：`ItemEditor` / `FeatureEditor` 已用 `useDraftState` 存 localStorage 草稿，重新打开自动恢复；关闭页面/刷新会提示，取消时确认放弃。项目切换门禁仍未做，因为编辑器是模态、切换入口被遮挡。
+**本项目现状（v0.1.3）**：`ItemEditor` / `FeatureEditor` 已用 `useDraftState` 存 localStorage 草稿，重新打开自动恢复；关闭页面/刷新会提示，取消时确认放弃。项目切换门禁仍未做，因为编辑器是模态、切换入口被遮挡。
 
 **建议**：
 
@@ -227,7 +227,7 @@ export async function readJsonWithPending(file, pending) // 待补：崩溃恢�
 - `Modal` 用原生 `<dialog>`、恢复焦点、Esc 取消、阻止事件冒泡；
 - 异步操作普遍带 `AbortSignal`，卸载即取消。
 
-**本项目现状（v0.1.2）**：`StudioRoot` 已加错误边界；`call()` 仍不重试写请求；列表/摘要没有请求序号守卫；Modal 仍是自绘 div，Esc 有处理但没有焦点恢复。
+**本项目现状（v0.1.3）**：`StudioRoot` 已加错误边界；`call()` 仍不重试写请求；列表/摘要没有请求序号守卫；Modal 仍是自绘 div，Esc 有处理但没有焦点恢复。
 
 **建议**：
 
@@ -246,7 +246,7 @@ export async function readJsonWithPending(file, pending) // 待补：崩溃恢�
 - 同一文件重复导入用 receipt key 防重复；
 - 导入失败保留冲突清单，不部分写入。
 
-**本项目现状（v0.1.2）**：`project.analyzeImport` 返回 `proof`，`reimport` 会校验；导入前自动备份，失败回滚，结果返回 `imported.backup`。proof 目前只覆盖扫描列表与条目状态，不覆盖素材文件内容。
+**本项目现状（v0.1.3）**：`project.analyzeImport` 返回 `proof`，`reimport` 会校验；导入前自动备份，失败回滚，结果返回 `imported.backup`。proof 目前只覆盖扫描列表与条目状态，不覆盖素材文件内容。
 
 **建议**：
 

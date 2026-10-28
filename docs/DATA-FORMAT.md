@@ -1,6 +1,6 @@
 # 数据格式
 
-> 适用版本：v0.1.2
+> 适用版本：v0.1.3
 > 更新日期：2026-10-28
 > 数据文件内的 `schemaVersion` 与插件版本号相互独立；插件升级不自动改写数据格式。
 > 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
@@ -205,6 +205,9 @@
 }
 ```
 
+`type` 取值：`item` / `block` / `tool` / `weapon` / `armor` / `food` / `material` / `creative_tab`。
+`creative_tab` 由导入自动识别创造模式标签生成，不是物品；素材页、校验器与摘要的物品计数会跳过它。
+
 ### 属性字段
 
 | 分组 | 字段 | 类型 | 默认值 |
@@ -261,9 +264,10 @@
     "name": "示例模组", "modid": "examplemod", "version": "0.1.0",
     "loader": "neoforge", "minecraft": "1.20.1", "loaderVersion": "NeoForge 47.1.79"
   },
-  "counts": { "ideas": 8, "ideasDone": 3, "items": 12, "blocks": 5, "totalEntries": 17 },
+  "counts": { "ideas": 8, "ideasDone": 3, "items": 12, "blocks": 5, "creativeTabs": 2, "totalEntries": 19 },
   "ideas": [{ "id": "f_1", "name": "宝石挖掘", "status": "planning", "priority": "high" }],
   "items": [{ "id": "ruby", "name": "红宝石", "type": "material", "texture": true, "model": true }],
+  "creativeTabs": [{ "id": "test_mod_tab", "name": "test_mod_tab" }],
   "missing": { "ids": ["ruby_sword"], "count": 1 },
   "code": {
     "mode": "annotated", "files": 6, "classes": 8, "methods": 34, "annotated": 4, "stale": 1,
@@ -278,7 +282,7 @@
 - 可以随时删除，下次访问时会重建；
 - 任何标注 `summary: true` 的写操作后自动刷新；
 - 手工修改不影响插件判断，因为真实数据在 `project.json` / `items/` 里；
-- `items[]` 只含最小字段，**不含 19 项属性**——要读属性用 `items/<id>.json` 或 `item_get` 工具；
+- `items[]` 只含最小字段，**不含 19 项属性**——要读属性用 `items/<id>.json` 或 `item_get` 工具；创造模式标签在 `creativeTabs[]`，不计入 `counts.items`；
 - `code` 只含注册点与计数，文件级明细在 `structure.json`（见 7.1），避免摘要膨胀。
 
 体积参考：12 个物品 + 8 条构想约 1.2 KB，逐文件读取约 8 KB。

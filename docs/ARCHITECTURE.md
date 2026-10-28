@@ -1,6 +1,6 @@
 # 架构说明
 
-> 适用版本：v0.1.2
+> 适用版本：v0.1.3
 > 更新日期：2026-10-28
 > 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)，实现状态见 [STATUS.md](STATUS.md)。
 

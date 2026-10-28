@@ -24,19 +24,19 @@ node test/04-entries.mjs # 单跑某个文件（输出更详细）
 | `04-entries.mjs` | 构想与物品 CRUD、字段纠偏、画布坐标、素材清理 | 10 |
 | `05-assets.mjs` | PNG 校验、模型读写、缺失统计、路径回退 | 13 |
 | `06-docs.mjs` | 五个导出文件、内容正确性、幂等 | 8 |
-| `07-scan.mjs` | 扫描、已导入判定、差异分析、重新导入 | 12 |
+| `07-scan.mjs` | 扫描、已导入判定、差异分析、重新导入、创造模式标签分类 | 13 |
 | `08-client-load.mjs` | 客户端模块加载、座位注册 | 8 |
 | `09-agent.mjs` | 工具清单、摘要、校验、筛选 | 19 |
 | `10-schema-sync.mjs` | schema.json 与 schema.js 一致 | 2 |
 | `11-tool-bridge.mjs` | DSH 工具定义、执行、导入提示 | 8 |
-| `12-render.mjs` | 客户端渲染结构（空态、条目、按钮、差异展示） | 15 |
+| `12-render.mjs` | 客户端渲染结构（空态、条目、按钮、差异展示、方块贴图回退） | 16 |
 | `13-block-assets.mjs` | 方块贴图按 blockstate → 模型 → parent 链 → 面解析 | 7 |
 | `14-persist.mjs` | 上次打开项目持久化、恢复、清理与旧格式兼容 | 10 |
 | `15-structure.mjs` | Java 结构解析、注册反查、跨行字段、泛型方法、缓存失效、注解 | 15 |
 | `16-reliability.mjs` | 持久写入、导入前备份与回滚、首次导入清理、导入 proof 失效 | 5 |
 | `render-harness.mjs` | 渲染测试装置（假 React + 元素树查询） | — |
 
-合计 **164 项**。
+合计 **166 项**。
 
 ## 设计要点
 

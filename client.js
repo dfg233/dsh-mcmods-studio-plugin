@@ -1413,35 +1413,48 @@ window.__ModuleLoader__.load({
         } catch (err) { setModelError(err.message) }
       }
 
-      const upload = async (id, file) => {
+      const upload = async (target, file) => {
         if (!file) return
         try {
           const buffer = await file.arrayBuffer()
           let binary = ''
           const bytes = new Uint8Array(buffer)
           for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
-          await call('assets.upload', { path: project.path, id, base64: btoa(binary) })
+          await call('assets.upload', { path: project.path, id: target.id, kind: target.kind, base64: btoa(binary) })
           await reloadAssets()
         } catch (err) { setError(err.message) }
       }
 
-      const removeTexture = async (id) => {
-        if (!window.confirm(`删除 ${id} 的贴图？`)) return
+      const removeTexture = async (target) => {
+        if (!window.confirm(`删除 ${target.id} 的贴图？`)) return
         try {
-          await call('assets.delete', { path: project.path, id })
+          await call('assets.delete', { path: project.path, id: target.id, kind: target.kind })
           await reloadAssets()
         } catch (err) { setError(err.message) }
       }
 
       const textureIds = new Set(assets.textures.map((t) => `${t.kind}/${t.id}`))
+      const blockTextureIds = new Set(assets.textures.filter((t) => t.kind === 'block').map((t) => t.id))
       const modelIds = new Set(assets.models.map((m) => m.id))
       /** 方块解析结果，按 id 索引。 */
       const blockMap = new Map((assets.blocks || []).map((entry) => [entry.id, entry]))
 
-      /** 某个条目是否有可用贴图：方块看解析结果，物品看 textures/item。 */
+      /**
+       * 某个条目实际该读哪张贴图。
+       * 方块优先用 blockstate 解析出的主贴图；没有 blockstate/模型时，
+       * 退回 textures/block/<id>.png —— 这类方块在导入后很常见。
+       */
+      const textureTarget = (item) => {
+        const block = blockMap.get(item.id)
+        if (block?.primaryKind && block?.primaryId) return { kind: block.primaryKind, id: block.primaryId }
+        if (blockTextureIds.has(item.id)) return { kind: 'block', id: item.id }
+        return { kind: 'item', id: item.id }
+      }
+
+      /** 某个条目是否有可用贴图。 */
       const hasTexture = (item) => {
-        if (blockMap.has(item.id)) return Boolean(blockMap.get(item.id).primary)
-        return textureIds.has(`item/${item.id}`)
+        const target = textureTarget(item)
+        return textureIds.has(`${target.kind}/${target.id}`)
       }
 
       /**
@@ -1451,9 +1464,8 @@ window.__ModuleLoader__.load({
        * 要用解析出来的主贴图名，所以键是 `block/<主贴图名>`。
        */
       const blockThumbKey = (id) => {
-        const block = blockMap.get(id)
-        if (block?.primary) return block.primary
-        return `item/${id}`
+        const target = textureTarget({ id })
+        return `${target.kind}/${target.id}`
       }
 
       return h('div', { style: { display: 'flex', flexDirection: 'column', gap: 14 } },
@@ -1473,7 +1485,7 @@ window.__ModuleLoader__.load({
         h('div', { style: S.card },
           h('div', { style: S.sectionTitle }, '贴图'),
           h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(132px, 1fr))', gap: 10 } },
-            (project.items || []).map((item) => {
+            (project.items || []).filter((item) => item.type !== 'creative_tab').map((item) => {
               const block = blockMap.get(item.id)
               const ok = hasTexture(item)
               return h('div', {
@@ -1511,11 +1523,11 @@ window.__ModuleLoader__.load({
                   h('button', { style: S.btn(), onClick: () => {
                     const input = document.createElement('input')
                     input.type = 'file'; input.accept = 'image/png'
-                    input.onchange = (event) => upload(item.id, event.target.files && event.target.files[0])
+                    input.onchange = (event) => upload(textureTarget(item), event.target.files && event.target.files[0])
                     input.click()
                   } }, ok ? '替换' : '上传'),
                   ok ? h('button', {
-                    style: { ...S.btn('ghost'), color: C.danger }, onClick: () => removeTexture(item.id),
+                    style: { ...S.btn('ghost'), color: C.danger }, onClick: () => removeTexture(textureTarget(item)),
                   }, '删除') : null,
                 ),
               )
@@ -2252,7 +2264,7 @@ window.__ModuleLoader__.load({
                     h(InfoRow, { label: 'modid', value: meta.modid }),
                     h(InfoRow, { label: '加载器', value: LOADER_LABELS[meta.loader] || meta.loader }),
                     h(InfoRow, { label: '版本', value: meta.version || '—' }),
-                    h(InfoRow, { label: '物品', value: `${items.length} 个` }),
+                    h(InfoRow, { label: '物品', value: `${items.filter((item) => item.type !== 'creative_tab').length} 个${items.some((item) => item.type === 'creative_tab') ? ` · 标签 ${items.filter((item) => item.type === 'creative_tab').length} 个` : ''}` }),
                     h(InfoRow, { label: '构想', value: `${features.length} 项（已完成 ${statusCount}）` }),
                     summary?.missing?.count
                       ? h(InfoRow, { label: '缺失素材', value: `${summary.missing.count} 个` })

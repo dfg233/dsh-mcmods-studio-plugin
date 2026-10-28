@@ -1,7 +1,7 @@
 # 素材管理模块计划
 
 > 模块编号：07
-> 适用插件版本：v0.1.2
+> 适用插件版本：v0.1.3
 > 代码位置：`lib/assets.js`、`client.js` 的 `AssetsTab`
 > 状态：已实现
 > 依据：[PROJECT-STRUCTURE.md](../PROJECT-STRUCTURE.md) 第 5 节
@@ -43,8 +43,8 @@
 | 方块模型 | `<root>/models/block/`（只读解析） |
 | 方块状态 | `<root>/blockstates/`（只读解析） |
 
-> 上传与模型编辑只支持 `item` 子目录；`block`、`blockstates`、`lang` 由导入模块读取，
-> 其中方块贴图已能按面解析展示，但素材页不提供上传与编辑。
+> 上传支持 `item` 与 `block` 两个贴图目录；`blockstates`、`lang` 由导入模块读取。
+> 方块贴图优先按 blockstate → 模型 → parent 链解析；没有 blockstate/模型时回退到同名 `textures/block/<id>.png`。
 
 ### 2.3 校验规则
 
@@ -161,10 +161,10 @@ listAssets
 | action | payload | 返回 |
 | --- | --- | --- |
 | `assets.list` | `{path}` | `{modid,standard,root,textures[],models[],missing[]}` |
-| `assets.upload` | `{path,id,base64}` | `{id,width,height,bytes,path}` |
+| `assets.upload` | `{path,id,base64,kind?}` | `{id,kind,width,height,bytes,path}` |
 | `assets.read` | `{path,id}` | `{dataUrl}` |
 | `assets.readMany` | `{path,ids[]}` | `{images:{id:dataUrl\|null}}` |
-| `assets.delete` | `{path,id}` | `{ok:true}` |
+| `assets.delete` | `{path,id,kind?}` | `{ok:true}` |
 | `assets.model.get` | `{path,id}` | `{text}` |
 | `assets.model.save` | `{path,id,model}` | `{text}` |
 | `assets.root` | `{path}` | `{root,standard}` |
@@ -189,11 +189,11 @@ listAssets
 
 ## 8. 现状与缺口
 
-**已实现**：目录回退策略、PNG 三重校验、上传/删除/读取、批量预览、模型查看与编辑、默认模型生成、缺失统计、方块贴图按 blockstate → 模型 → parent 链 → 面解析。
+**已实现**：目录回退策略、PNG 三重校验、上传/删除/读取、批量预览、模型查看与编辑、默认模型生成、缺失统计、方块贴图按 blockstate → 模型 → parent 链 → 面解析，以及无 blockstate/模型时回退同名方块贴图。
 
 **已知缺口**：
 
-- 上传与模型编辑只支持 `textures/item` 与 `models/item`；`block`、`blockstates`、`lang`、`sounds` 只能读取，不能上传或编辑；
+- 模型编辑只支持 `models/item`；`blockstates`、`lang`、`sounds` 只能读取，不能编辑；方块贴图已支持上传/删除；
 - 无批量上传、拖拽上传；
 - 无图片裁剪/缩放/背景透明化；
 - 无动画 `.mcmeta` 编辑；

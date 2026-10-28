@@ -1,7 +1,7 @@
 # 物品管理模块计划
 
 > 模块编号：06
-> 适用插件版本：v0.1.2
+> 适用插件版本：v0.1.3
 > 代码位置：`lib/schema.js` 的 `ITEM_FIELDS`/`ITEM_TYPES`/`itemSchema`/`defaultProperties`；`lib/entries.js` 的 `listItems`/`normalizeItem`/`saveItem`/`deleteItem`；`lib/paths.js` 的 `itemsDir`；`client.js` 的 `ItemsTab`、`ItemEditor`、`renderField`、`defaultSlot`
 > 状态：已实现
 > 最后更新：2026-10-28
@@ -10,7 +10,7 @@
 
 **负责**：
 
-- 以「物品」为单位记录模组内容（含方块，方块是一种物品类型）；
+- 以「物品」为单位记录模组内容（含方块，方块是一种物品类型）；创造模式标签是特殊类型（`creative_tab`），自动归类但不计入物品统计；
 - 提供 19 个属性字段的编辑能力，按五组分类；
 - 两种浏览方式：表格列表与自由排布的画布；
 - 搜索、删除、画布坐标持久化。

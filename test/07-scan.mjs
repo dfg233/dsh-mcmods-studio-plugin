@@ -3,6 +3,7 @@
  */
 
 import { rm } from 'node:fs/promises'
+import { join } from 'node:path'
 import { equal, must, runSuite, writeFabricProject, writeNeoForgeProject } from './helpers.mjs'
 
 const cases = [
@@ -95,6 +96,46 @@ const cases = [
       const fresh = await writeNeoForgeProject(ws, ws.path('c'), { modid: 'cmod' })
       const r3 = await ws.call('project.analyzeImport', { path: fresh })
       equal(r3.kind, 'new', '全新目录应为 new')
+    },
+  },
+  {
+    name: '创造模式标签单独归类，不混入物品',
+    async run(ws) {
+      const dir = await writeNeoForgeProject(ws, ws.path('tabs'), {
+        modid: 'tabsmod', items: ['ruby'], blocks: [],
+      })
+      await ws.write(join(dir, 'src/main/java/com/example/ModItems.java'), [
+        'package com.example;',
+        'public class ModItems {',
+        '  public static void register() { register("ruby", new Item()); }',
+        '}',
+      ].join('\n'))
+      await ws.write(join(dir, 'src/main/java/com/example/ModCreativeModeTabs.java'), [
+        'package com.example;',
+        'import net.minecraft.world.item.CreativeModeTab;',
+        'public class ModCreativeModeTabs {',
+        '  public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(...);',
+        '  public static void register() { register("materials_tab", () -> CreativeModeTab.builder().build()); }',
+        '}',
+      ].join('\n'))
+
+      const project = await ws.call('project.import', { path: dir })
+      equal(project.items.find((item) => item.id === 'ruby').type, 'item', '普通注册名仍是物品')
+      equal(project.items.find((item) => item.id === 'materials_tab').type, 'creative_tab', '创造模式标签应单独归类')
+
+      const summary = await ws.call('agent.summary', { path: dir })
+      equal(summary.counts.items, 1, '物品计数不应包含创造模式标签')
+      equal(summary.counts.creativeTabs, 1, '应返回创造模式标签计数')
+
+      const assets = await ws.call('assets.list', { path: dir })
+      must(!assets.missing.includes('materials_tab'), '创造模式标签不应出现在缺失素材里')
+
+      // 模拟旧版本把标签存成物品，merge 重新导入也应纠正类型
+      await ws.call('items.save', { path: dir, item: { id: 'materials_tab', displayName: 'materials_tab', type: 'item' } })
+      const analysis = await ws.call('project.analyzeImport', { path: dir })
+      await ws.call('project.reimport', { path: dir, mode: 'merge', proof: analysis.proof })
+      const reopened = await ws.call('project.open', { path: dir })
+      equal(reopened.items.find((item) => item.id === 'materials_tab').type, 'creative_tab', 'merge 重新导入应纠正旧的错误分类')
     },
   },
   {

@@ -265,6 +265,31 @@ const cases = [
     },
   },
   {
+    name: '素材页显示无 blockstate 方块贴图',
+    async run() {
+      const client = await loadClient({
+        handler: async (action) => {
+          if (action === 'assets.readMany') return { images: { 'block/ice_ether_block': 'data:image/png;base64,AA==' } }
+          return {}
+        },
+      })
+      const project = makeProject({
+        items: [{ id: 'ice_ether_block', displayName: '寒冰方块', type: 'block', properties: { maxStackSize: 64, maxDamage: 0 }, canvas: { x: 0, y: 0 } }],
+      })
+      const assets = {
+        modid: 'demomod', root: 'D:/demo/assets', standard: true,
+        textures: [{ id: 'ice_ether_block', kind: 'block' }],
+        models: [], blockModels: [], blocks: [], missing: ['ice_ether_block'], blockCount: 0,
+      }
+      const tree = await client.renderSettled(client.components.AssetsTab, {
+        project, assets, reloadAssets: () => {}, setError: () => {},
+      })
+
+      must(hasText(tree, 'ice_ether_block'), '应列出方块条目')
+      must(countTag(tree, 'img') >= 1, '应显示方块贴图缩略图')
+    },
+  },
+  {
     name: '导入确认弹窗展示四类差异',
     async run() {
       const client = await loadClient({

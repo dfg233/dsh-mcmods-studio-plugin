@@ -1,7 +1,7 @@
 # 工程导入模块计划
 
 > 模块编号：04
-> 适用插件版本：v0.1.2
+> 适用插件版本：v0.1.3
 > 代码位置：`lib/gradle.js`；`lib/import.js` 的 `resolveIdentity`、`diffEntries`、`syncEntries`、`importProject`、`reimportProject`、`analyzeImport`、`importProof`、`detectDescriptor`、`scanProjectAssets`、`scanRegistryNames`、`writeSnapshot`；`lib/backup.js` 的 `runWithProjectBackup`；`client.js` 的 `ImportProjectModal`、`ImportConfirmModal`、`ProjectDetailModal`
 > 状态：已实现
 > 依据：[PROJECT-STRUCTURE.md](../PROJECT-STRUCTURE.md)
@@ -207,6 +207,7 @@ reimportProject
 | 有 blockstate / 方块模型 / 方块贴图 | `block` | 「贴图已存在；模型已存在」或对应「缺…」 |
 | 其余（物品贴图 / 物品模型 / 注册名） | `item` | 同上 |
 | 语言文件名（`zh_cn`、`en_us`） | **不创建条目** | — |
+| `DeferredRegister<CreativeModeTab>` / `CreativeModeTab.builder` 文件里的 `register` | `creative_tab` | 创造模式物品栏标签，不计入物品统计 |
 | 其他命名空间的资源 | **不创建条目** | 只在快照中记录 |
 
 ### 4.4 快照文档结构
@@ -214,7 +215,7 @@ reimportProject
 1. 标题与生成时间；
 2. 「基本信息」表（目录、modid、名称、版本、加载器、目标版本，以及可选的 MC 版本范围、加载器版本、作者、许可证、包名、信息来源）；
 3. 「资源扫描」总表（类型 / 路径 / 数量）；
-4. 各类型清单小节（物品贴图、方块贴图、模型、方块状态、语言、配方、战利品表、标签、进度、注册名）；
+4. 各类型清单小节（物品贴图、方块贴图、模型、方块状态、语言、配方、战利品表、标签、进度、注册名、创造模式标签）；
 5. 「检测到的命名空间」（标注本项目 / 其他）。
 
 ## 5. 接口
@@ -222,7 +223,7 @@ reimportProject
 | action | payload | 返回 |
 | --- | --- | --- |
 | `project.analyzeImport` | `{path, modid?, name?, version?}` | `{kind, registered, hasStudioData, marker, identity, identityError, conflicts, missing, meta, scan, diff, notices, proof}` |
-| `project.import` | `{path, modid?, name?, version?, force?}` | `{path, meta, features, items, imported:{assets, registryNames, created, updated, kept, typeConflicts, missing, blocks, mode, snapshot, structure, notices}}` |
+| `project.import` | `{path, modid?, name?, version?, force?}` | `{path, meta, features, items, imported:{assets, registryNames, creativeTabs, created, updated, kept, typeConflicts, missing, blocks, mode, snapshot, structure, notices}}` |
 | `project.reimport` | `{path, mode?, proof?}` | 同上 |
 
 > `notices` 记录元数据来源、加载器判定、占位符解析等系统判断（只提示，不写盘）。

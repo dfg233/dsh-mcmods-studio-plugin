@@ -1,6 +1,6 @@
 # 代码索引
 
-> 适用版本：v0.1.2
+> 适用版本：v0.1.3
 > 更新日期：2026-10-28
 > 用途：修改插件代码前先查这里，按「文件 → 函数 → 参数 → 返回」定位，不必通读源码。
 > 说明：行号为编写时的位置，改动后会偏移，**优先按名称搜索**。发版与升版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
@@ -26,27 +26,27 @@
 | `package.json` | bundle 清单：版本、包名、`dsh.bundle.patch`、`dsh.client` | 46 |
 | `cordis.patch.yml` | 向 Loader 插入 `id: mc-mod-studio` | 12 |
 | `index.js` | Host 入口：HTTP 路由、原生工具注册、卸载清理 | 121 |
-| `client.js` | 浏览器半：全部 UI（单文件模块） | 2353 |
-| `lib/api.js` | 37 个动作的声明式路由表与分派 | 572 |
+| `client.js` | 浏览器半：全部 UI（单文件模块） | 2365 |
+| `lib/api.js` | 37 个动作的声明式路由表与分派 | 573 |
 | `lib/paths.js` | `.mcstudio/` 路径、id 校验、路径归属 | 75 |
-| `lib/schema.js` | 加载器、构想状态、物品类型、19 个字段 | 182 |
+| `lib/schema.js` | 加载器、构想状态、物品类型（含创造模式标签）、19 个字段 | 183 |
 | `lib/meta.js` | `project.json` 与 `studio.json` 读写、项目创建 | 217 |
 | `lib/entries.js` | 构想与物品 CRUD、字段纠偏、`readProject` | 194 |
-| `lib/import.js` | 工程识别、资源扫描、身份解析、差异、快照、导入 proof | 818 |
+| `lib/import.js` | 工程识别、资源扫描、身份解析、差异、快照、导入 proof、标签分类 | 838 |
 | `lib/gradle.js` | `gradle.properties` 解析、占位符处理 | 205 |
-| `lib/assets.js` | 贴图与模型：路径、PNG 校验、上传、读取、方块面解析 | 528 |
+| `lib/assets.js` | 贴图与模型：路径、PNG 校验、上传、读取、方块面解析 | 536 |
 | `lib/docs.js` | 五份 Markdown 的渲染 | 256 |
 | `lib/registry.js` | 插件注册表、路径展开、持久原子写入 | 243 |
 | `lib/backup.js` | 导入前项目备份、失败回滚、备份路径 | 109 |
-| `lib/summary.js` | `.mcstudio/summary.json` 的构建 | 109 |
+| `lib/summary.js` | `.mcstudio/summary.json` 的构建（含创造模式标签计数） | 114 |
 | `lib/validate.js` | 9 类项目校验 | 171 |
 | `lib/tools.js` | 21 个 agent 工具的定义与调用 | 468 |
 | `lib/structure.js` | Java 源码结构解析、按哈希增量、注解读写 | 794 |
 | `lib/tool-bridge.js` | 把工具注册为 DSH 原生工具 | 87 |
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
-| `data/schema.json` | 字段定义的对外副本（生成物） | 8.0 KB |
+| `data/schema.json` | 字段定义的对外副本（生成物） | 7.3 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：16 个文件、164 项 | 3654 |
+| `test/*.mjs` | 回归测试：16 个文件、166 项 | 3631 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 
 > `lib/project.js` 是 2026-10-24 拆分后保留的转发层，`api.js`、`assets.js`、`docs.js`、
@@ -102,7 +102,7 @@
 | `LOADERS[]` | `{id,label,note}`，forge / neoforge / fabric |
 | `FEATURE_STATUS[]` | idea / planning / implementing / done，带 `tone` |
 | `FEATURE_PRIORITY[]` | high / medium / low |
-| `ITEM_TYPES[]` | item / block / tool / weapon / armor / food / material |
+| `ITEM_TYPES[]` | item / block / tool / weapon / armor / food / material / creative_tab |
 | `ITEM_FIELDS[]` | 19 个字段：`{key,label,type,group,default,min,max,unit,hint,options?}` |
 | `itemSchema()` | 聚合返回给前端 |
 | `defaultProperties()` | 由字段定义生成默认属性对象 |
@@ -161,9 +161,9 @@
 | 函数 | 用途 | 返回 |
 | --- | --- | --- |
 | `scanCandidates(root)` | 扫描一级子目录 | 候选数组，含 `imported` / `legacy` |
-| `importProject(input)` | 首次导入 | 项目数据 + `imported{assets,created,notices,snapshot,backup}` |
+| `importProject(input)` | 首次导入 | 项目数据 + `imported{assets,registryNames,creativeTabs,created,notices,snapshot,backup}` |
 | `reimportProject(input)` | 重新导入，`mode` 为 `merge` / `overwrite`，`proof` 校验过期预览 | 同上 |
-| `analyzeImport(input)` | 只分析不写盘 | `{kind, identity, diff, notices, proof}` |
+| `analyzeImport(input)` | 只分析不写盘 | `{kind, identity, diff, notices, creativeTabs, proof}` |
 | `writeSnapshot(path, info)` | 写导入快照 | 相对路径 |
 
 内部函数（不导出）：
@@ -189,9 +189,9 @@
 | `modelFile` | 物品模型绝对路径 |
 | `pngSize(buffer)` | 解析 PNG 宽高，非 PNG 返回 `null` |
 | `listAssets(path)` | 见下方「返回结构」 |
-| `uploadTexture(path, id, base64)` | 校验并保存，返回 `{id,width,height,bytes,path}` |
+| `uploadTexture(path, id, base64, kind?)` | 校验并保存；`kind` 为 `item` / `block`，返回 `{id,kind,width,height,bytes,path}` |
 | `readTextureDataUrl(path, id, kind)` | data URL 或 `null`；找不到时回退另一种 `kind` |
-| `deleteTexture(path, id)` | 删除贴图 |
+| `deleteTexture(path, id, kind?)` | 删除贴图；`kind` 为 `item` / `block` |
 | `readModel` / `saveModel` | 模型 JSON 读写，保存前校验 |
 | `buildDefaultModel(modid, item)` | 生成 `item/generated` 模型 |
 | `ensureModel(path, item)` | 缺失时补默认模型 |
@@ -363,7 +363,7 @@ export * from './import.js'
 | `project.create` | `{path,name,modid,version,description,loader}` | 项目数据 | none |
 | `project.open` | `{path}` | `{path, meta, features, items}` | project |
 | `project.import` | `{path,modid?,name?,version?,force?}` | 项目数据 + `imported` | none |
-| `project.analyzeImport` | `{path,...}` | `{kind, identity, diff, notices, proof}` | none |
+| `project.analyzeImport` | `{path,...}` | `{kind, identity, diff, notices, creativeTabs, proof}` | none |
 | `project.reimport` | `{path, mode?, proof?}` | 项目数据 + `imported` | none |
 | `project.saveMeta` | `{path, patch}` | `meta` | studio |
 
@@ -392,10 +392,10 @@ export * from './import.js'
 | action | payload | 返回 | scope |
 | --- | --- | --- | --- |
 | `assets.list` | `{path}` | `{modid,standard,root,textures,models,blockModels,blocks,missing}` | studio |
-| `assets.upload` | `{path,id,base64}` | `{id,width,height,bytes,path}` | studio |
+| `assets.upload` | `{path,id,base64,kind?}` | `{id,kind,width,height,bytes,path}` | studio |
 | `assets.read` | `{path,id,kind?}` | `{dataUrl}` | studio |
 | `assets.readMany` | `{path,ids[]}` | `{images}` | studio |
-| `assets.delete` | `{path,id}` | `{ok:true}` | studio |
+| `assets.delete` | `{path,id,kind?}` | `{ok:true}` | studio |
 | `assets.model.get` | `{path,id}` | `{text}` | studio |
 | `assets.model.save` | `{path,id,model}` | `{text}` | studio |
 | `assets.root` | `{path}` | `{root,standard}` | studio |
@@ -601,7 +601,7 @@ const tabs = [
 
 ### 6.5 `summary.json`（派生）
 
-`{schemaVersion, meta, counts{ideas,ideasDone,items,blocks,totalEntries}, ideas[], items[], missing{ids,count}, code{...}|null, updatedAt}`
+`{schemaVersion, meta, counts{ideas,ideasDone,items,blocks,creativeTabs,totalEntries}, ideas[], items[], creativeTabs[], missing{ids,count}, code{...}|null, updatedAt}`
 
 `code` 只含 `mode / files / classes / methods / annotated / stale / registrations`；
 没有结构文档时为 `null`。
@@ -693,7 +693,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（16 个文件、164 项）
+# 全部测试（16 个文件、166 项）
 npm test
 
 # 只跑某一组
@@ -740,12 +740,12 @@ client.js
 | `04-entries.mjs` | 构想与物品 CRUD、纠偏 | 10 |
 | `05-assets.mjs` | PNG 校验、模型、路径回退 | 13 |
 | `06-docs.mjs` | 五份导出、幂等 | 8 |
-| `07-scan.mjs` | 扫描、判定、差异、重新导入 | 12 |
+| `07-scan.mjs` | 扫描、判定、差异、重新导入、标签分类 | 13 |
 | `08-client-load.mjs` | 客户端加载、座位注册 | 8 |
 | `09-agent.mjs` | 工具、摘要、校验 | 19 |
 | `10-schema-sync.mjs` | schema 一致性 | 2 |
 | `11-tool-bridge.mjs` | 原生工具定义与 notices | 8 |
-| `12-render.mjs` | 渲染结构 | 15 |
+| `12-render.mjs` | 渲染结构、方块贴图回退 | 16 |
 | `13-block-assets.mjs` | 方块面贴图解析 | 7 |
 | `14-persist.mjs` | 项目切换持久化 | 10 |
 | `15-structure.mjs` | 代码结构文档 | 15 |

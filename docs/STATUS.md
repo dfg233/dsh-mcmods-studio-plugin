@@ -1,6 +1,6 @@
 # 项目状态：已实现、未实现与要求
 
-> 适用版本：模组工坊（`dsh-mcmods-studio-plugin`）v0.1.2
+> 适用版本：模组工坊（`dsh-mcmods-studio-plugin`）v0.1.3
 > 更新日期：2026-10-28
 > 本文档回答三个问题：**现在能做什么**、**还不能做什么**、**必须遵守什么**。
 > 历史变更见 [CHANGELOG.md](CHANGELOG.md)，版本规则与发版流程见 [VERSION-PLAN.md](VERSION-PLAN.md)，开发方式见 [DEVELOPMENT.md](DEVELOPMENT.md)，版本路线与宗旨见 [PLAN.md](PLAN.md)，代码索引见 [INDEX.md](INDEX.md)。
@@ -60,10 +60,10 @@
 - 重新导入：项目列表每行提供「重新导入」按钮，确认后按差异同步——新增条目自动创建，已有条目默认保留（可选按扫描结果改写类型冲突项）；
 - 导入安全：导入 / 重新导入前把 `.mcstudio/` 与 `docs/mcstudio-snapshot.md` 备份到插件数据目录，失败自动回滚；分析结果带 `proof`，预览后工程有变化会拒绝执行并要求重新分析；
 - 项目详情：列表每行提供「详情」按钮，默认只显示 modid、Minecraft 版本、加载器；作者、许可证、包名、版本范围等收在「更多信息」里；
-- 导入分类：有 blockstate / 方块模型 / 方块贴图的条目归为「方块」，其余归为「物品」；语言文件名（`zh_cn`、`en_us`）不作为条目；
+- 导入分类：有 blockstate / 方块模型 / 方块贴图的条目归为「方块」；`CreativeModeTab` 注册文件里的条目归为「创造模式标签」，不计入物品；其余归为「物品」；语言文件名（`zh_cn`、`en_us`）不作为条目；
 - 加载器识别：`fabric.mod.json` 直接判定 Fabric；`mods.toml` 因 1.20.1 的 Forge 与 NeoForge 共用文件名，改由 `build.gradle` / `gradle.properties` 中的 `net.neoforged` / `neo_version` 区分；
 - 命名空间记录：快照中列出 `assets/` 与 `data/` 下检测到的全部命名空间，并标注是否属于本项目；
-- 生成 `docs/mcstudio-snapshot.md`：按资源类型列出数量与清单（物品贴图、方块贴图、模型、方块状态、语言、配方、战利品表、标签、进度、注册名）；
+- 生成 `docs/mcstudio-snapshot.md`：按资源类型列出数量与清单（物品贴图、方块贴图、模型、方块状态、语言、配方、战利品表、标签、进度、注册名、创造模式标签）；
 - 修改扫描根目录（默认 `D:\program`）。
 
 ### 2.2 构想
@@ -84,7 +84,7 @@
   - 行为属性：工具等级、采集等级、攻击伤害、攻击速度、护甲值、食物恢复值、食物饱和度；
   - 标签属性：物品标签、方块标签；
   - 兼容性：加载器差异备注；
-- 物品类型：普通物品、方块、工具、武器、盔甲、食物、材料；
+- 物品类型：普通物品、方块、工具、武器、盔甲、食物、材料、创造模式标签（`creative_tab`，导入时自动归类，不计入物品）；
 - 删除物品；
 - 编辑草稿：未保存输入存 localStorage，重新打开自动恢复；离开页面提示、取消确认；
 - 导出 `docs/ITEMS.md`（总览）与 `docs/ITEMS/<id>.md`（单件详情）。
@@ -92,10 +92,11 @@
 ### 2.4 贴图与模型
 
 - PNG 上传：校验文件魔数、必须为正方形、单文件 ≤ 2MB；
-- 贴图预览（像素化渲染）与列表；
+- 贴图预览（像素化渲染）与列表；`textures/item` 与 `textures/block` 都支持上传 / 删除；
+- 方块贴图：优先按 blockstate → 模型 → parent 链解析；没有 blockstate/模型时回退到同名 `textures/block/<id>.png`；
 - 模型 JSON 查看、编辑、保存前校验；可为缺失模型生成默认 `item/generated` 模型；
 - 缺失素材统计：哪些物品没有贴图、哪些没有模型；
-- 存储位置：优先写入 `src/main/resources/assets/<modid>/textures/item` 与 `models/item`；工程没有标准资源目录时回退到 `.mcstudio/assets/<modid>/`。
+- 存储位置：优先写入 `src/main/resources/assets/<modid>/textures/item|block` 与 `models/item`；工程没有标准资源目录时回退到 `.mcstudio/assets/<modid>/`。
 
 ### 2.5 文档导出
 
@@ -231,6 +232,14 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | 编辑器草稿 | `client.js` 的 `useDraftState` | 物品 / 构想草稿存 localStorage，重新打开恢复；离开提示与取消确认 |
 | 测试 | `test/16-reliability.mjs` | 持久写入、备份回滚、备份保留、首次导入清理、proof 失效；总计 16 个文件 / 164 项 |
 
+### 3.0.5 v0.1.3 导入分类与贴图显示（已完成）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| 创造模式标签 | `lib/import.js`、`lib/schema.js` | 识别 `DeferredRegister<CreativeModeTab>` / `CreativeModeTab.builder` / `Registries.CREATIVE_MODE_TAB`；标签单独归为 `creative_tab`，摘要、素材、校验与侧栏不计入物品；`merge` 重新导入会纠正旧数据 |
+| 方块贴图回退 | `client.js` 的 `AssetsTab`、`lib/assets.js` | 没有 blockstate / 方块模型时回退读取 `textures/block/<id>.png`；上传 / 删除支持 `kind: block`；`missing` 不再把「有贴图缺模型」算成缺贴图 |
+| 测试 | `test/07-scan.mjs`、`test/12-render.mjs` | 标签分类与 merge 纠正、无 blockstate 方块贴图渲染；总计 16 个文件 / 166 项 |
+
 ### 3.1 计划中（按优先级）
 
 > 优先级口径：P0 = 渲染层测试、代码结构文档与 v0.1.2 可靠性补丁（**已完成**）；P1 = v0.2 关系视图、编辑效率与设置；P2 = v0.3 代码工作区与生成；P3 = v0.4 图形化；P4 = v0.5 质量与效率。
@@ -305,17 +314,17 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**16 个文件、164 项全部通过**）：
+已通过自动化验证（`npm test`，**16 个文件、166 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
-| Host 业务 | 102 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| Host 业务 | 103 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
 | 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |
 | 可靠性 | 5 项 | 持久写入无临时残留、备份失败回滚、备份成功保留、首次导入失败清理、导入 proof 失效与重新导入 |
 | 客户端加载 | 8 项 | 假 `__ModuleLoader__` + 假 React，验证加载、模块 id、座位注册 |
-| 渲染结构 | 15 项 | 假 React 渲染组件，断言文本、按钮、条件分支 |
+| 渲染结构 | 16 项 | 假 React 渲染组件，断言文本、按钮、条件分支 |
 | schema 一致性 | 2 项 | 比对 `schema.js` 与 `data/schema.json` |
 
 接口级验证：

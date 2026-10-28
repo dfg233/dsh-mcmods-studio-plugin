@@ -81,6 +81,10 @@
     {
       "id": "material",
       "label": "材料"
+    },
+    {
+      "id": "creative_tab",
+      "label": "创造模式标签"
     }
   ],
   "itemFields": [

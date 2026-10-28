@@ -1,7 +1,7 @@
 # 界面外壳模块计划
 
 > 模块编号：10
-> 适用插件版本：v0.1.2
+> 适用插件版本：v0.1.3
 > 代码位置：`client.js` 全文件（主题常量、通用组件、`StudioPage`、`SidebarStudioPanel`、`PathField`、`ensureStyles`、`studioState`、座位注册）
 > 状态：已实现
 > 最后更新：2026-10-28
