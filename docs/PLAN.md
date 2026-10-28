@@ -2,6 +2,7 @@
 
 > 项目：模组工坊（`dsh-mcmods-studio-plugin`）
 > 当前版本：v0.1.3（已交付并运行）
+> 新方向（AI 工作台、想法/系统/任务/模板、图形化数据编辑）见 [WORKBENCH-PLAN.md](WORKBENCH-PLAN.md)；本文保留 v0.1–v0.2 旧路线，待新计划确认后同步。
 > 当前适配：**仅 Minecraft 1.20.1**（Forge / NeoForge / Fabric）
 > 更新日期：2026-10-28
 > 本文档描述**方向与路线**。实现细节见 [STATUS.md](STATUS.md)，代码索引见 [INDEX.md](INDEX.md)，版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
