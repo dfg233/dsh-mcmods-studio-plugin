@@ -8,6 +8,8 @@
 
 - M1.1 工作台计划数据：`lib/workbench.js`、`.mcstudio/systems.json`、`.mcstudio/tasks.json`；新增 `workbench.plan`、`systems.*`、`tasks.*` 共 7 个动作；客户端新增「计划」页与系统/任务编辑弹窗；新增 `mcmods_workbench` 原生工具。
 - 测试新增 `test/17-workbench.mjs`，计划页渲染用例；总计 17 个文件 / 172 项。
+- M1.2 内容编辑：新增 `lib/content.js` 与 `content.get/preview/apply/rollback` 四个动作；支持语言、有序/无序/熔炉配方、物品模型，写入前备份、失败回滚；物品编辑器增加语言/配方/模型字段与变更预览。
+- 测试新增 `test/18-content.mjs`，总计 18 个文件 / 179 项。
 
 ### 计划中
 

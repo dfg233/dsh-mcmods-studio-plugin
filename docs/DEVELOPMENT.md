@@ -47,7 +47,7 @@ dsh-mcmods-studio-plugin/
 ├── index.js              # Host 入口：HTTP 路由、原生工具注册、卸载清理
 ├── client.js             # Client 入口：单文件 UI 模块
 ├── lib/
-│   ├── api.js            # 44 个动作的声明式路由表与 dispatch
+│   ├── api.js            # 48 个动作的声明式路由表与 dispatch
 │   ├── registry.js       # 注册表、路径工具、原子写文件
 │   ├── paths.js          # .mcstudio/ 路径、id 校验、路径归属
 │   ├── schema.js         # 加载器、状态、类型、19 个字段
@@ -55,6 +55,7 @@ dsh-mcmods-studio-plugin/
 │   ├── entries.js        # 构想与物品 CRUD、readProject
 │   ├── import.js         # 工程识别、资源扫描、差异、快照、proof
 │   ├── workbench.js      # 系统卡与任务包
+│   ├── content.js        # 语言/配方/模型资源与回滚
 │   ├── backup.js         # 导入前备份与失败回滚
 │   ├── gradle.js         # gradle.properties 解析与占位符
 │   ├── assets.js         # 贴图、模型、方块面解析
@@ -67,7 +68,7 @@ dsh-mcmods-studio-plugin/
 │   └── project.js        # 转发层：export * 五个数据模块（不能删）
 ├── data/schema.json      # 字段定义对外副本（由脚本生成）
 ├── scripts/gen-schema.mjs
-├── test/                 # 17 个回归用例文件、172 项
+├── test/                 # 18 个回归用例文件、179 项
 ├── locale/               # 插件显示名与描述
 └── docs/                 # 本目录
 ```
@@ -164,7 +165,7 @@ Host 层可以脱离 DSH 直接测试：设置 `DSH_HOME` 到临时目录，
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（17 个文件、172 项）
+# 全部测试（18 个文件、179 项）
 npm test
 
 # 只跑某一组

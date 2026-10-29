@@ -1235,6 +1235,7 @@ window.__ModuleLoader__.load({
       const [drag, setDrag] = useState(null)
       const [report, setReport] = useState(null)
       const [reportOpen, setReportOpen] = useState(false)
+      const [lastContentBackup, setLastContentBackup] = useState(null)
       const positionsRef = useRef({})
       const movedRef = useRef(false)
 
@@ -1335,9 +1336,13 @@ window.__ModuleLoader__.load({
 
       if (!project) return h('div', { style: S.empty }, '请先在「项目」中打开一个项目。')
 
-      const saveItem = async (item) => {
+      const saveItem = async (item, content) => {
         try {
           const result = await call('items.save', { path: project.path, item })
+          if (content) {
+            const applied = await call('content.apply', { path: project.path, id: result.item.id, content })
+            if (applied.backupDir) setLastContentBackup(applied.backupDir)
+          }
           const next = items.filter((i) => i.id !== result.item.id)
           next.push(result.item)
           setProject({ ...project, items: next })
@@ -1356,6 +1361,17 @@ window.__ModuleLoader__.load({
           await call('items.delete', { path: project.path, id })
           setProject({ ...project, items: items.filter((i) => i.id !== id) })
           reloadAssets()
+        } catch (err) { setError(err.message) }
+      }
+
+      const rollbackContent = async () => {
+        if (!lastContentBackup) return
+        if (!window.confirm('回滚上次内容写入？语言/配方/模型会恢复到写入前。')) return
+        try {
+          await call('content.rollback', { path: project.path, backupDir: lastContentBackup })
+          setLastContentBackup(null)
+          reloadAssets()
+          setError('')
         } catch (err) { setError(err.message) }
       }
 
@@ -1416,6 +1432,13 @@ window.__ModuleLoader__.load({
                       : null,
                   )
                 : null,
+            )
+          : null,
+
+        lastContentBackup
+          ? h('div', { style: { ...S.card, padding: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' } },
+              h('span', { style: { ...S.hint, marginTop: 0, flex: 1 } }, '上次内容写入已备份，可回滚语言/配方/模型。'),
+              h('button', { style: S.btn('ghost'), onClick: rollbackContent }, '回滚上次内容'),
             )
           : null,
 
@@ -1540,7 +1563,35 @@ window.__ModuleLoader__.load({
       const draft = draftState.value
       const [uploading, setUploading] = useState(false)
       const [saving, setSaving] = useState(false)
+      const [contentLoading, setContentLoading] = useState(false)
+      const [content, setContent] = useState({
+        lang: { zh: item.displayName || '', en: '' },
+        recipe: { type: 'none', pattern: ['', '', ''], keys: [], ingredients: [], count: 1, experience: 0, cookingTime: 200 },
+        model: { parent: 'minecraft:item/generated' },
+      })
       const fileRef = useRef(null)
+
+      useEffect(() => {
+        if (!props.item.createdAt) return undefined
+        let alive = true
+        setContentLoading(true)
+        call('content.get', { path: project.path, id: props.item.id })
+          .then((data) => {
+            if (!alive) return
+            setContent({
+              lang: { zh: data?.lang?.zh || props.item.displayName || '', en: data?.lang?.en || '' },
+              recipe: data?.recipe || { type: 'none', pattern: ['', '', ''], keys: [], ingredients: [], count: 1, experience: 0, cookingTime: 200 },
+              model: { parent: data?.model?.parent || 'minecraft:item/generated' },
+            })
+          })
+          .catch(() => {})
+          .finally(() => { if (alive) setContentLoading(false) })
+        return () => { alive = false }
+      }, [props.item.id, props.item.createdAt, project.path, props.item.displayName])
+
+      const setContentField = (key, value) => setContent((prev) => ({ ...prev, [key]: value }))
+      const setRecipe = (key, value) => setContent((prev) => ({ ...prev, recipe: { ...prev.recipe, [key]: value } }))
+      const setLang = (key, value) => setContent((prev) => ({ ...prev, lang: { ...prev.lang, [key]: value } }))
 
       const set = (key, value) => draftState.setValue((prev) => ({ ...prev, [key]: value }))
       const setProperty = (key, value) => draftState.setValue((prev) => ({
@@ -1557,8 +1608,15 @@ window.__ModuleLoader__.load({
         if (saving) return
         setSaving(true)
         try {
-          const ok = await props.onSave(draft)
+          const preview = await call('content.preview', { path: project.path, id: draft.id, content, item: draft })
+          if (preview.files.length) {
+            const list = preview.files.map((file) => `${file.action} ${file.path}`).join('\n')
+            if (!window.confirm(`将修改以下文件：\n${list}\n\n继续保存？`)) return
+          }
+          const ok = await props.onSave(draft, content)
           if (ok !== false) draftState.clear()
+        } catch (err) {
+          setError(err.message)
         } finally {
           setSaving(false)
         }
@@ -1596,7 +1654,7 @@ window.__ModuleLoader__.load({
         onClose: cancel,
         footer: [
           h('button', { key: 'cancel', style: S.btn('ghost'), onClick: cancel }, '取消'),
-          h('button', { key: 'save', style: S.btn(), disabled: saving, onClick: save }, saving ? '保存中…' : '保存'),
+          h('button', { key: 'save', style: S.btn(), disabled: saving || contentLoading, onClick: save }, saving ? '保存中…' : contentLoading ? '读取内容…' : '保存'),
         ],
       },
         draftState.restored
@@ -1632,6 +1690,73 @@ window.__ModuleLoader__.load({
             )),
         ),
         h(Field, { label: '描述' }, h(Textarea, { value: draft.description, onChange: (v) => set('description', v) })),
+
+        h('div', { style: { marginTop: 14 } },
+          h('div', { style: { ...S.sectionTitle, marginBottom: 6 } }, '语言与配方'),
+          contentLoading ? h('div', { style: S.hint }, '正在读取语言/配方…') : null,
+          h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
+            h(Field, { label: '中文名' },
+              h(TextInput, { value: content.lang.zh, onChange: (v) => setLang('zh', v), placeholder: draft.displayName })),
+            h(Field, { label: '英文名' },
+              h(TextInput, { value: content.lang.en, onChange: (v) => setLang('en', v), placeholder: draft.displayName })),
+          ),
+          h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
+            h(Field, { label: '配方类型' },
+              h(Select, {
+                value: content.recipe.type, onChange: (v) => setRecipe('type', v),
+                options: [
+                  { value: 'none', label: '不生成配方' },
+                  { value: 'shaped', label: '有序合成' },
+                  { value: 'shapeless', label: '无序合成' },
+                  { value: 'furnace', label: '熔炉' },
+                ],
+              })),
+            h(Field, { label: '产出数量' },
+              h(NumberInput, { value: content.recipe.count, onChange: (v) => setRecipe('count', v), min: 1, max: 64 })),
+          ),
+          content.recipe.type === 'shaped'
+            ? h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
+                h(Field, { label: 'Pattern', hint: '最多 3 行，空格表示空位；例如：\n R \n R \n S ' },
+                  h(Textarea, {
+                    value: (content.recipe.pattern || []).join('\n'),
+                    onChange: (v) => setRecipe('pattern', v.split(/\r?\n/).filter((line) => line.length > 0)),
+                  })),
+                h(Field, { label: '材料键', hint: '一行一个，例如 R=ruby；无命名空间默认当前模组' },
+                  h(Textarea, {
+                    value: (content.recipe.keys || []).join('\n'),
+                    onChange: (v) => setRecipe('keys', splitLines(v)),
+                  })),
+              )
+            : null,
+          content.recipe.type === 'shapeless'
+            ? h(Field, { label: '材料', hint: '一行一个，例如 ruby、minecraft:stick' },
+                h(Textarea, {
+                  value: (content.recipe.ingredients || []).join('\n'),
+                  onChange: (v) => setRecipe('ingredients', splitLines(v)),
+                }))
+            : null,
+          content.recipe.type === 'furnace'
+            ? h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 } },
+                h(Field, { label: '材料' },
+                  h(TextInput, {
+                    value: (content.recipe.ingredients || [])[0] || '',
+                    onChange: (v) => setRecipe('ingredients', splitLines(v)),
+                  })),
+                h(Field, { label: '经验' },
+                  h(NumberInput, { value: content.recipe.experience, onChange: (v) => setRecipe('experience', v), min: 0, step: 0.1 })),
+                h(Field, { label: '烧炼时间（tick）' },
+                  h(NumberInput, { value: content.recipe.cookingTime, onChange: (v) => setRecipe('cookingTime', v), min: 1, step: 20 })),
+              )
+            : null,
+          h(Field, { label: '物品模型', hint: '写入 models/item/<id>.json；不影响已有手写模型之外的文件' },
+            h(Select, {
+              value: content.model.parent, onChange: (v) => setContentField('model', { parent: v }),
+              options: [
+                { value: 'minecraft:item/generated', label: 'generated（普通物品）' },
+                { value: 'minecraft:item/handheld', label: 'handheld（工具/武器）' },
+              ],
+            })),
+        ),
 
         groups.map((group) => h('div', { key: group, style: { marginTop: 14 } },
           h('div', { style: { ...S.sectionTitle, marginBottom: 6 } }, group),

@@ -242,6 +242,9 @@ const cases = [
       must(hasText(tree, '稀有度'), '应渲染下拉字段标签')
       must(hasText(tree, '基础属性'), '应渲染分组标题')
       must(hasText(tree, '上传 PNG'), '应渲染贴图上传入口')
+      must(hasText(tree, '中文名'), '应渲染语言字段')
+      must(hasText(tree, '配方类型'), '应渲染配方字段')
+      must(hasText(tree, '物品模型'), '应渲染模型选择')
     },
   },
   {

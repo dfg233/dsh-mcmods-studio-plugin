@@ -33,13 +33,14 @@
 │ DSH Host（Node 进程）                                     │
 │   index.js  →  webServer.register('/mcmods-studio/api')     │
 │             →  tools.register(22 个 mcmods_* 工具)        │
-│   lib/api.js → 44 个动作的声明式路由表                     │
+│   lib/api.js → 48 个动作的声明式路由表                     │
 │      ├─ registry.js   注册表（$DSH_HOME/mcmods-studio）     │
 │      ├─ paths.js      .mcstudio 路径与 id 校验            │
 │      ├─ schema.js     加载器 / 状态 / 类型 / 19 个字段     │
 │      ├─ meta.js       project.json 与 studio.json         │
 │      ├─ entries.js    构想与物品 CRUD、readProject        │
 │      ├─ workbench.js  系统卡与任务包                      │
+│      ├─ content.js    语言/配方/模型资源与回滚            │
 │      ├─ import.js     识别 / 扫描 / 差异 / 快照 / proof    │
 │      ├─ backup.js     导入前备份与失败回滚                  │
 │      ├─ gradle.js     gradle.properties 解析与占位符       │

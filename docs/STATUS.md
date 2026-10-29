@@ -134,13 +134,14 @@
   `studio.json`（工坊标记）、`summary.json`（派生摘要）、`structure.json`（派生代码结构）；
 - 插件注册表：`$DSH_HOME/mcmods-studio/registry.json`（记录扫描根目录与项目列表）；
 - 导入前备份：`$DSH_HOME/mcmods-studio/backups/`（`.mcstudio/` 与快照，失败时回滚）；
-- Host 接口：`POST /mcmods-studio/api`，共 **44 个动作**：
+- Host 接口：`POST /mcmods-studio/api`，共 **48 个动作**：
 
 | 分组 | 动作 |
 | --- | --- |
 | 项目与注册表 | `boot`、`projects.scan`、`projects.add`、`projects.remove`、`projects.remember`、`registry.setRoot`、`project.create`、`project.open`、`project.import`、`project.analyzeImport`、`project.reimport`、`project.saveMeta` |
 | 构想与物品 | `features.list`、`features.save`、`features.delete`、`items.list`、`items.save`、`items.delete` |
 | 计划 | `workbench.plan`、`systems.list/save/delete`、`tasks.list/save/delete` |
+| 内容 | `content.get/preview/apply/rollback` |
 | 素材与文档 | `assets.list`、`assets.upload`、`assets.read`、`assets.readMany`、`assets.delete`、`assets.model.get`、`assets.model.save`、`assets.root`、`docs.export`、`guide` |
 | 代码结构 | `structure.refresh`、`structure.get`、`structure.find`、`structure.annotate` |
 | Agent 与诊断 | `agent.summary`、`agent.validate`、`agent.tools`、`agent.call`、`debug.clientGraph` |
@@ -266,6 +267,20 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 **尚未完成**：内容编辑 MVP（配方/标签/语言/模型预览）、应用/回滚、想法字段扩展、Agent 原生工作台工具。M1 未发版，版本仍为 v0.1.3。
 
+### 3.0.8 M1.2 内容编辑（进行中）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| 语言 | `content.get/apply` | `zh_cn` / `en_us` 按物品/方块键合并，保留原有键 |
+| 配方 | 同上 | 有序、无序、熔炉；材料无命名空间默认当前模组 |
+| 模型 | 同上 | 写入 `models/item/<id>.json`，generated/handheld |
+| 预览 | `content.preview` | 只返回将写入的文件，不落盘 |
+| 备份/回滚 | `content.apply` / `content.rollback` | 写入前复制资源，失败自动恢复；回滚校验路径 |
+| 编辑器 | `ItemEditor` | 语言、配方类型、pattern/材料、模型选择；保存前列出变更文件 |
+| 测试 | `test/18-content.mjs` | 预览、应用、回填、回滚、标准路径、非法配方；总计 18 文件 / 179 项 |
+
+**尚未完成**：标签编辑、应用预览的完整门禁、新建物品时的资源预览、Agent 原生内容工具、想法字段扩展。
+
 ### 3.1 目标能力（v0.2 起）
 
 | 里程碑 | 能力 | 说明 |
@@ -326,11 +341,11 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**17 个文件、172 项全部通过**）：
+已通过自动化验证（`npm test`，**18 个文件、179 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
-| Host 业务 | 108 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| Host 业务 | 115 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
 | 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |

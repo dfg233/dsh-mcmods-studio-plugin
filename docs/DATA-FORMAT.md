@@ -234,6 +234,24 @@
 - 任务必须引用已存在的 `systemId`；至少一个 `allowedPaths`。
 - 字符串路径归一为 `{path, mode:"modify"}`；字符串检查归一为 `{id, runner:"host"}`。
 
+## 3.3 内容资源（语言 / 配方 / 模型）
+
+M1.2 的内容编辑器只写标准资源文件：
+
+```text
+src/main/resources/assets/<modid>/lang/zh_cn.json
+src/main/resources/assets/<modid>/lang/en_us.json
+src/main/resources/assets/<modid>/models/item/<id>.json
+src/main/resources/data/<modid>/recipes/<id>.json
+```
+
+- 标准工程不存在 `src/main/resources` 时，回退到 `.mcstudio/assets/`、`.mcstudio/data/`；
+- 语言键为 `item.<modid>.<id>`；方块类型用 `block.<modid>.<id>`；
+- 配方 id 默认为物品 id，支持 `minecraft:crafting_shaped`、`minecraft:crafting_shapeless`、`minecraft:smelting`；
+- 材料无命名空间时默认当前模组；
+- `content.apply` 前把目标文件复制到 `$DSH_HOME/mcmods-studio/backups/...`，失败自动恢复；
+- `content.rollback` 只接受备份目录内的清单，并拒绝越界目标路径。
+
 ## 4. items/<id>.json
 
 ```json
