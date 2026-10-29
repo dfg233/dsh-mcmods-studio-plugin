@@ -17,6 +17,8 @@
 - **内容线**：图形化编辑物品、配方、标签、语言、模型等数据，让用户直接看到并修改自己的模组；
 - **工程线**：想法解析、系统卡、模板、任务包、上下文包、验收门禁，让 AI 少检索、少猜、少越界。
 
+事实层由三部分组成：**项目文件与代码结构**、**从 Gradle classpath 提取的 API 索引**、**模板/知识卡**。官方文档是知识卡的来源之一，不是运行时必需。
+
 工作台默认显示「现在做什么、下一步是什么」，代码是可选视图，不是首页。
 
 ## 1. 产品定义
@@ -62,6 +64,8 @@
    - 先展示将改哪些文件，再写入；写入前自动备份。
 7. **默认隐藏代码**
    - 用户想看代码时再展开；工作台首页只显示进度和下一步。
+8. **API 签名优先于模型记忆**
+   - 从项目依赖提取真实类/方法签名；文档只补“推荐用法”，编译与检查才是事实。
 
 ## 3. 用户旅程
 
@@ -123,7 +127,7 @@ AI 实现 → 插件检查 → 用户验收
 
 ## 4. 核心对象
 
-> 字段级规格见 [design/IDEA-MODEL.md](design/IDEA-MODEL.md)、[design/SYSTEM-MODEL.md](design/SYSTEM-MODEL.md)、[design/TEMPLATE-SPEC.md](design/TEMPLATE-SPEC.md)、[design/TASK-SPEC.md](design/TASK-SPEC.md)。
+> 字段级规格见 [design/IDEA-MODEL.md](design/IDEA-MODEL.md)、[design/SYSTEM-MODEL.md](design/SYSTEM-MODEL.md)、[design/TEMPLATE-SPEC.md](design/TEMPLATE-SPEC.md)、[design/TASK-SPEC.md](design/TASK-SPEC.md)、[design/API-INDEX-SPEC.md](design/API-INDEX-SPEC.md)。
 
 ### 4.1 想法卡（Idea）
 
@@ -211,6 +215,27 @@ AI 实现 → 插件检查 → 用户验收
 - **Check**：资源存在、注册配对、允许路径、编译、NBT 往返、模板一致性等；
 - **Decision**：为什么偏离模板、为什么换方案、影响哪些系统；不写决策就默认按模板。
 
+### 4.6 API 索引（支撑层）
+
+不是用户对象，但决定 AI 是否在猜 API。
+
+| 字段 | 说明 |
+| --- | --- |
+| `loader` / `mcVersion` | 从构建文件识别 |
+| `classpathHash` | 依赖与构建文件摘要，用于失效 |
+| `classes` | 类名、kind、修饰符、方法/字段签名 |
+| `packages` | 分片，按需加载 |
+| `stats` | jar 数、类数、包数 |
+| `source` | 静态缓存扫描 / Gradle classpath 导出 |
+
+规则：
+
+- 签名以真实 classpath 为准，不以模型记忆为准；
+- 默认不执行构建脚本；精确模式由用户开启；
+- 查询只回签名摘要，任务上下文最多 20 个类 / 4KB；
+- 找不到就返回 `unknown`，不猜；
+- 完整规格见 [design/API-INDEX-SPEC.md](design/API-INDEX-SPEC.md)。
+
 ## 5. 数据与文件
 
 ```text
@@ -226,6 +251,17 @@ AI 实现 → 插件检查 → 用户验收
 ├── studio.json           # 工坊标记（已有）
 └── backups/              # 由插件数据目录统一管理（已有）
 ```
+
+API 索引不写进项目：
+
+```text
+$DSH_HOME/mcmods-studio/cache/api/
+  <projectHash>-<classpathHash>/
+    meta.json
+    classes/<package>.json
+```
+
+它是派生缓存，可安全删除；构建文件或依赖变化时重建。
 
 资源文件仍写入工程标准路径：
 
@@ -254,6 +290,8 @@ src/main/java/...
 | `lib/systems.js` | 系统卡 CRUD、与代码/资源的关联 |
 | `lib/tasks.js` | 任务包 CRUD、状态、允许路径、结果 |
 | `lib/templates.js` | 模板清单、参数校验、渲染 |
+| `lib/api-index.js` | 从 Gradle classpath 提取/查询类与方法签名 |
+| `lib/knowledge.js` | 版本化知识卡：官方文档/源码的整理与检索 |
 | `lib/context.js` | 为任务生成最小上下文包 |
 | `lib/checks.js` | 资源、注册、路径、编译等检查 |
 | `lib/changes.js` | 变更预览、应用、备份、回滚 |
@@ -267,6 +305,7 @@ idea.list / idea.save / idea.confirm
 system.list / system.save
 task.list / task.save / task.start / task.verify
 template.list / template.get / template.render
+api.status / api.refresh / api.search / api.get / api.context
 context.pack
 change.preview / change.apply / change.undo
 content.recipe.get / content.recipe.save
@@ -284,6 +323,7 @@ mcmods_idea      查看/保存想法卡
 mcmods_plan      系统卡与计划
 mcmods_task      创建/读取/更新任务
 mcmods_template  查询/渲染模板
+mcmods_api       查询 API 索引（签名/类/包）
 mcmods_context   获取任务上下文包
 mcmods_check     运行或读取检查结果
 ```
@@ -388,9 +428,10 @@ AI 负责把自然语言解析为想法卡，但必须：
 - 1 张系统卡；
 - 1–2 个模板；
 - 相关类/资源清单（不超过 10 个文件）；
+- 任务需要的 API 签名（最多 20 个类 / 4KB）；
 - 不变量、允许路径、验收条件。
 
-目标是让 AI 不需要全仓库 grep，也不需要读无关文件。
+目标是让 AI 不需要全仓库 grep，也不需要读无关文件，更不需要凭记忆编 API。
 
 ### 8.4 任务包
 
@@ -439,6 +480,7 @@ AI 负责把自然语言解析为想法卡，但必须：
 
 ### M2 · v0.3.0 模板 + 上下文包 + 检查（2–3 周）
 
+- API 索引：从 Gradle classpath 提取签名，支持静态扫描与精确导出；
 - 模板清单、参数、渲染；
 - `simple-item`、`tool-set`、`block-basic`、配方/标签/语言模板；
 - `context.pack`；
@@ -449,6 +491,7 @@ AI 负责把自然语言解析为想法卡，但必须：
 
 - AI 能根据一句想法选择模板并生成任务；
 - 一个任务上下文不超过 10 个文件；
+- AI 查询 `Item.Properties`、`BlockEntity`、`MenuProvider` 能拿到真实签名；
 - 越界修改会被检查拦下。
 
 ### M3 · v0.4.0 代码生成 + Lock 试点（3 周左右）
@@ -482,6 +525,7 @@ AI 负责把自然语言解析为想法卡，但必须：
 
 - 每个新模块补单元测试；
 - 模板做 golden 测试：固定参数生成固定结果；
+- API 索引做解析快照：已知 jar 的类/方法签名、缓存失效、缺失 JDK 的回退；
 - 上下文包做预算测试：文件数、字节数不超限；
 - 检查器做正反例测试；
 - 内容编辑做往返测试：读 → 改 → 写 → 再读；
@@ -497,6 +541,9 @@ AI 负责把自然语言解析为想法卡，但必须：
 | 模板爆炸 | 只做高频模式；模板可组合，不为每个功能建模板 |
 | AI 解析出错误假设 | 假设/未决问题必须显式确认，未确认不开工 |
 | 代码生成破坏手写代码 | 只改标记区块；生成前 diff；失败回滚 |
+| API 索引解析不准/缓存布局变化 | 优先使用 Gradle classpath 导出；静态扫描只作回退；索引标记 `source` 与 `classpathHash` |
+| 精确索引执行构建脚本 | 默认不执行；用户显式开启 `--offline`、超时、只读 init 脚本 |
+| 无 JDK/无 Gradle 环境 | 返回 `unavailable`，任务上下文标记 `apiUnknown`，不阻塞内容编辑 |
 | 检查器执行编译有安全/性能风险 | 用户显式开启、超时、只读检查优先 |
 | UI 又变成文件树 | 默认系统卡/任务卡，代码折叠 |
 | 现有功能回归 | 每次改动跑全量测试；旧字段只增不改 |
@@ -517,6 +564,7 @@ AI 负责把自然语言解析为想法卡，但必须：
 1. **优先级**：先做内容编辑 MVP（M1），再补想法/任务骨架；
 2. **代码生成范围**：只生成插件自己创建/标记的内容，不直接改用户手写注册代码；
 3. **模板形态**：先用 Markdown + 文件模板，验证后再做结构化渲染器；
-4. **版本安排**：以 v0.2.0 作为转向起点，旧关系图/设置页后移。
+4. **版本安排**：以 v0.2.0 作为转向起点，旧关系图/设置页后移；
+5. **API 索引模式**：默认静态扫描，首次创建/导入项目时询问是否开启精确索引。
 
 下一步从 M0 开始：先写 schema 和样张，不写代码。

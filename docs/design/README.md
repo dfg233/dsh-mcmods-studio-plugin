@@ -14,6 +14,7 @@
 | [IDEA-MODEL.md](IDEA-MODEL.md) | 想法卡：用户意图、假设、未决问题、验收 |
 | [SYSTEM-MODEL.md](SYSTEM-MODEL.md) | 系统卡：边界、不变量、关键类/资源、依赖 |
 | [TEMPLATE-SPEC.md](TEMPLATE-SPEC.md) | 模板：参数、文件、注册点、检查、版本 |
+| [API-INDEX-SPEC.md](API-INDEX-SPEC.md) | API 索引：从 Gradle classpath 提取签名，减少猜测 |
 | [TASK-SPEC.md](TASK-SPEC.md) | 任务包：范围、允许路径、上下文、验收、回滚 |
 | [CONTENT-EDIT.md](CONTENT-EDIT.md) | 图形化数据编辑：三层数据、MVP、应用管线 |
 

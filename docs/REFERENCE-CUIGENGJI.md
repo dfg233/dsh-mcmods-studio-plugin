@@ -301,6 +301,7 @@ export async function readJsonWithPending(file, pending) // 待补：崩溃恢�
 | 按需指引模块：`core/project/write/plan/memory/revise`，返回 `resourceBase`，不常驻注入 | `src/adapters/dsh/guidance.js`、`src/adapters/dsh/skills.js` | 模板/任务说明按需读取；任务只取相关模块，不全量塞提示词 |
 | 任务型 Skill + 共享 Persona：不同任务加载不同 Skill，共享接手规则 | `skills/*/SKILL.md`、`src/adapters/dsh/skills.js` | 「任务型技能包」：每个模板/任务带自己的说明与共享工程契约 |
 | 项目接手说明：只给身份、有限目录和资料索引，不含正文；正文按需读 | `src/application/queries/handoff.js`、`handoff-text.js` | `context.pack`：给索引、摘要、版本与按需读取入口，不塞整仓库 |
+| 先摘要索引，再按需读全文 | `planning.list/get`、`graph.list/get` | API 索引只返回签名摘要，任务按 `apiRefs` 取少量类 |
 | 原子批量操作：`planning.apply {requestId, operations, refs}`，整批成功/失败 | `src/application/store.js`、`src/domain/planning/operations.ts` | `change.apply`：一次任务一次变更集，支持 ref 关联与回滚 |
 | 层级与状态：stage/子情节、`written` 需正文版本证据 | `src/domain/planning/hierarchy.ts`、`src/application/store.js` | 任务树/系统层级；`done` 必须有检查证据，不能只靠 AI 声明 |
 | 项目级预设：启用/停用、导入预览、按作品隔离 | `docs/presets.md`、`src/client/shared/settings/*` | 项目级模板/预设：启用、预览、只作用于当前项目 |

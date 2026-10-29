@@ -45,6 +45,10 @@ templates/
     { "key": "displayName", "type": "string", "required": true },
     { "key": "stackSize", "type": "number", "default": 64 }
   ],
+  "apiRefs": [
+    "net.minecraft.world.item.Item",
+    "net.minecraft.world.item.Item.Properties"
+  ],
   "files": [
     { "path": "src/main/java/{{package}}/item/{{ClassName}}.java", "template": "files/item.java.tpl", "when": "always" },
     { "path": "src/main/resources/assets/{{modid}}/models/item/{{id}}.json", "template": "files/model.json.tpl", "when": "always" },
@@ -61,6 +65,7 @@ templates/
 - `version` 用于模板升级与 golden 测试；
 - `loaders` / `mcVersion` 不匹配时拒绝渲染；
 - `parameters` 由插件校验，不信任 AI 传入；
+- `apiRefs` 声明模板依赖的真实类，任务上下文按它取签名；
 - `files` 的 `merge` 支持 `json`（深合并）和 `markers`（标记区块）；
 - `checks` 是检查 id，不是自然语言。
 

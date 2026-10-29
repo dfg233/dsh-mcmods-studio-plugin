@@ -23,6 +23,7 @@
 | `templateRefs` | array | 否 | `{id, version}` |
 | `allowedPaths` | string[] | 是 | 允许修改的文件/目录，支持 glob |
 | `contextRefs` | array | 否 | 需要喂给 AI 的类、资源、系统卡 |
+| `apiRefs` | string[] | 否 | 需要从 API 索引取的类（最多 20 个） |
 | `acceptance` | string[] | 是 | 可执行的验收条件 |
 | `verify` | string[] | 是 | 检查 id 或命令 |
 | `status` | enum | 是 | `todo` / `doing` / `review` / `done` / `blocked` |
@@ -89,6 +90,7 @@ todo → doing → review → done
   "task": {...},
   "system": {...},
   "templates": [...],
+  "api": [{ "class": "net.minecraft.world.item.Item", "methods": ["..."] }],
   "classes": [{ "path": "...", "summary": "...", "excerpt": "..." }],
   "resources": [{ "path": "...", "kind": "lang|model|..." }],
   "invariants": ["..."],
@@ -99,7 +101,7 @@ todo → doing → review → done
 
 预算建议：
 
-- 最多 10 个文件或 12KB（以先到为准）；
+- 最多 10 个文件或 12KB（以先到为准），其中 API 签名最多 20 个类 / 4KB；
 - 超过预算时只保留摘要，让 AI 用工具按需读取；
 - 不把整个仓库、生成的 `structure.json`、历史日志塞进上下文。
 
