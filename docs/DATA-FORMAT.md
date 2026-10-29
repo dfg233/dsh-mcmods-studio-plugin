@@ -16,7 +16,9 @@
 ├── .mcstudio/
 │   ├── studio.json           # 工坊标记：存在即表示已被本插件接管
 │   ├── project.json          # 项目元数据
-│   ├── features.json         # 构想清单
+│   ├── features.json         # 构想/想法清单
+│   ├── systems.json          # 系统卡
+│   ├── tasks.json            # 任务包
 │   ├── summary.json          # 派生摘要（供 agent 一次读取，可安全删除）
 │   ├── structure.json        # 代码结构文档（按文件哈希增量，可重建）
 │   └── items/
@@ -167,6 +169,70 @@
 
 - `status`：`idea` / `planning` / `implementing` / `done`
 - `priority`：`high` / `medium` / `low`
+
+## 3.1 systems.json（系统卡）
+
+```json
+{
+  "schemaVersion": 1,
+  "systems": [
+    {
+      "id": "lock-core",
+      "name": "锁核心",
+      "responsibility": "维护锁状态与钥匙匹配",
+      "nonGoals": ["不负责复制台 GUI"],
+      "invariants": ["锁状态以服务端为准"],
+      "entryPoints": [{ "kind": "class", "path": "src/main/java/com/example/AbstractLock.java" }],
+      "resources": [{ "kind": "tag", "path": "data/lock/tags/blocks/lockable.json", "required": true }],
+      "dependsOn": ["key-binding"],
+      "checks": ["nbt-roundtrip"],
+      "status": "stable",
+      "notes": "",
+      "createdAt": "...",
+      "updatedAt": "..."
+    }
+  ]
+}
+```
+
+- `status`：`planned` / `implementing` / `stable` / `deprecated`
+- 字符串资源在保存时归一为 `{kind:"other",path,required:true}`。
+
+## 3.2 tasks.json（任务包）
+
+```json
+{
+  "schemaVersion": 1,
+  "tasks": [
+    {
+      "id": "t_lock_electronic_01",
+      "title": "新增电子锁类型",
+      "ideaId": "f_lock_core_001",
+      "systemId": "lock-core",
+      "goal": "新增 electronic_lock",
+      "nonGoals": ["不改网络协议"],
+      "templateRefs": [{ "id": "lock-type", "version": 1 }],
+      "allowedPaths": [{ "path": "src/main/java/.../ElectronicLock.java", "mode": "create" }],
+      "guardPaths": ["src/main/java/.../network/*"],
+      "baseRevisions": [{ "path": "src/main/java/.../AbstractLock.java", "hash": "sha256:..." }],
+      "baseStructureHash": "sha256:...",
+      "contextRefs": ["system:lock-core"],
+      "apiRefs": ["net.minecraft.world.item.Item"],
+      "codeRefs": ["class:AbstractLock"],
+      "acceptance": ["机械锁行为不变"],
+      "verify": [{ "id": "compile-java", "runner": "host", "timeoutMs": 180000 }],
+      "status": "todo",
+      "result": {},
+      "createdAt": "...",
+      "updatedAt": "..."
+    }
+  ]
+}
+```
+
+- `status`：`todo` / `doing` / `review` / `done` / `blocked`
+- 任务必须引用已存在的 `systemId`；至少一个 `allowedPaths`。
+- 字符串路径归一为 `{path, mode:"modify"}`；字符串检查归一为 `{id, runner:"host"}`。
 
 ## 4. items/<id>.json
 

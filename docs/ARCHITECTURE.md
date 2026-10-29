@@ -11,7 +11,7 @@
 ┌──────────────────────────────────────────────────────────┐
 │ 使用方                                                     │
 │   用户 → DSH Web UI（浏览器）                              │
-│   Agent → 21 个原生工具（mcmods_*）或 HTTP 动作             │
+│   Agent → 22 个原生工具（mcmods_*）或 HTTP 动作             │
 └───────────────────────┬──────────────────────────────────┘
                         │ POST /mcmods-studio/api
                         ▼
@@ -32,13 +32,14 @@
 ┌──────────────────────────────────────────────────────────┐
 │ DSH Host（Node 进程）                                     │
 │   index.js  →  webServer.register('/mcmods-studio/api')     │
-│             →  tools.register(21 个 mcmods_* 工具)        │
-│   lib/api.js → 37 个动作的声明式路由表                     │
+│             →  tools.register(22 个 mcmods_* 工具)        │
+│   lib/api.js → 44 个动作的声明式路由表                     │
 │      ├─ registry.js   注册表（$DSH_HOME/mcmods-studio）     │
 │      ├─ paths.js      .mcstudio 路径与 id 校验            │
 │      ├─ schema.js     加载器 / 状态 / 类型 / 19 个字段     │
 │      ├─ meta.js       project.json 与 studio.json         │
 │      ├─ entries.js    构想与物品 CRUD、readProject        │
+│      ├─ workbench.js  系统卡与任务包                      │
 │      ├─ import.js     识别 / 扫描 / 差异 / 快照 / proof    │
 │      ├─ backup.js     导入前备份与失败回滚                  │
 │      ├─ gradle.js     gradle.properties 解析与占位符       │
@@ -78,7 +79,7 @@
 | 插件代码 | `D:\program\dsh-mcmods-studio-plugin` | 是 | 本仓库 |
 | 插件注册表 | `$DSH_HOME/mcmods-studio/registry.json` | 否 | 本机项目索引与默认根目录 |
 | 导入前备份 | `$DSH_HOME/mcmods-studio/backups/` | 否 | `.mcstudio/` 与快照的副本，失败时回滚 |
-| 项目设计数据 | `<项目>/.mcstudio/` | 建议是 | 元数据、构想、物品、工坊标记 |
+| 项目设计数据 | `<项目>/.mcstudio/` | 建议是 | 元数据、构想、系统卡、任务包、物品、工坊标记 |
 | 项目素材 | `<项目>/src/main/resources/assets/` | 是 | 贴图与模型（标准路径） |
 | 导出文档 | `<项目>/docs/` | 是 | 人读的 Markdown |
 

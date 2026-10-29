@@ -27,13 +27,14 @@
 | `package.json` | bundle 清单：版本、包名、`dsh.bundle.patch`、`dsh.client` | 46 |
 | `cordis.patch.yml` | 向 Loader 插入 `id: mc-mod-studio` | 12 |
 | `index.js` | Host 入口：HTTP 路由、原生工具注册、卸载清理 | 121 |
-| `client.js` | 浏览器半：全部 UI（单文件模块） | 2365 |
-| `lib/api.js` | 37 个动作的声明式路由表与分派 | 573 |
+| `client.js` | 浏览器半：全部 UI（单文件模块） | 2672 |
+| `lib/api.js` | 44 个动作的声明式路由表与分派 | 618 |
 | `lib/paths.js` | `.mcstudio/` 路径、id 校验、路径归属 | 75 |
 | `lib/schema.js` | 加载器、构想状态、物品类型（含创造模式标签）、19 个字段 | 183 |
 | `lib/meta.js` | `project.json` 与 `studio.json` 读写、项目创建 | 217 |
 | `lib/entries.js` | 构想与物品 CRUD、字段纠偏、`readProject` | 194 |
 | `lib/import.js` | 工程识别、资源扫描、身份解析、差异、快照、导入 proof、标签分类 | 838 |
+| `lib/workbench.js` | 系统卡与任务包读写、字段归一与引用校验 | 207 |
 | `lib/gradle.js` | `gradle.properties` 解析、占位符处理 | 205 |
 | `lib/assets.js` | 贴图与模型：路径、PNG 校验、上传、读取、方块面解析 | 536 |
 | `lib/docs.js` | 五份 Markdown 的渲染 | 256 |
@@ -41,13 +42,13 @@
 | `lib/backup.js` | 导入前项目备份、失败回滚、备份路径 | 109 |
 | `lib/summary.js` | `.mcstudio/summary.json` 的构建（含创造模式标签计数） | 114 |
 | `lib/validate.js` | 9 类项目校验 | 171 |
-| `lib/tools.js` | 21 个 agent 工具的定义与调用 | 468 |
+| `lib/tools.js` | 22 个 agent 工具的定义与调用 | 498 |
 | `lib/structure.js` | Java 源码结构解析、按哈希增量、注解读写 | 794 |
 | `lib/tool-bridge.js` | 把工具注册为 DSH 原生工具 | 87 |
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
 | `data/schema.json` | 字段定义的对外副本（生成物） | 7.3 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：16 个文件、166 项 | 3631 |
+| `test/*.mjs` | 回归测试：17 个文件、172 项 | 3765 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 
 > `lib/project.js` 是 2026-10-24 拆分后保留的转发层，`api.js`、`assets.js`、`docs.js`、
@@ -298,7 +299,7 @@
 
 | 导出 | 用途 |
 | --- | --- |
-| `TOOLS` | 21 个工具定义的数组 |
+| `TOOLS` | 22 个工具定义的数组 |
 | `listTools()` | 精简清单（name / description / input） |
 | `callTool(name, args)` | 按名调用，未知工具抛错 |
 
@@ -331,6 +332,17 @@ export * from './import.js'
 | `restoreProjectBackup(projectPath, backupDir)` | 用备份覆盖当前数据；备份里没有快照时移除本次新建的快照 | `undefined` |
 | `runWithProjectBackup(projectPath, fn, reason)` | 备份后执行 `fn`，失败自动回滚并把原始错误抛出 | `{result, backupDir}` |
 
+### 2.17 `lib/workbench.js`（9 个导出）
+
+系统卡与任务包存放在 `.mcstudio/systems.json`、`.mcstudio/tasks.json`；想法继续使用 `features.json`。
+
+| 函数 | 用途 |
+| --- | --- |
+| `listSystems(path)` / `saveSystem(path, system)` / `deleteSystem(path, id)` | 系统卡 CRUD；`saveSystem` 归一字段并校验 id |
+| `listTasks(path)` / `saveTask(path, task)` / `deleteTask(path, id)` | 任务包 CRUD；校验所属系统、允许路径、检查对象 |
+| `readPlan(path)` | 一次返回 `{ideas, systems, tasks}` |
+| `SYSTEM_STATUS` / `TASK_STATUS` | 状态枚举 |
+
 ## 3. 接口层
 
 ### 3.1 HTTP 约定
@@ -340,7 +352,7 @@ export * from './import.js'
 - 成功：`{"ok": true, "data": ...}`；失败：`{"ok": false, "error": "中文信息"}`；
 - 非 POST 返回 405；未知 action 抛 `未知动作：xxx`。
 
-### 3.2 动作表（37 个）
+### 3.2 动作表（44 个）
 
 **路由声明**：`lib/api.js` 的 `routes` 对象，每个动作声明 `scope` 与 `run`，
 可选 `summary: true` 在执行后刷新摘要。
@@ -378,6 +390,18 @@ export * from './import.js'
 | `items.list` | `{path}` | `{items}` | studio |
 | `items.save` | `{path, item, ensureModel?}` | `{item}` | studio |
 | `items.delete` | `{path, id}` | `{ok:true}` | studio |
+
+#### 计划
+
+| action | payload | 返回 | scope |
+| --- | --- | --- | --- |
+| `workbench.plan` | `{path}` | `{ideas, systems, tasks}` | studio |
+| `systems.list` | `{path}` | `{systems}` | studio |
+| `systems.save` | `{path, system}` | `{system}` | studio |
+| `systems.delete` | `{path, id}` | `{systems}` | studio |
+| `tasks.list` | `{path}` | `{tasks}` | studio |
+| `tasks.save` | `{path, task}` | `{task}` | studio |
+| `tasks.delete` | `{path, id}` | `{tasks}` | studio |
 
 #### 代码结构
 
@@ -421,7 +445,7 @@ export * from './import.js'
 4. 前端用 `call('your.action', {...})`；
 5. 若也想暴露给 agent，在 `lib/tools.js` 的 `TOOLS` 加一项。
 
-## 4. Agent 工具（21 个）
+## 4. Agent 工具（22 个）
 
 原生工具名带 `mcmods_` 前缀，与 `TOOLS.name` 一一对应。
 
@@ -448,6 +472,7 @@ export * from './import.js'
 | `structure_get` | 读结构文档 | `{project?,compact?}` |
 | `structure_find` | 按 id 查注册位置 | `{id,project?}` |
 | `structure_annotate` | 写语义注解 | `{file,summary?,members?,project?}` |
+| `workbench` | 读取/更新系统卡与任务包 | `{action,project?,system?,task?}` |
 
 所有工具在未传 `project` 时使用注册表中第一个可用项目。
 
@@ -504,6 +529,8 @@ window.__ModuleLoader__.load({
 | `ProjectTab` | 项目列表、扫描区、行内操作 | `{boot,project,refreshBoot,open,onCreate,onImport,onReimport,onCloseProject,setError}` |
 | `FeaturesTab` | 构想列表 | `{project,setProject,schema,setError}` |
 | `FeatureEditor` | 构想编辑弹窗（带草稿恢复） | `{feature,schema,project,onSave,onCancel}` |
+| `PlanTab` | 计划页：系统卡、任务卡 | `{project,setError}` |
+| `SystemEditor` / `TaskEditor` | 系统/任务编辑弹窗 | `{system/task,onSave,onCancel}` |
 | `ItemsTab` | 列表 / 画布、搜索、校验提示条 | `{project,setProject,assets,schema,setError,reloadAssets}` |
 | `ItemEditor` | 19 字段分组编辑（带草稿恢复） | `{schema,item,project,images,setError,onSave,onCancel}` |
 | `AssetsTab` | 上传、预览、模型编辑 | `{project,assets,reloadAssets,setError}` |
@@ -675,6 +702,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 | 加接口动作 | `lib/api.js` 的 `routes` | 前端 `call()`、INDEX 动作表 |
 | 加 agent 工具 | `lib/tools.js` 的 `TOOLS` | 工具自动注册，无需改 `tool-bridge.js` |
 | 加页面页签 | `client.js` 的 `StudioPage` | `Tabs` 渲染分支 |
+| 加系统卡/任务包字段 | `lib/workbench.js` | `DATA-FORMAT` 3.1/3.2、`test/17` |
 | 加设置页 / 改默认行为 | 规划见 [plans/SETTINGS-PLAN.md](plans/SETTINGS-PLAN.md)；实现后改 `lib/settings.js`、`SettingsTab` | 启动恢复、默认页签、删除素材、Agent 默认项目 |
 | 改数据可靠性 / 原子写 / 导入回滚 | 参考 [REFERENCE-CUIGENGJI.md](REFERENCE-CUIGENGJI.md) 第 1、2、11 节 | `lib/registry.js` 的 `writeJson`、`lib/import.js` |
 | 改侧栏顺序 | `apply(ctx)` 的 `order` | 侧栏截图核对 |
@@ -694,7 +722,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（16 个文件、166 项）
+# 全部测试（17 个文件、172 项）
 npm test
 
 # 只跑某一组
@@ -746,7 +774,8 @@ client.js
 | `09-agent.mjs` | 工具、摘要、校验 | 19 |
 | `10-schema-sync.mjs` | schema 一致性 | 2 |
 | `11-tool-bridge.mjs` | 原生工具定义与 notices | 8 |
-| `12-render.mjs` | 渲染结构、方块贴图回退 | 16 |
+| `12-render.mjs` | 渲染结构、方块贴图回退、计划页 | 17 |
+| `17-workbench.mjs` | 系统卡/任务包 CRUD、字段归一、计划读取 | 5 |
 | `13-block-assets.mjs` | 方块面贴图解析 | 7 |
 | `14-persist.mjs` | 项目切换持久化 | 10 |
 | `15-structure.mjs` | 代码结构文档 | 15 |

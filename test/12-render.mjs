@@ -265,6 +265,38 @@ const cases = [
     },
   },
   {
+    name: '计划页渲染系统与任务',
+    async run() {
+      const client = await loadClient({
+        handler: async (action) => {
+          if (action === 'workbench.plan') {
+            return {
+              ideas: [{ id: 'f_1', name: '锁想法' }],
+              systems: [{
+                id: 'lock-core', name: '锁核心', responsibility: '维护锁状态',
+                invariants: ['服务端权威'], dependsOn: [], status: 'stable',
+              }],
+              tasks: [{
+                id: 't_1', title: '新增电子锁', systemId: 'lock-core', status: 'todo',
+                goal: '新增类型', allowedPaths: [{ path: 'a.java', mode: 'modify' }],
+                acceptance: ['编译通过'], verify: [{ id: 'compile-java' }],
+              }],
+            }
+          }
+          return {}
+        },
+      })
+      const tree = await client.renderSettled(client.components.PlanTab, {
+        project: makeProject(), setError: () => {},
+      })
+
+      must(hasText(tree, '锁核心'), '应显示系统卡')
+      must(hasText(tree, '新增电子锁'), '应显示任务卡')
+      must(hasText(tree, '系统'), '应有系统分组')
+      must(hasText(tree, '任务'), '应有任务分组')
+    },
+  },
+  {
     name: '素材页显示无 blockstate 方块贴图',
     async run() {
       const client = await loadClient({

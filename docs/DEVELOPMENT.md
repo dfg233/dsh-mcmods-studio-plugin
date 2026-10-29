@@ -32,7 +32,7 @@ plugin_manager install_bundle  target: D:\program\dsh-mcmods-studio-plugin
 
 - 侧栏出现「模组工坊」图标，点击打开中央页面；
 - Host 路由 `POST /mcmods-studio/api` 生效；
-- 21 个 `mcmods_*` 原生工具注册到宿主；
+- 22 个 `mcmods_*` 原生工具注册到宿主；
 - 改动代码前先查 [代码索引](INDEX.md)，按「文件 → 函数 → 参数 → 返回」定位；
 - 修改 Host 代码后需要 `remove_bundle` + `install_bundle` 重装（或重启 DSH），
   才能加载新的 JavaScript 模块；
@@ -47,13 +47,14 @@ dsh-mcmods-studio-plugin/
 ├── index.js              # Host 入口：HTTP 路由、原生工具注册、卸载清理
 ├── client.js             # Client 入口：单文件 UI 模块
 ├── lib/
-│   ├── api.js            # 37 个动作的声明式路由表与 dispatch
+│   ├── api.js            # 44 个动作的声明式路由表与 dispatch
 │   ├── registry.js       # 注册表、路径工具、原子写文件
 │   ├── paths.js          # .mcstudio/ 路径、id 校验、路径归属
 │   ├── schema.js         # 加载器、状态、类型、19 个字段
 │   ├── meta.js           # project.json 与 studio.json
 │   ├── entries.js        # 构想与物品 CRUD、readProject
 │   ├── import.js         # 工程识别、资源扫描、差异、快照、proof
+│   ├── workbench.js      # 系统卡与任务包
 │   ├── backup.js         # 导入前备份与失败回滚
 │   ├── gradle.js         # gradle.properties 解析与占位符
 │   ├── assets.js         # 贴图、模型、方块面解析
@@ -61,12 +62,12 @@ dsh-mcmods-studio-plugin/
 │   ├── summary.js        # summary.json（agent 摘要）
 │   ├── structure.js      # Java 结构解析、按哈希增量、语义注解
 │   ├── validate.js       # 9 类校验
-│   ├── tools.js          # 21 个 agent 工具的定义与调用
+│   ├── tools.js          # 22 个 agent 工具的定义与调用
 │   ├── tool-bridge.js    # 把工具注册为 DSH 原生工具
 │   └── project.js        # 转发层：export * 五个数据模块（不能删）
 ├── data/schema.json      # 字段定义对外副本（由脚本生成）
 ├── scripts/gen-schema.mjs
-├── test/                 # 16 个回归用例文件、166 项
+├── test/                 # 17 个回归用例文件、172 项
 ├── locale/               # 插件显示名与描述
 └── docs/                 # 本目录
 ```
@@ -163,7 +164,7 @@ Host 层可以脱离 DSH 直接测试：设置 `DSH_HOME` 到临时目录，
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（16 个文件、166 项）
+# 全部测试（17 个文件、172 项）
 npm test
 
 # 只跑某一组

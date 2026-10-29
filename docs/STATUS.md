@@ -17,7 +17,7 @@
 
 当前承担的三件事：
 
-1. **为 agent 提供上下文**（**已完成**）：21 个 DSH 原生工具、项目摘要 `summary.json`、
+1. **为 agent 提供上下文**（**已完成**）：22 个 DSH 原生工具、项目摘要 `summary.json`、
    schema 外置 `data/schema.json`、9 类校验器、导入判定提示；
 2. **为用户提供直观平台**（**大部分完成**）：构想清单、物品属性、贴图模型、文档集中在一处，
    可画布与列表浏览；缺工作台、计划页，以及配方/标签/语言编辑；
@@ -134,17 +134,18 @@
   `studio.json`（工坊标记）、`summary.json`（派生摘要）、`structure.json`（派生代码结构）；
 - 插件注册表：`$DSH_HOME/mcmods-studio/registry.json`（记录扫描根目录与项目列表）；
 - 导入前备份：`$DSH_HOME/mcmods-studio/backups/`（`.mcstudio/` 与快照，失败时回滚）；
-- Host 接口：`POST /mcmods-studio/api`，共 **37 个动作**：
+- Host 接口：`POST /mcmods-studio/api`，共 **44 个动作**：
 
 | 分组 | 动作 |
 | --- | --- |
 | 项目与注册表 | `boot`、`projects.scan`、`projects.add`、`projects.remove`、`projects.remember`、`registry.setRoot`、`project.create`、`project.open`、`project.import`、`project.analyzeImport`、`project.reimport`、`project.saveMeta` |
 | 构想与物品 | `features.list`、`features.save`、`features.delete`、`items.list`、`items.save`、`items.delete` |
+| 计划 | `workbench.plan`、`systems.list/save/delete`、`tasks.list/save/delete` |
 | 素材与文档 | `assets.list`、`assets.upload`、`assets.read`、`assets.readMany`、`assets.delete`、`assets.model.get`、`assets.model.save`、`assets.root`、`docs.export`、`guide` |
 | 代码结构 | `structure.refresh`、`structure.get`、`structure.find`、`structure.annotate` |
 | Agent 与诊断 | `agent.summary`、`agent.validate`、`agent.tools`、`agent.call`、`debug.clientGraph` |
 
-- Agent 工具：21 个，注册为 DSH 原生 `mcmods_*` 工具，清单见 [INDEX.md](INDEX.md) 第 4 节。
+- Agent 工具：22 个，注册为 DSH 原生 `mcmods_*` 工具，清单见 [INDEX.md](INDEX.md) 第 4 节。
 
 ## 3. 未实现功能
 
@@ -154,7 +155,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 | 能力 | 落地 | 说明 |
 | --- | --- | --- |
-| 原生工具 | `lib/tools.js` + `lib/tool-bridge.js` | 21 个工具，注册为 DSH 原生 `mcmods_*` 工具，agent 可直接调用 |
+| 原生工具 | `lib/tools.js` + `lib/tool-bridge.js` | 22 个工具，注册为 DSH 原生 `mcmods_*` 工具，agent 可直接调用 |
 | 项目摘要 | `lib/summary.js` | `.mcstudio/summary.json`，12 物品约 1.2 KB，写操作后自动刷新 |
 | 紧凑 / 详细双表示 | `item_list` / `item_get` | 列举仅回 id / 名称 / 类型（12 物品约 300 字节）；详情才回 19 个字段 |
 | schema 外置 | `data/schema.json` | 由 `lib/schema.js` 生成，`test/10-schema-sync.mjs` 守住一致性 |
@@ -253,6 +254,18 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 旧 v0.2 的「关系图 + 设置页」后移；旧路线存档见 [archive/PLAN-v0.1.md](archive/PLAN-v0.1.md)。
 
+### 3.0.7 M1.1 工作台计划数据（进行中）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| 系统卡 | `lib/workbench.js`、`.mcstudio/systems.json` | CRUD、字段归一、状态；资源字符串归一为 `{kind,path,required}` |
+| 任务包 | 同上、`.mcstudio/tasks.json` | CRUD、所属系统校验、允许路径归一、检查对象归一 |
+| 计划读取 | `workbench.plan` | 一次返回想法（features）、系统、任务 |
+| 计划页 | `client.js` 的 `PlanTab` | 系统/任务卡片、新增/编辑/删除弹窗 |
+| 测试 | `test/17-workbench.mjs`、`test/12-render.mjs` | 数据 CRUD、字段归一、引用校验、计划页渲染；总计 17 文件 / 172 项 |
+
+**尚未完成**：内容编辑 MVP（配方/标签/语言/模型预览）、应用/回滚、想法字段扩展、Agent 原生工作台工具。M1 未发版，版本仍为 v0.1.3。
+
 ### 3.1 目标能力（v0.2 起）
 
 | 里程碑 | 能力 | 说明 |
@@ -313,17 +326,17 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**16 个文件、166 项全部通过**）：
+已通过自动化验证（`npm test`，**17 个文件、172 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
-| Host 业务 | 103 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| Host 业务 | 108 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
 | 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |
 | 可靠性 | 5 项 | 持久写入无临时残留、备份失败回滚、备份成功保留、首次导入失败清理、导入 proof 失效与重新导入 |
 | 客户端加载 | 8 项 | 假 `__ModuleLoader__` + 假 React，验证加载、模块 id、座位注册 |
-| 渲染结构 | 16 项 | 假 React 渲染组件，断言文本、按钮、条件分支 |
+| 渲染结构 | 17 项 | 假 React 渲染组件，断言文本、按钮、条件分支 |
 | schema 一致性 | 2 项 | 比对 `schema.js` 与 `data/schema.json` |
 
 接口级验证：
@@ -333,7 +346,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 - 可靠性：导入前备份、失败回滚、proof 拒绝过期预览均有自动化用例；
 - 数据：画布坐标持久化、快照生成、注册表读写、摘要重建；
 - 代码结构：真实 Forge 工程扫描 14 文件 / 15 类 / 38 方法，注册点按 `items` 归类；
-- Agent：21 个工具全部注册到宿主，`agent.tools` 返回 21 工具 / 37 动作；
+- Agent：22 个工具全部注册到宿主，`agent.tools` 返回 22 工具 / 44 动作；
 - 槽位：`main`、`sidebar.panellist`、`sidebar.right.pane.tab` 均已确认注册且处于激活状态；
 - 安装：bundle 安装与卸载、接口新旧路径切换。
 

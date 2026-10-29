@@ -907,6 +907,310 @@ window.__ModuleLoader__.load({
       )
     }
 
+    // ── 计划页：系统卡与任务包 ───────────────────────────────
+
+    function splitLines(value) {
+      return String(value || '').split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+    }
+
+    const SYSTEM_STATUS_OPTIONS = [
+      { value: 'planned', label: '规划中' },
+      { value: 'implementing', label: '实现中' },
+      { value: 'stable', label: '稳定' },
+      { value: 'deprecated', label: '废弃' },
+    ]
+
+    const TASK_STATUS_OPTIONS = [
+      { value: 'todo', label: '待做' },
+      { value: 'doing', label: '进行中' },
+      { value: 'review', label: '待验证' },
+      { value: 'done', label: '完成' },
+      { value: 'blocked', label: '阻塞' },
+    ]
+
+    function PlanTab(props) {
+      const { project, setError } = props
+      const [plan, setPlan] = useState({ ideas: [], systems: [], tasks: [] })
+      const [loading, setLoading] = useState(false)
+      const [systemEditing, setSystemEditing] = useState(null)
+      const [taskEditing, setTaskEditing] = useState(null)
+
+      const load = useCallback(async () => {
+        if (!project) return
+        setLoading(true)
+        try {
+          setPlan(await call('workbench.plan', { path: project.path }))
+          setError('')
+        } catch (err) {
+          setError(err.message)
+        } finally {
+          setLoading(false)
+        }
+      }, [project?.path, setError])
+
+      useEffect(() => { load() }, [load])
+
+      if (!project) return h('div', { style: S.empty }, '请先在「项目」中打开一个项目。')
+
+      const systems = plan.systems || []
+      const tasks = plan.tasks || []
+      const ideas = plan.ideas || []
+
+      const saveSystem = async (system) => {
+        try {
+          await call('systems.save', { path: project.path, system })
+          await load()
+          setSystemEditing(null)
+          return true
+        } catch (err) {
+          setError(err.message)
+          return false
+        }
+      }
+
+      const removeSystem = async (system) => {
+        if (!window.confirm(`删除系统「${system.name}」？引用它的任务会保留，但需要重新指定系统。`)) return
+        try {
+          await call('systems.delete', { path: project.path, id: system.id })
+          await load()
+        } catch (err) { setError(err.message) }
+      }
+
+      const saveTask = async (task) => {
+        try {
+          await call('tasks.save', { path: project.path, task })
+          await load()
+          setTaskEditing(null)
+          return true
+        } catch (err) {
+          setError(err.message)
+          return false
+        }
+      }
+
+      const removeTask = async (task) => {
+        if (!window.confirm(`删除任务「${task.title}」？`)) return
+        try {
+          await call('tasks.delete', { path: project.path, id: task.id })
+          await load()
+        } catch (err) { setError(err.message) }
+      }
+
+      const newSystem = () => setSystemEditing({
+        id: '', name: '', responsibility: '', invariants: [], dependsOn: [],
+        checks: [], status: 'planned', notes: '',
+      })
+
+      const newTask = () => {
+        if (!systems.length) {
+          window.alert('请先创建至少一个系统，任务需要归属系统。')
+          return
+        }
+        setTaskEditing({
+          id: `t_${Date.now()}`, title: '', systemId: systems[0].id, goal: '',
+          nonGoals: [], allowedPaths: [], guardPaths: [], acceptance: [], verify: [],
+          status: 'todo',
+        })
+      }
+
+      return h('div', { style: { display: 'flex', flexDirection: 'column', gap: 12 } },
+        h('div', { style: S.row },
+          h('div', { style: { ...S.sectionTitle, flex: 1 } },
+            `计划（想法 ${ideas.length} · 系统 ${systems.length} · 任务 ${tasks.length}）`),
+          h('button', { style: S.btn(), onClick: newSystem }, '新增系统'),
+          h('button', { style: S.btn(), onClick: newTask }, '新增任务'),
+          h('button', { style: S.btn('ghost'), onClick: load }, loading ? '刷新中…' : '刷新'),
+        ),
+        h('div', { style: S.hint },
+          '系统卡描述职责与不变量；任务包描述这次只改什么。详细字段见 docs/design/。'),
+
+        systems.length === 0
+          ? h('div', { style: S.empty }, '还没有系统卡。先为一个职责边界建卡，例如「锁核心」。')
+          : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } },
+              h('div', { style: S.sectionTitle }, '系统'),
+              systems.map((system) => h('div', {
+                key: system.id,
+                style: { ...S.card, display: 'flex', gap: 12, alignItems: 'flex-start' },
+              },
+                h('div', { style: { flex: 1, minWidth: 0 } },
+                  h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+                    h('span', { style: { fontSize: 13.5, fontWeight: 650 } }, system.name),
+                    h('code', { style: { fontSize: 11, color: C.muted } }, system.id),
+                    h('span', { style: S.badge(system.status === 'stable' ? 'success' : 'idle') },
+                      SYSTEM_STATUS_OPTIONS.find((item) => item.value === system.status)?.label || system.status),
+                  ),
+                  system.responsibility ? h('div', { style: { ...S.hint, marginTop: 6 } }, system.responsibility) : null,
+                  system.invariants?.length
+                    ? h('div', { style: { ...S.hint, marginTop: 4 } }, `不变量：${system.invariants.slice(0, 3).join('；')}${system.invariants.length > 3 ? ' …' : ''}`)
+                    : null,
+                  system.dependsOn?.length
+                    ? h('div', { style: { ...S.hint, marginTop: 2 } }, `依赖：${system.dependsOn.join('、')}`)
+                    : null,
+                ),
+                h('div', { style: { display: 'flex', gap: 6, flexShrink: 0 } },
+                  h('button', { style: S.btn('ghost'), onClick: () => setSystemEditing(system) }, '编辑'),
+                  h('button', { style: { ...S.btn('ghost'), color: C.danger }, onClick: () => removeSystem(system) }, '删除'),
+                ),
+              )),
+            ),
+
+        tasks.length === 0
+          ? h('div', { style: S.empty }, '还没有任务。系统建好后，创建第一个任务包。')
+          : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } },
+              h('div', { style: S.sectionTitle }, '任务'),
+              tasks.map((task) => h('div', {
+                key: task.id,
+                style: { ...S.card, display: 'flex', gap: 12, alignItems: 'flex-start' },
+              },
+                h('div', { style: { flex: 1, minWidth: 0 } },
+                  h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+                    h('span', { style: { fontSize: 13.5, fontWeight: 650 } }, task.title),
+                    h('code', { style: { fontSize: 11, color: C.muted } }, task.id),
+                    h('span', { style: S.badge(task.status === 'done' ? 'success' : task.status === 'blocked' ? 'danger' : 'idle') },
+                      TASK_STATUS_OPTIONS.find((item) => item.value === task.status)?.label || task.status),
+                    h('span', { style: S.badge('idle') }, task.systemId),
+                  ),
+                  task.goal ? h('div', { style: { ...S.hint, marginTop: 6 } }, task.goal) : null,
+                  h('div', { style: { ...S.hint, marginTop: 4 } },
+                    `允许修改 ${task.allowedPaths?.length || 0} 个路径 · 验收 ${task.acceptance?.length || 0} 条 · 检查 ${task.verify?.length || 0} 项`),
+                ),
+                h('div', { style: { display: 'flex', gap: 6, flexShrink: 0 } },
+                  h('button', { style: S.btn('ghost'), onClick: () => setTaskEditing(task) }, '编辑'),
+                  h('button', { style: { ...S.btn('ghost'), color: C.danger }, onClick: () => removeTask(task) }, '删除'),
+                ),
+              )),
+            ),
+
+        systemEditing ? h(SystemEditor, {
+          system: systemEditing,
+          onSave: saveSystem,
+          onCancel: () => setSystemEditing(null),
+        }) : null,
+
+        taskEditing ? h(TaskEditor, {
+          task: taskEditing,
+          systems,
+          onSave: saveTask,
+          onCancel: () => setTaskEditing(null),
+        }) : null,
+      )
+    }
+
+    function SystemEditor(props) {
+      const [saving, setSaving] = useState(false)
+      const [draft, setDraft] = useState(() => ({
+        ...props.system,
+        invariants: (props.system.invariants || []).join('\n'),
+        dependsOn: (props.system.dependsOn || []).join(', '),
+        checks: (props.system.checks || []).join('\n'),
+      }))
+      const set = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }))
+      const save = async () => {
+        if (saving) return
+        setSaving(true)
+        try {
+          const ok = await props.onSave({
+            ...props.system,
+            ...draft,
+            invariants: splitLines(draft.invariants),
+            dependsOn: splitLines(draft.dependsOn.replaceAll(',', '\n')),
+            checks: splitLines(draft.checks),
+          })
+          if (!ok) return
+        } finally {
+          setSaving(false)
+        }
+      }
+      return h(Modal, {
+        title: props.system.id ? `编辑系统：${props.system.name}` : '新增系统',
+        onClose: props.onCancel,
+        footer: [
+          h('button', { key: 'cancel', style: S.btn('ghost'), onClick: props.onCancel }, '取消'),
+          h('button', { key: 'save', style: S.btn(), disabled: saving, onClick: save }, saving ? '保存中…' : '保存'),
+        ],
+      },
+        h(Field, { label: '系统 id', required: true, hint: '小写字母、数字、连字符，例如 lock-core' },
+          h(TextInput, { value: draft.id, onChange: (v) => set('id', v.toLowerCase()), placeholder: 'lock-core' })),
+        h(Field, { label: '名称', required: true },
+          h(TextInput, { value: draft.name, onChange: (v) => set('name', v), placeholder: '锁核心' })),
+        h(Field, { label: '职责' },
+          h(Textarea, { value: draft.responsibility, onChange: (v) => set('responsibility', v), placeholder: '这个系统负责什么？' })),
+        h(Field, { label: '不变量', hint: '一行一条，例如：锁状态以服务端为准' },
+          h(Textarea, { value: draft.invariants, onChange: (v) => set('invariants', v) })),
+        h(Field, { label: '依赖系统', hint: '逗号分隔，例如 key-binding' },
+          h(TextInput, { value: draft.dependsOn, onChange: (v) => set('dependsOn', v) })),
+        h(Field, { label: '检查 id', hint: '一行一条，例如 nbt-roundtrip' },
+          h(Textarea, { value: draft.checks, onChange: (v) => set('checks', v) })),
+        h(Field, { label: '状态' },
+          h(Select, { value: draft.status, onChange: (v) => set('status', v), options: SYSTEM_STATUS_OPTIONS })),
+        h(Field, { label: '备注' },
+          h(Textarea, { value: draft.notes, onChange: (v) => set('notes', v) })),
+      )
+    }
+
+    function TaskEditor(props) {
+      const [saving, setSaving] = useState(false)
+      const [draft, setDraft] = useState(() => ({
+        ...props.task,
+        nonGoals: (props.task.nonGoals || []).join('\n'),
+        allowedPaths: (props.task.allowedPaths || []).map((item) => item.path || item).join('\n'),
+        guardPaths: (props.task.guardPaths || []).join('\n'),
+        acceptance: (props.task.acceptance || []).join('\n'),
+        verify: (props.task.verify || []).map((item) => item.id || item).join('\n'),
+      }))
+      const set = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }))
+      const save = async () => {
+        if (saving) return
+        setSaving(true)
+        try {
+          const ok = await props.onSave({
+            ...props.task,
+            ...draft,
+            nonGoals: splitLines(draft.nonGoals),
+            allowedPaths: splitLines(draft.allowedPaths),
+            guardPaths: splitLines(draft.guardPaths),
+            acceptance: splitLines(draft.acceptance),
+            verify: splitLines(draft.verify),
+          })
+          if (!ok) return
+        } finally {
+          setSaving(false)
+        }
+      }
+      return h(Modal, {
+        title: props.task.title ? `编辑任务：${props.task.title}` : '新增任务',
+        onClose: props.onCancel,
+        footer: [
+          h('button', { key: 'cancel', style: S.btn('ghost'), onClick: props.onCancel }, '取消'),
+          h('button', { key: 'save', style: S.btn(), disabled: saving || !draft.title.trim(), onClick: save }, saving ? '保存中…' : '保存'),
+        ],
+      },
+        h(Field, { label: '任务 id', required: true },
+          h(TextInput, { value: draft.id, onChange: (v) => set('id', v.toLowerCase()) })),
+        h(Field, { label: '标题', required: true },
+          h(TextInput, { value: draft.title, onChange: (v) => set('title', v), placeholder: '新增电子锁类型' })),
+        h(Field, { label: '所属系统', required: true },
+          h(Select, {
+            value: draft.systemId, onChange: (v) => set('systemId', v),
+            options: props.systems.map((system) => ({ value: system.id, label: `${system.name}（${system.id}）` })),
+          })),
+        h(Field, { label: '目标' },
+          h(Textarea, { value: draft.goal, onChange: (v) => set('goal', v) })),
+        h(Field, { label: '非目标', hint: '一行一条' },
+          h(Textarea, { value: draft.nonGoals, onChange: (v) => set('nonGoals', v) })),
+        h(Field, { label: '允许修改的路径', required: true, hint: '一行一个，项目相对路径；字符串默认 modify' },
+          h(Textarea, { value: draft.allowedPaths, onChange: (v) => set('allowedPaths', v) })),
+        h(Field, { label: '只读保护路径', hint: '一行一个；这些文件不能被修改' },
+          h(Textarea, { value: draft.guardPaths, onChange: (v) => set('guardPaths', v) })),
+        h(Field, { label: '验收条件', hint: '一行一条' },
+          h(Textarea, { value: draft.acceptance, onChange: (v) => set('acceptance', v) })),
+        h(Field, { label: '检查 id', hint: '一行一个，例如 compile-java' },
+          h(Textarea, { value: draft.verify, onChange: (v) => set('verify', v) })),
+        h(Field, { label: '状态' },
+          h(Select, { value: draft.status, onChange: (v) => set('status', v), options: TASK_STATUS_OPTIONS })),
+      )
+    }
+
     // ── 物品页 ───────────────────────────────────────────────
 
     /** 画布自动排布：每个物品的默认落点。 */
@@ -1681,6 +1985,7 @@ window.__ModuleLoader__.load({
       const tabs = [
         { id: 'project', label: '项目' },
         { id: 'features', label: '构想' },
+        { id: 'plan', label: '计划' },
         { id: 'items', label: '物品' },
         { id: 'assets', label: '贴图与模型' },
         { id: 'guide', label: '构建教程' },
@@ -1740,7 +2045,9 @@ window.__ModuleLoader__.load({
                 })
               : tab === 'features'
                 ? h(FeaturesTab, { project, setProject, schema: boot.schema, setError })
-                : tab === 'items'
+                : tab === 'plan'
+                  ? h(PlanTab, { project, setError })
+                  : tab === 'items'
                   ? h(ItemsTab, { project, setProject, assets, schema: boot.schema, setError, reloadAssets })
                   : tab === 'assets'
                     ? h(AssetsTab, { project, assets, reloadAssets, setError })
@@ -2308,7 +2615,7 @@ window.__ModuleLoader__.load({
       ? {
           components: {
             ProjectTab, FeaturesTab, ItemsTab, AssetsTab, GuideTab,
-            StudioPage, StudioRoot, SidebarStudioPanel, ItemEditor, FeatureEditor,
+            StudioPage, StudioRoot, SidebarStudioPanel, ItemEditor, FeatureEditor, PlanTab, SystemEditor, TaskEditor,
             ProjectDetailModal, ImportConfirmModal, Icon, InfoRow, PathField,
           },
           helpers: { call, pickFolder, getStudioState, setStudioState, defaultSlot },
