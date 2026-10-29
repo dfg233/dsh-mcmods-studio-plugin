@@ -5,6 +5,7 @@
 > 最后更新：2026-10-29
 
 > 路径均相对于项目根；`status` 为样张判断，不是插件实测。
+> 表中“资源”为可读简写；按修正后的 SYSTEM-MODEL，实际 JSON 应为 `{kind,path,required}` 对象。
 
 ## 1. `lock-core` 锁核心
 

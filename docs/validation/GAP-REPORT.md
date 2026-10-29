@@ -146,3 +146,19 @@ Lock 的 `mechanical_lock` 已存在，电子锁是计划新增；当前 `conten
 | 计划/状态/版本路线同步 | 已更新 PLAN、STATUS、VERSION-PLAN |
 
 > 下一轮验证：用修改后的任务包重填一次，确认 `allowedPaths` 的 `mode` 与 `verify` 对象是否够用。
+
+## 7. 第二轮确认（ROUND2-TASK）
+
+用修正后的规格重填「新增电子锁」后，结论：
+
+| 方法 | 结果 |
+| --- | --- |
+| `allowedPaths` 只写 create/modify | 成立 |
+| 只读保护拆为 `guardPaths` | 成立，避免把“禁止修改”混进“允许修改” |
+| 源码 base 用 sha256 | 成立，Java 文件没有业务 revision |
+| `verify` 增加 runner/evidence | 成立，host/agent/manual 可区分 |
+| `structure-diff` 带 `baseStructureHash` | 成立 |
+| `apiRefs` 与 `codeRefs` 分离 | 成立，项目类不混入依赖 API 索引 |
+| 模板缺失时阻塞 | 成立，`lock-type` 未实现前任务不能执行 |
+
+样张见 [ROUND2-TASK.md](ROUND2-TASK.md)。已把对应字段写回 TASK-SPEC、API-INDEX-SPEC 与 PLAN。

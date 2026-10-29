@@ -24,6 +24,7 @@
 | [LOCK-TASK.md](LOCK-TASK.md) | 任务包：新增电子锁、允许路径、上下文、验收 |
 | [API-INDEX-SAMPLE.md](API-INDEX-SAMPLE.md) | API 索引：真实 classpath 签名样例 |
 | [GAP-REPORT.md](GAP-REPORT.md) | 验证结论与规格调整建议 |
+| [ROUND2-TASK.md](ROUND2-TASK.md) | 用修正规格重填任务包，并确认 guardPaths、codeRefs、verify runner、baseStructureHash |
 
 ## 判定标准
 

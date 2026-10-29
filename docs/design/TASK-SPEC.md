@@ -21,12 +21,15 @@
 | `goal` | string | 是 | 这次做什么 |
 | `nonGoals` | string[] | 否 | 这次不做什么 |
 | `templateRefs` | array | 否 | `{id, version}` |
-| `allowedPaths` | array | 是 | `{path, mode:"create"|"modify"|"readonly"}`；字符串简写等价于 `modify` |
-| `baseRevisions` | array | 否 | `{path, revision?, hash?}`，写入前核对并行编辑 |
+| `allowedPaths` | array | 是 | `{path, mode:"create"|"modify"}`；字符串简写等价于 `modify` |
+| `guardPaths` | string[] | 否 | 只读保护路径；出现任何改动即失败 |
+| `baseRevisions` | array | 否 | `{path, hash}`（源码默认 sha256）或 `{path, revision}`（业务数据），写入前核对并行编辑 |
+| `baseStructureHash` | string | 否 | `structure-diff` 的基线；缺省时退化为只比允许路径 |
 | `contextRefs` | array | 否 | 需要喂给 AI 的类、资源、系统卡 |
-| `apiRefs` | string[] | 否 | 需要从 API 索引取的类（最多 20 个） |
+| `apiRefs` | string[] | 否 | 需要从依赖 classpath API 索引取的类（最多 20 个），不含项目自身类 |
+| `codeRefs` | string[] | 否 | 项目自身类/符号，来自 `structure.json`，不进入 API 索引 |
 | `acceptance` | string[] | 是 | 可执行的验收条件 |
-| `verify` | array | 是 | 检查 id 或 `{id, runner, timeoutMs}`；字符串简写等价于 `{id, runner:"host"}`；不接受未注册 id |
+| `verify` | array | 是 | `{id, runner:"host"|"agent"|"manual", timeoutMs?, evidence?, baseline?}`；字符串简写等价于 host；不接受未注册 id |
 | `status` | enum | 是 | `todo` / `doing` / `review` / `done` / `blocked` |
 | `result` | object | 否 | 变更摘要、检查结果、回滚点 |
 | `requestId` | string | 否 | 幂等 |
@@ -75,12 +78,15 @@
 {
   "allowedPaths": [
     { "path": "src/main/java/com/dfg233/lock/item/custom/lock/ElectronicLock.java", "mode": "create" },
-    { "path": "src/main/java/com/dfg233/lock/item/AbstractLock.java", "mode": "modify" },
-    { "path": "src/main/java/com/dfg233/lock/network/*", "mode": "readonly" }
+    { "path": "src/main/java/com/dfg233/lock/item/AbstractLock.java", "mode": "modify" }
+  ],
+  "guardPaths": [
+    "src/main/java/com/dfg233/lock/network/*"
   ],
   "baseRevisions": [
     { "path": "src/main/java/com/dfg233/lock/item/AbstractLock.java", "hash": "sha256:..." }
   ],
+  "baseStructureHash": "sha256:...",
   "verify": [
     { "id": "allowed-paths", "runner": "host" },
     { "id": "structure-diff", "runner": "host" },
@@ -89,7 +95,7 @@
 }
 ```
 
-`readonly` 路径用于“必须读、但不许改”的上下文；越界写入直接失败。
+`guardPaths` 用于“必须读、但不许改”的文件；`allowedPaths` 只放可写路径。越界写入或 guard 路径变更直接失败。
 
 ## 3. 状态机
 
@@ -102,7 +108,7 @@ todo → doing → review → done
 - `doing`：AI 可以改允许路径；
 - `review`：等待检查/用户确认；
 - `done`：所有 `verify` 通过，且有证据；
-- `blocked`：缺上下文、检查失败或用户未决问题未清空。
+- `blocked`：缺上下文、检查失败、模板缺失/版本不兼容，或用户未决问题未清空。
 
 ## 4. 上下文包
 
@@ -151,13 +157,15 @@ todo → doing → review → done
 `verify` 支持：
 
 - `allowed-paths`：只改了允许路径；
+- `guard-paths`：`guardPaths` 无改动；
+- `structure-diff`：相对 `baseStructureHash` 只出现预期变化；
 - `resource-exists`：模型/贴图/语言/声音/标签存在；
 - `registration-pair`：方块+方块实体+物品、菜单+屏幕、包+注册；
 - `nbt-roundtrip`：写入/读取一致；
 - `compile-java`：`gradlew compileJava`（用户开启、超时、输出摘要）；
 - `custom`：任务自定义命令或检查。
 
-检查结果写入 `result.checks`，包含命令、退出码、摘要；没有证据不能标 `done`。
+检查结果写入 `result.checks`，包含 id、runner、退出码/证据、摘要；`manual` 必须有 evidence；没有证据不能标 `done`。
 
 ## 7. 界面
 

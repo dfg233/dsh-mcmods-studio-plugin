@@ -203,8 +203,11 @@ AI 实现 → 插件检查 → 用户验收
 | `systemId` | 所属系统 |
 | `goal` / `nonGoals` | 这次做什么、不做什么 |
 | `templateRefs` | 使用哪些模板 |
-| `allowedPaths` | 允许修改的文件/目录 |
+| `allowedPaths` | 允许修改的文件/目录（create/modify） |
+| `guardPaths` | 只读保护路径 |
 | `contextRefs` | 需要喂给 AI 的类、资源、系统卡 |
+| `codeRefs` | 项目自身类/符号 |
+| `baseStructureHash` | structure-diff 基线 |
 | `acceptance` | 可执行的验收条件 |
 | `verify` | 验证命令或检查 id |
 | `status` | 待做 / 进行中 / 待验证 / 完成 / 阻塞 |

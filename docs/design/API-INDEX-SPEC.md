@@ -196,6 +196,7 @@ api.context {taskId, budget?}     # 供 context.pack 使用
   → 编译检查验证
 ```
 
+- `apiRefs` 只指向依赖 classpath；项目自身类用 `codeRefs` 从 `structure.json` 取，不混入 API 索引；
 - `api-index` 回答“签名存在”；
 - 模板/知识卡回答“正确用法”；
 - `compileJava` 回答“是否能编译”；
