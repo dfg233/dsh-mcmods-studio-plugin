@@ -24,10 +24,10 @@
 | `allowedPaths` | array | 是 | `{path, mode:"create"|"modify"}`；字符串简写等价于 `modify` |
 | `guardPaths` | string[] | 否 | 只读保护路径；出现任何改动即失败 |
 | `baseRevisions` | array | 否 | `{path, hash}`（源码默认 sha256）或 `{path, revision}`（业务数据），写入前核对并行编辑 |
-| `baseStructureHash` | string | 否 | `structure-diff` 的基线；缺省时退化为只比允许路径 |
+| `baseStructureHash` | string | 否 | `structure-diff` 基线快照的哈希；需能解析到已保存快照，否则降级为 allowed-paths + 警告 |
 | `contextRefs` | array | 否 | 需要喂给 AI 的类、资源、系统卡 |
 | `apiRefs` | string[] | 否 | 需要从依赖 classpath API 索引取的类（最多 20 个），不含项目自身类 |
-| `codeRefs` | string[] | 否 | 项目自身类/符号，来自 `structure.json`，不进入 API 索引 |
+| `codeRefs` | string[] | 否 | 项目自身类 ID（structure 的类名/符号），渲染时解析到文件；不进入 API 索引 |
 | `acceptance` | string[] | 是 | 可执行的验收条件 |
 | `verify` | array | 是 | `{id, runner:"host"|"agent"|"manual", timeoutMs?, evidence?, baseline?}`；字符串简写等价于 host；不接受未注册 id |
 | `status` | enum | 是 | `todo` / `doing` / `review` / `done` / `blocked` |
@@ -123,8 +123,10 @@ todo → doing → review → done
   "classes": [{ "path": "...", "summary": "...", "excerpt": "..." }],
   "resources": [{ "path": "...", "kind": "lang|model|..." }],
   "invariants": ["..."],
-  "allowedPaths": ["..."],
-  "budget": { "files": 8, "bytes": 12000 }
+  "allowedPaths": [{ "path": "...", "mode": "modify" }],
+  "guardPaths": ["..."],
+  "codeRefs": [{ "id": "class:...", "path": "..." }],
+  "budget": { "files": 8, "bytes": 12000, "apiClasses": 20 }
 }
 ```
 
@@ -151,6 +153,30 @@ todo → doing → review → done
 - 已有文件必须带 `expectedRevision` 或内容哈希；
 - 越界路径直接拒绝，不给“先改了再解释”的机会；
 - 回滚只恢复本任务允许的文件，不碰其他改动。
+
+### 5.1 执行策略（2026-10-29 确认）
+
+1. **`guardPaths` 独立字段**
+   - 只表示“必须存在且不得修改”；
+   - 与 `allowedPaths` 冲突时任务无效；
+   - 任何 guard 路径变化直接阻断。
+
+2. **`manual` 证据**
+   - `runner:"manual"` 必须填 `evidence`；
+   - 证据可以是文本说明 + 可选文件路径（截图、测试报告、日志）；
+   - 不强制截图；没有证据不能把任务标为 `done`。
+
+3. **`structure-diff` 阻断/警告**
+   - 阻断：guard 路径变化、未声明的新增/删除文件、注册项/资源变化超出任务范围；
+   - 警告：类顺序、行号偏移、派生文件（`summary.json`、`structure.json`）变化；
+   - 任务开始时把 `structure.json` 快照存入 `$DSH_HOME/mcmods-studio/cache/structure/<hash>.json`；
+   - `baseStructureHash` 找不到快照时，不做结构 diff，只跑 allowed/guard 检查并标记“未验证结构”。
+
+4. **`codeRefs` 使用结构类 ID**
+   - 用 `structure.json` 的类名/符号，不直接写文件路径；
+   - 上下文打包时解析到路径与行号；
+   - 引用不存在的类 → 任务 `blocked`；
+   - 新建类不放进 `codeRefs`，由模板/任务声明。
 
 ## 6. 验收与证据
 

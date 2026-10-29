@@ -162,3 +162,5 @@ Lock 的 `mechanical_lock` 已存在，电子锁是计划新增；当前 `conten
 | 模板缺失时阻塞 | 成立，`lock-type` 未实现前任务不能执行 |
 
 样张见 [ROUND2-TASK.md](ROUND2-TASK.md)。已把对应字段写回 TASK-SPEC、API-INDEX-SPEC 与 PLAN。
+
+**2026-10-29 策略确认**：`guardPaths` 独立；`manual` 证据为文本 + 可选文件；`structure-diff` 对越界/未声明文件阻断、对行号/顺序/派生文件警告；`codeRefs` 用结构类 ID 并在上下文打包时解析路径。已写入 TASK-SPEC §5.1。

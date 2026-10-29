@@ -160,11 +160,18 @@
 | 模板缺失时阻塞任务 | 成立，不能静默跳过 |
 | 预算按文件/API 双维度 | 成立，实际约 6 文件/5 API 类 |
 
-## 4. 仍需确认
+## 4. 已确认策略（2026-10-29）
 
-1. `guardPaths` 是独立字段，还是 `allowedPaths` 的 `mode:"guard"`？
-2. `manual` 检查的证据格式：文本、截图路径、测试报告路径？
-3. `structure-diff` 失败时是阻断，还是只警告？
-4. `codeRefs` 是否复用 `structure.json` 的类 ID，而不是文件路径？
+| 问题 | 决定 |
+| --- | --- |
+| `guardPaths` 独立还是塞回 `allowedPaths` | **独立字段**；与 allowed 冲突时任务无效 |
+| `manual` 证据格式 | 文本说明 + 可选文件路径（截图/报告/日志）；不强制截图 |
+| `structure-diff` 失败 | guard/越界/未声明文件 → 阻断；行号/顺序/派生文件 → 警告 |
+| `codeRefs` 用 ID 还是路径 | 用 `structure` 类 ID，打包时解析路径；缺失类 → `blocked` |
+
+补充：
+
+- `baseStructureHash` 必须能解析到任务开始时保存的结构快照，否则退化为 allowed/guard 检查并标记“未验证结构”；
+- 新建类不放进 `codeRefs`，由模板/任务声明。
 
 > 本轮只重填任务包与确认字段，不改代码。
