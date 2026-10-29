@@ -38,6 +38,8 @@ templates/
   "version": 1,
   "loaders": ["forge", "neoforge"],
   "mcVersion": "1.20.1",
+  "profileId": "forge-1.20.1",
+  "mappings": "parchment 2023.09.03-1.20.1",
   "category": "item",
   "parameters": [
     { "key": "modid", "type": "string", "required": true },
@@ -63,7 +65,7 @@ templates/
 字段约束：
 
 - `version` 用于模板升级与 golden 测试；
-- `loaders` / `mcVersion` 不匹配时拒绝渲染；
+- `loaders` / `mcVersion` / `profileId` / `mappings` 不匹配时拒绝渲染或提示；
 - `parameters` 由插件校验，不信任 AI 传入；
 - `apiRefs` 声明模板依赖的真实类，任务上下文按它取签名；
 - `files` 的 `merge` 支持 `json`（深合并）和 `markers`（标记区块）；
@@ -109,6 +111,7 @@ templates/
 | `block-entity-menu` | 方块实体 + Menu + Screen + capability |
 | `s2c-sync-packet` | 包类、注册、客户端处理 |
 | `saved-data-store` | SavedData 持久化 |
+| `lock-type` | 新增锁类型并接入 `AbstractLock.create` |
 | `config` | Forge/NeoForge 配置 |
 | `creative-tab` | 创造模式标签与成员 |
 

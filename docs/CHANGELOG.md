@@ -14,6 +14,7 @@
 ### 文档
 
 - 2026-10-29 产品方向调整：旧版 v0.1 路线归档到 `docs/archive/PLAN-v0.1.md`，`PLAN.md` 改为 AI 工作台主线；新增 `docs/design/` 的想法、系统、模板、任务、API 索引、内容编辑规格；同步更新 STATUS、VERSION-PLAN、plans/README 与 REFERENCE。
+- 2026-10-29 M0 文档验证：新增 `docs/validation/` 的 Lock 想法卡、7 张系统卡、电子锁任务包、真实 API 索引样例与 GAP-REPORT；按报告补强想法/系统/任务/模板/API 索引规格。
 - 本次只重构文档，不改变 v0.1.3 的代码与测试。
 
 ## [0.1.3] - 2026-10-28

@@ -25,10 +25,11 @@
 | `nonGoals` | string[] | 不负责什么 |
 | `invariants` | string[] | 不能破坏的规则，尽量可验证 |
 | `entryPoints` | array | `{kind:'class'|'method'|'registration', path?, name?, line?}` |
-| `resources` | array | 贴图、模型、语言、配方、标签、声音、GUI |
+| `resources` | array | `{kind, path, required}`：贴图、模型、语言、配方、标签、声音、GUI |
 | `dependsOn` | string[] | 依赖的系统 id |
 | `checks` | string[] | 检查 id |
 | `status` | enum | `planned` / `implementing` / `stable` / `deprecated` |
+| `lastVerifiedAt` | string | 可选：上次核对代码/资源的时间 |
 | `notes` | string | 备注 |
 
 ### 示例：Lock 的锁核心
@@ -49,7 +50,10 @@
     { "kind": "class", "path": "src/main/java/com/dfg233/lock/data/LockLevelData.java" },
     { "kind": "class", "path": "src/main/java/com/dfg233/lock/Utils/LockUtils.java" }
   ],
-  "resources": ["assets/lock/lang/zh_cn.json", "assets/lock/sounds.json"],
+  "resources": [
+    { "kind": "lang", "path": "assets/lock/lang/zh_cn.json", "required": true },
+    { "kind": "sound", "path": "assets/lock/sounds.json", "required": true }
+  ],
   "dependsOn": ["key-binding"],
   "checks": ["server-authority", "nbt-roundtrip", "unlocked-pass-through"],
   "status": "stable"

@@ -106,10 +106,12 @@ com.mojang.math
 ### 4.2 解析
 
 - 用 JDK `javap` 或 classfile 解析器；
-- 只保留 public/protected；
-- 记录：类名、kind、修饰符、父类/接口、方法名、参数类型、返回类型、静态/抽象、泛型签名、是否 deprecated；
+- 只保留 public/protected；不能只用 `javap -public`，否则会漏掉 `BlockEntity.saveAdditional` 这类 protected 重写点；
+- 记录：类名、kind、修饰符、父类/接口、方法名、参数类型、返回类型、静态/抽象、泛型签名、是否 deprecated、`inheritedFrom`（继承方法）；
 - 不记录方法体、常量池细节、私有字段；
-- 大索引按包分片，按需加载。
+- 大索引按包分片，按需加载；
+- 嵌套类同时保留 `Outer$Inner` 与 `Outer.Inner` 两个查询键；
+- 继承方法要么合并进子类（标注 `inheritedFrom`），要么提供 `api.get` 的父类跳转；不能静默缺失。
 
 ### 4.3 缓存
 
@@ -134,8 +136,9 @@ $DSH_HOME/mcmods-studio/cache/api/
   "schemaVersion": 1,
   "projectPath": "D:/MCmod/Lock",
   "loader": "forge",
+  "loaderVersion": "47.4.16",
   "mcVersion": "1.20.1",
-  "mappings": "official",
+  "mappings": "parchment 2023.09.03-1.20.1",
   "javaVersion": "17",
   "source": "gradle-classpath",
   "classpathHash": "sha256:...",
@@ -159,7 +162,8 @@ $DSH_HOME/mcmods-studio/cache/api/
       "params": ["int"],
       "returns": "Item.Properties",
       "static": false,
-      "visibility": "public"
+      "visibility": "public",
+      "inheritedFrom": null
     }
   ],
   "fields": []
@@ -211,6 +215,7 @@ api.context {taskId, budget?}     # 供 context.pack 使用
 ## 9. 验收
 
 - 对 Lock 工程，能索引 Forge/MC 的核心类；
+- `BlockEntity.saveAdditional`、`MenuProvider.createMenu`、`Item$Properties` 能查到；
 - AI 查询 `Item.Properties`、`BlockEntity`、`MenuProvider` 能拿到真实签名；
 - 构建文件变化后索引失效并重建；
 - 无 JDK/Gradle 时返回明确状态，不阻塞内容编辑；

@@ -21,7 +21,7 @@
 | `goal` | string | 否 | 用户想实现什么；缺省时用 `description` |
 | `loop` | string | 否 | 玩法循环：玩家做什么、得到什么反馈 |
 | `description` | string | 否 | 详细说明，沿用旧字段 |
-| `content` | array | 否 | 涉及的内容：`{kind:'item'|'block'|'recipe'|'lang'|'gui'|..., id?, note?}` |
+| `content` | array | 否 | 涉及的内容：`{kind, id?, status:'existing'|'planned'|'deprecated', note?}` |
 | `systems` | string[] | 否 | 关联系统卡 id |
 | `constraints` | object | 否 | 加载器、MC 版本、依赖、兼容性、性能 |
 | `acceptance` | string[] | 否 | 可验证的验收条件 |
@@ -41,9 +41,10 @@
   "goal": "玩家可以给门/箱子装锁，用匹配的钥匙开关，并用复制台复制钥匙",
   "loop": "装锁 → 上锁 → 用钥匙解锁 → 复制钥匙 → 用撬棍拆锁",
   "content": [
-    { "kind": "item", "id": "mechanical_lock" },
-    { "kind": "item", "id": "mechanical_key" },
-    { "kind": "block", "id": "key_duplicator" }
+    { "kind": "item", "id": "mechanical_lock", "status": "existing" },
+    { "kind": "item", "id": "mechanical_key", "status": "existing" },
+    { "kind": "block", "id": "key_duplicator", "status": "existing" },
+    { "kind": "item", "id": "electronic_lock", "status": "planned" }
   ],
   "systems": ["lock-core", "key-binding", "duplicator"],
   "constraints": { "loader": "forge", "mcVersion": "1.20.1" },

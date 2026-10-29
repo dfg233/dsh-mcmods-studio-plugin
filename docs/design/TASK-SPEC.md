@@ -21,11 +21,12 @@
 | `goal` | string | 是 | 这次做什么 |
 | `nonGoals` | string[] | 否 | 这次不做什么 |
 | `templateRefs` | array | 否 | `{id, version}` |
-| `allowedPaths` | string[] | 是 | 允许修改的文件/目录，支持 glob |
+| `allowedPaths` | array | 是 | `{path, mode:"create"|"modify"|"readonly"}`；字符串简写等价于 `modify` |
+| `baseRevisions` | array | 否 | `{path, revision?, hash?}`，写入前核对并行编辑 |
 | `contextRefs` | array | 否 | 需要喂给 AI 的类、资源、系统卡 |
 | `apiRefs` | string[] | 否 | 需要从 API 索引取的类（最多 20 个） |
 | `acceptance` | string[] | 是 | 可执行的验收条件 |
-| `verify` | string[] | 是 | 检查 id 或命令 |
+| `verify` | array | 是 | 检查 id 或 `{id, runner, timeoutMs}`；字符串简写等价于 `{id, runner:"host"}`；不接受未注册 id |
 | `status` | enum | 是 | `todo` / `doing` / `review` / `done` / `blocked` |
 | `result` | object | 否 | 变更摘要、检查结果、回滚点 |
 | `requestId` | string | 否 | 幂等 |
@@ -63,10 +64,32 @@
     "世界重启后仍能匹配",
     "未上锁时门仍可正常开关"
   ],
-  "verify": ["allowed-paths", "resource-exists", "nbt-roundtrip", "compile-java"],
+  "verify": ["allowed-paths", "resource-exists", "nbt-roundtrip", "compile-java", "structure-diff"],
   "status": "todo"
 }
 ```
+
+### 扩展写法
+
+```json
+{
+  "allowedPaths": [
+    { "path": "src/main/java/com/dfg233/lock/item/custom/lock/ElectronicLock.java", "mode": "create" },
+    { "path": "src/main/java/com/dfg233/lock/item/AbstractLock.java", "mode": "modify" },
+    { "path": "src/main/java/com/dfg233/lock/network/*", "mode": "readonly" }
+  ],
+  "baseRevisions": [
+    { "path": "src/main/java/com/dfg233/lock/item/AbstractLock.java", "hash": "sha256:..." }
+  ],
+  "verify": [
+    { "id": "allowed-paths", "runner": "host" },
+    { "id": "structure-diff", "runner": "host" },
+    { "id": "compile-java", "runner": "host", "timeoutMs": 120000 }
+  ]
+}
+```
+
+`readonly` 路径用于“必须读、但不许改”的上下文；越界写入直接失败。
 
 ## 3. 状态机
 
@@ -101,7 +124,7 @@ todo → doing → review → done
 
 预算建议：
 
-- 最多 10 个文件或 12KB（以先到为准），其中 API 签名最多 20 个类 / 4KB；
+- 最多 10 个文件、12KB、20 个 API 类（三个维度任一超限即裁剪）；
 - 超过预算时只保留摘要，让 AI 用工具按需读取；
 - 不把整个仓库、生成的 `structure.json`、历史日志塞进上下文。
 
