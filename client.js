@@ -886,6 +886,29 @@ window.__ModuleLoader__.load({
         h(Field, { label: '构想说明' },
           h(Textarea, { value: draft.description, onChange: (v) => set('description', v), placeholder: '这个构想提供什么玩法？' })),
         h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
+          h(Field, { label: '目标' }, h(Textarea, { value: draft.goal || '', onChange: (v) => set('goal', v), placeholder: '玩家最终能做什么？' })),
+          h(Field, { label: '玩法循环' }, h(Textarea, { value: draft.loop || '', onChange: (v) => set('loop', v), placeholder: '获得 → 使用 → 升级' })),
+        ),
+        h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
+          h(Field, { label: '验收条件', hint: '一行一条' },
+            h(Textarea, { value: (draft.acceptance || []).join('\n'), onChange: (v) => set('acceptance', splitLines(v)) })),
+          h(Field, { label: '假设', hint: '一行一条，未确认的不要写死' },
+            h(Textarea, { value: (draft.assumptions || []).join('\n'), onChange: (v) => set('assumptions', splitLines(v)) })),
+        ),
+        h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
+          h(Field, { label: '未决问题', hint: '一行一条' },
+            h(Textarea, { value: (draft.openQuestions || []).join('\n'), onChange: (v) => set('openQuestions', splitLines(v)) })),
+          h(Field, { label: '关联系统', hint: '一行一个，例如 lock-core' },
+            h(Textarea, { value: (draft.systems || []).join('\n'), onChange: (v) => set('systems', splitLines(v)) })),
+        ),
+        h(Field, { label: '约束', hint: '一行一条' },
+          h(Textarea, { value: (draft.constraints || []).join('\n'), onChange: (v) => set('constraints', splitLines(v)) })),
+        h(Field, { label: '内容清单', hint: '一行一个 kind:id:status，例如 item:electronic_lock:planned' },
+          h(Textarea, {
+            value: (draft.content || []).map((entry) => `${entry.kind}:${entry.id}:${entry.status}`).join('\n'),
+            onChange: (v) => set('content', parseContentText(v)),
+          })),
+        h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
           h(Field, { label: '状态' }, h(Select, {
             value: draft.status, onChange: (v) => set('status', v),
             options: props.schema.statuses.map((s) => ({ value: s.id, label: s.label })),
@@ -911,6 +934,14 @@ window.__ModuleLoader__.load({
 
     function splitLines(value) {
       return String(value || '').split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+    }
+
+    function parseContentText(value) {
+      return splitLines(value).map((line) => {
+        const [kind, id, status] = line.split(':')
+        if (!id) return null
+        return { kind: kind || 'other', id, status: status || 'planned' }
+      }).filter(Boolean)
     }
 
     const SYSTEM_STATUS_OPTIONS = [
@@ -1568,6 +1599,7 @@ window.__ModuleLoader__.load({
         lang: { zh: item.displayName || '', en: '' },
         recipe: { type: 'none', pattern: ['', '', ''], keys: [], ingredients: [], count: 1, experience: 0, cookingTime: 200 },
         model: { parent: 'minecraft:item/generated' },
+        tags: [],
       })
       const fileRef = useRef(null)
 
@@ -1582,6 +1614,7 @@ window.__ModuleLoader__.load({
               lang: { zh: data?.lang?.zh || props.item.displayName || '', en: data?.lang?.en || '' },
               recipe: data?.recipe || { type: 'none', pattern: ['', '', ''], keys: [], ingredients: [], count: 1, experience: 0, cookingTime: 200 },
               model: { parent: data?.model?.parent || 'minecraft:item/generated' },
+              tags: Array.isArray(data?.tags) ? data.tags : [],
             })
           })
           .catch(() => {})
@@ -1748,6 +1781,11 @@ window.__ModuleLoader__.load({
                   h(NumberInput, { value: content.recipe.cookingTime, onChange: (v) => setRecipe('cookingTime', v), min: 1, step: 20 })),
               )
             : null,
+          h(Field, { label: '资源标签', hint: `一行一个，例如 minecraft:planks、lock:lockable；保存时写入 data/*/tags/${draft.type === 'block' ? 'blocks' : 'items'}` },
+            h(Textarea, {
+              value: (content.tags || []).join('\n'),
+              onChange: (v) => setContent((prev) => ({ ...prev, tags: splitLines(v) })),
+            })),
           h(Field, { label: '物品模型', hint: '写入 models/item/<id>.json；不影响已有手写模型之外的文件' },
             h(Select, {
               value: content.model.parent, onChange: (v) => setContentField('model', { parent: v }),

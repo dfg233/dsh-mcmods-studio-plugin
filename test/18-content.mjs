@@ -73,6 +73,24 @@ const cases = [
     },
   },
   {
+    name: '资源标签写入与移除',
+    async run(ws) {
+      const dir = await makeProject(ws)
+      await ws.call('content.apply', {
+        path: dir, id: 'ruby_sword', content: { tags: ['minecraft:planks', 'ruby:lockable'] },
+      })
+      let data = await ws.call('content.get', { path: dir, id: 'ruby_sword' })
+      equal(data.tags.length, 2, '应写入两个标签')
+      must(data.tags.includes('minecraft:planks'), '应包含 minecraft 标签')
+      const tag = JSON.parse(await readFile(join(dir, '.mcstudio', 'data', 'ruby', 'tags', 'items', 'lockable.json'), 'utf8'))
+      equal(tag.values[0], 'contentmod:ruby_sword', '标签值应为当前物品')
+
+      await ws.call('content.apply', { path: dir, id: 'ruby_sword', content: { tags: [] } })
+      data = await ws.call('content.get', { path: dir, id: 'ruby_sword' })
+      equal(data.tags.length, 0, '清空后应移除标签')
+    },
+  },
+  {
     name: '新建物品在保存前也能预览',
     async run(ws) {
       const dir = await makeProject(ws)

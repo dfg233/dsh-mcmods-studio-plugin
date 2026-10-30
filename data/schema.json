@@ -24,6 +24,16 @@
       "tone": "idle"
     },
     {
+      "id": "clarified",
+      "label": "已澄清",
+      "tone": "warn"
+    },
+    {
+      "id": "confirmed",
+      "label": "已确认",
+      "tone": "brand"
+    },
+    {
       "id": "planning",
       "label": "规划中",
       "tone": "warn"

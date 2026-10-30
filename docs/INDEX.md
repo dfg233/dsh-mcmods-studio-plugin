@@ -1,7 +1,7 @@
 # 代码索引
 
-> 适用版本：v0.1.3
-> 状态：as-built（v0.1.3 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
+> 适用版本：v0.2.0
+> 状态：as-built（v0.2.0 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
 > 更新日期：2026-10-28
 > 用途：修改插件代码前先查这里，按「文件 → 函数 → 参数 → 返回」定位，不必通读源码。
 > 说明：行号为编写时的位置，改动后会偏移，**优先按名称搜索**。发版与升版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
@@ -27,15 +27,15 @@
 | `package.json` | bundle 清单：版本、包名、`dsh.bundle.patch`、`dsh.client` | 46 |
 | `cordis.patch.yml` | 向 Loader 插入 `id: mc-mod-studio` | 12 |
 | `index.js` | Host 入口：HTTP 路由、原生工具注册、卸载清理 | 121 |
-| `client.js` | 浏览器半：全部 UI（单文件模块） | 2800 |
-| `lib/api.js` | 48 个动作的声明式路由表与分派 | 583 |
+| `client.js` | 浏览器半：全部 UI（单文件模块） | 2835 |
+| `lib/api.js` | 48 个动作的声明式路由表与分派 | 645 |
 | `lib/paths.js` | `.mcstudio/` 路径、id 校验、路径归属 | 75 |
-| `lib/schema.js` | 加载器、构想状态、物品类型（含创造模式标签）、19 个字段 | 183 |
+| `lib/schema.js` | 加载器、构想状态、物品类型（含创造模式标签）、19 个字段 | 185 |
 | `lib/meta.js` | `project.json` 与 `studio.json` 读写、项目创建 | 217 |
-| `lib/entries.js` | 构想与物品 CRUD、字段纠偏、`readProject` | 194 |
+| `lib/entries.js` | 构想与物品 CRUD、字段纠偏、`readProject` | 227 |
 | `lib/import.js` | 工程识别、资源扫描、身份解析、差异、快照、导入 proof、标签分类 | 838 |
 | `lib/workbench.js` | 系统卡与任务包读写、字段归一与引用校验 | 207 |
-| `lib/content.js` | 语言/配方/模型资源预览、写入与回滚 | 322 |
+| `lib/content.js` | 语言/配方/模型/标签资源预览、写入与回滚 | 437 |
 | `lib/gradle.js` | `gradle.properties` 解析、占位符处理 | 205 |
 | `lib/assets.js` | 贴图与模型：路径、PNG 校验、上传、读取、方块面解析 | 536 |
 | `lib/docs.js` | 五份 Markdown 的渲染 | 256 |
@@ -49,7 +49,7 @@
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
 | `data/schema.json` | 字段定义的对外副本（生成物） | 7.3 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：18 个文件、179 项 | 3822 |
+| `test/*.mjs` | 回归测试：18 个文件、182 项 | 3889 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 
 > `lib/project.js` 是 2026-10-24 拆分后保留的转发层，`api.js`、`assets.js`、`docs.js`、
@@ -353,7 +353,7 @@ export * from './import.js'
 | `applyContent(path,id,content)` | 备份后写入语言/配方/模型，失败自动回滚 |
 | `restoreContent(path,backupDir)` | 用备份清单恢复资源；校验备份与目标路径 |
 
-支持 `shaped` / `shapeless` / `furnace` 三种配方；语言写入 `assets/<modid>/lang/*.json`；模型写入 `models/item/<id>.json`。
+支持 `shaped` / `shapeless` / `furnace` 三种配方；语言写入 `assets/<modid>/lang/*.json`；模型写入 `models/item/<id>.json`；标签写入 `data/<ns>/tags/items|blocks/<tag>.json`。
 
 ## 3. 接口层
 
@@ -428,8 +428,8 @@ export * from './import.js'
 
 | action | payload | 返回 | scope |
 | --- | --- | --- | --- |
-| `content.get` | `{path, id}` | `{itemId,type,lang,recipe,model,files}` | studio |
-| `content.preview` | `{path, id, content}` | `{itemId,files[],changes,backupHint}` | studio |
+| `content.get` | `{path, id}` | `{itemId,type,lang,tags,recipe,model,files}` | studio |
+| `content.preview` | `{path, id, content, item?}` | `{itemId,files[],changes,backupHint}` | studio |
 | `content.apply` | `{path, id, content}` | `{files[],backupDir}` | studio |
 | `content.rollback` | `{path, backupDir}` | `{ok:true}` | studio |
 
@@ -743,7 +743,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（18 个文件、179 项）
+# 全部测试（18 个文件、182 项）
 npm test
 
 # 只跑某一组
@@ -787,7 +787,7 @@ client.js
 | `01-registry.mjs` | 注册表、路径、损坏回退 | 8 |
 | `02-project.mjs` | 新建、打开、元数据、标记 | 11 |
 | `03-import.mjs` | gradle 解析、三分支、占位符 | 13 |
-| `04-entries.mjs` | 构想与物品 CRUD、纠偏 | 10 |
+| `04-entries.mjs` | 构想与物品 CRUD、纠偏、想法字段 | 11 |
 | `05-assets.mjs` | PNG 校验、模型、路径回退 | 13 |
 | `06-docs.mjs` | 五份导出、幂等 | 8 |
 | `07-scan.mjs` | 扫描、判定、差异、重新导入、标签分类 | 13 |
@@ -795,9 +795,9 @@ client.js
 | `09-agent.mjs` | 工具、摘要、校验 | 19 |
 | `10-schema-sync.mjs` | schema 一致性 | 2 |
 | `11-tool-bridge.mjs` | 原生工具定义与 notices | 8 |
-| `12-render.mjs` | 渲染结构、方块贴图回退、计划页 | 17 |
+| `12-render.mjs` | 渲染结构、方块贴图回退、计划页、想法字段 | 18 |
 | `17-workbench.mjs` | 系统卡/任务包 CRUD、字段归一、计划读取 | 5 |
-| `18-content.mjs` | 语言/配方/模型预览、应用、回滚、标准路径、新建预览 | 7 |
+| `18-content.mjs` | 语言/配方/模型/标签预览、应用、回滚、标准路径、新建预览 | 8 |
 | `13-block-assets.mjs` | 方块面贴图解析 | 7 |
 | `14-persist.mjs` | 项目切换持久化 | 10 |
 | `15-structure.mjs` | 代码结构文档 | 15 |

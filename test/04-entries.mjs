@@ -38,6 +38,32 @@ const cases = [
     },
   },
   {
+    name: '想法字段扩展与内容状态归一',
+    async run(ws) {
+      const dir = await newProject(ws)
+      const saved = await ws.call('features.save', {
+        path: dir,
+        feature: {
+          name: '电子锁', goal: '给门加电子锁', loop: '装锁 → 配钥匙',
+          constraints: ['不改原方块'], systems: ['lock-core'],
+          acceptance: ['错误钥匙打不开'], assumptions: ['服务端权威'],
+          openQuestions: ['是否消耗能量'],
+          content: [
+            { kind: 'item', id: 'electronic_lock', status: 'planned' },
+            { kind: 'block', id: 'key_duplicator' },
+            'mechanical_lock',
+          ],
+        },
+      })
+      equal(saved.feature.goal, '给门加电子锁', '应保存目标')
+      equal(saved.feature.acceptance[0], '错误钥匙打不开', '应保存验收')
+      equal(saved.feature.content.length, 3, '应保存内容清单')
+      equal(saved.feature.content[0].status, 'planned', '内容状态应保留')
+      equal(saved.feature.content[1].status, 'planned', '缺省内容状态应为 planned')
+      equal(saved.feature.content[2].kind, 'other', '字符串内容应归一为对象')
+    },
+  },
+  {
     name: '构想列表按更新时间倒序',
     async run(ws) {
       const dir = await newProject(ws)

@@ -1,7 +1,7 @@
 # 数据格式
 
-> 适用版本：v0.1.3
-> 状态：as-built（v0.1.3 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
+> 适用版本：v0.2.0
+> 状态：as-built（v0.2.0 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
 > 更新日期：2026-10-28
 > 数据文件内的 `schemaVersion` 与插件版本号相互独立；插件升级不自动改写数据格式。
 > 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
@@ -159,6 +159,14 @@
       "priority": "high",
       "version": "0.1.0",
       "items": ["ruby", "ruby_sword"],
+      "goal": "用红宝石制作工具与盔甲",
+      "loop": "挖矿 → 合成 → 升级",
+      "constraints": ["不改原版配方"],
+      "content": [{ "kind": "item", "id": "ruby_sword", "status": "planned" }],
+      "systems": ["gear"],
+      "acceptance": ["红宝石剑可合成"],
+      "assumptions": ["红宝石由挖矿获得"],
+      "openQuestions": ["是否需要套装效果"],
       "notes": "",
       "createdAt": "2026-10-20T12:00:00.000Z",
       "updatedAt": "2026-10-20T12:00:00.000Z"
@@ -167,7 +175,8 @@
 }
 ```
 
-- `status`：`idea` / `planning` / `implementing` / `done`
+- `status`：`idea` / `clarified` / `confirmed` / `planning` / `implementing` / `done`
+- `content[].status`：`existing` / `planned` / `deprecated`
 - `priority`：`high` / `medium` / `low`
 
 ## 3.1 systems.json（系统卡）
@@ -247,6 +256,7 @@ src/main/resources/data/<modid>/recipes/<id>.json
 
 - 标准工程不存在 `src/main/resources` 时，回退到 `.mcstudio/assets/`、`.mcstudio/data/`；
 - 语言键为 `item.<modid>.<id>`；方块类型用 `block.<modid>.<id>`；
+- 资源标签写入 `data/<ns>/tags/items|blocks/<tag>.json`，保留其他成员与 `replace`；
 - 配方 id 默认为物品 id，支持 `minecraft:crafting_shaped`、`minecraft:crafting_shapeless`、`minecraft:smelting`；
 - 材料无命名空间时默认当前模组；
 - `content.apply` 前把目标文件复制到 `$DSH_HOME/mcmods-studio/backups/...`，失败自动恢复；

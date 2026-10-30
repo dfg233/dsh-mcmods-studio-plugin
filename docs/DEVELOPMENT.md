@@ -1,7 +1,7 @@
 # 开发文档
 
-> 适用版本：v0.1.3
-> 状态：as-built（v0.1.3 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
+> 适用版本：v0.2.0
+> 状态：as-built（v0.2.0 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
 > 更新日期：2026-10-28
 > 发版与版本号规则见 [VERSION-PLAN.md](VERSION-PLAN.md)，函数级索引见 [INDEX.md](INDEX.md)。
 
@@ -68,7 +68,7 @@ dsh-mcmods-studio-plugin/
 │   └── project.js        # 转发层：export * 五个数据模块（不能删）
 ├── data/schema.json      # 字段定义对外副本（由脚本生成）
 ├── scripts/gen-schema.mjs
-├── test/                 # 18 个回归用例文件、179 项
+├── test/                 # 18 个回归用例文件、182 项
 ├── locale/               # 插件显示名与描述
 └── docs/                 # 本目录
 ```
@@ -165,7 +165,7 @@ Host 层可以脱离 DSH 直接测试：设置 `DSH_HOME` 到临时目录，
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（18 个文件、179 项）
+# 全部测试（18 个文件、182 项）
 npm test
 
 # 只跑某一组

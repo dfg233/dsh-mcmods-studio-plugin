@@ -2,14 +2,17 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
-## [Unreleased]
+## [0.2.0] - 2026-10-30
 
 ### 新增
 
 - M1.1 工作台计划数据：`lib/workbench.js`、`.mcstudio/systems.json`、`.mcstudio/tasks.json`；新增 `workbench.plan`、`systems.*`、`tasks.*` 共 7 个动作；客户端新增「计划」页与系统/任务编辑弹窗；新增 `mcmods_workbench` 原生工具。
 - 测试新增 `test/17-workbench.mjs`，计划页渲染用例；总计 17 个文件 / 172 项。
 - M1.2 内容编辑：新增 `lib/content.js` 与 `content.get/preview/apply/rollback` 四个动作；支持语言、有序/无序/熔炉配方、物品模型，写入前备份、失败回滚；物品编辑器增加语言/配方/模型字段与变更预览。
-- 测试新增 `test/18-content.mjs`，总计 18 个文件 / 179 项。
+- 测试新增 `test/18-content.mjs`，与 M1.3 合计 18 个文件 / 182 项。
+- M1.3 标签与想法字段：资源标签按 `data/*/tags/items|blocks` 增删并保留其他成员；想法新增目标、玩法循环、约束、内容清单、系统、验收、假设、未决问题。
+
+## [Unreleased]
 
 ### 计划中
 
@@ -22,7 +25,7 @@
 
 - 2026-10-29 产品方向调整：旧版 v0.1 路线归档到 `docs/archive/PLAN-v0.1.md`，`PLAN.md` 改为 AI 工作台主线；新增 `docs/design/` 的想法、系统、模板、任务、API 索引、内容编辑规格；同步更新 STATUS、VERSION-PLAN、plans/README 与 REFERENCE。
 - 2026-10-29 M0 文档验证：新增 `docs/validation/` 的 Lock 想法卡、7 张系统卡、电子锁任务包、真实 API 索引样例与 GAP-REPORT；按报告补强想法/系统/任务/模板/API 索引规格。
-- M0 只重构文档；M1.1 已开始实现工作台计划数据，版本仍为 v0.1.3，未发版。
+- M0 只重构文档；M1.1–M1.3 已在 v0.2.0 落地。
 
 ## [0.1.3] - 2026-10-28
 

@@ -1,7 +1,7 @@
 # 代码工作区模块计划
 
 > 模块编号：11
-> 适用插件版本：v0.1.3
+> 适用插件版本：v0.2.0
 > 代码位置：规划中，拟新增 `lib/files.js`、`lib/codegen.js`、`lib/codegen/templates/`、`client.js` 的「代码」页签
 > 状态：**未实现（后移至 v0.4）**
 > 目标版本：**v0.4.0**（AI 工作台主线见 [../PLAN.md](../PLAN.md)）

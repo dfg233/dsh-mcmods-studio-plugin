@@ -245,6 +245,28 @@ const cases = [
       must(hasText(tree, '中文名'), '应渲染语言字段')
       must(hasText(tree, '配方类型'), '应渲染配方字段')
       must(hasText(tree, '物品模型'), '应渲染模型选择')
+      must(hasText(tree, '资源标签'), '应渲染资源标签')
+    },
+  },
+  {
+    name: '想法编辑器渲染目标、验收与内容清单',
+    async run() {
+      const client = await loadClient()
+      const tree = client.render(client.components.FeatureEditor, {
+        feature: {
+          id: 'f1', name: '电子锁', description: '', status: 'idea', priority: 'high',
+          goal: '给门加锁', loop: '装锁 → 配钥匙', acceptance: ['错误钥匙打不开'],
+          assumptions: [], openQuestions: [], systems: ['lock-core'], constraints: [],
+          content: [{ kind: 'item', id: 'electronic_lock', status: 'planned' }],
+          items: [], notes: '', version: '',
+        },
+        schema, project: makeProject(), setError: () => {},
+        onSave: () => {}, onCancel: () => {},
+      })
+      must(hasText(tree, '目标'), '应渲染目标字段')
+      must(hasText(tree, '验收条件'), '应渲染验收字段')
+      must(hasText(tree, '内容清单'), '应渲染内容清单')
+      must(hasText(tree, 'item:electronic_lock:planned'), '应回填内容状态')
     },
   },
   {

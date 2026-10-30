@@ -1,7 +1,7 @@
 # 工程导入模块计划
 
 > 模块编号：04
-> 适用插件版本：v0.1.3
+> 适用插件版本：v0.2.0
 > 代码位置：`lib/gradle.js`；`lib/import.js` 的 `resolveIdentity`、`diffEntries`、`syncEntries`、`importProject`、`reimportProject`、`analyzeImport`、`importProof`、`detectDescriptor`、`scanProjectAssets`、`scanRegistryNames`、`writeSnapshot`；`lib/backup.js` 的 `runWithProjectBackup`；`client.js` 的 `ImportProjectModal`、`ImportConfirmModal`、`ProjectDetailModal`
 > 状态：已实现
 > 依据：[PROJECT-STRUCTURE.md](../PROJECT-STRUCTURE.md)
