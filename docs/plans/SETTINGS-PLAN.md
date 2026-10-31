@@ -1,7 +1,7 @@
 # 设置与偏好模块计划
 
 > 模块编号：13
-> 适用插件版本：v0.2.1
+> 适用插件版本：v0.2.2
 > 目标版本：后移（v0.5+ 候选；不占用 v0.2）
 > 代码位置：拟新增 `lib/settings.js`；修改 `client.js`（`GearIcon`、`Tabs`、`SettingsTab`）、`lib/api.js`、`lib/entries.js`、`lib/tools.js`
 > 状态：**规划中（后移；方案保留，等基础工作台稳定后再评估）**

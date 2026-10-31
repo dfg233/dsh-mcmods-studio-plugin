@@ -2,6 +2,22 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.2.2] - 2026-10-31
+
+### 修复
+
+- 物品编辑器的「贴图」栏始终显示「无」：`ItemsTab` 用 `assets.readMany` 读取缩略图时返回键为 `item/<id>`（方块为主贴图名），编辑器却按 `images[draft.id]` 取值，键永远匹配不上。现在由 `ItemsTab` 传入 `imageFor(id)`（内部走 `thumbKey`），编辑器按映射取图；方块贴图名与 id 不同时也能显示。
+- 编辑页上传 PNG 后预览不刷新：上传成功改为调用 `onTextureUploaded`，重新读取缩略图并刷新素材列表，不需要关闭重开编辑器。
+
+### 变更
+
+- `package.json` 版本由 `0.2.1` 升至 `0.2.2`。
+- 测试新增 2 项（`test/12-render.mjs`），总计 18 个文件 / 196 项。
+
+### 文档
+
+- 新增 [fix/V0.2.2-PLAN.md](fix/V0.2.2-PLAN.md)：根因、修复与验收记录。
+
 ## [Unreleased]
 
 ### 计划中

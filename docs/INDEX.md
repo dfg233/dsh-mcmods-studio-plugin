@@ -1,7 +1,7 @@
 # 代码索引
 
-> 适用版本：v0.2.1
-> 状态：as-built（v0.2.1 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)，小版本修复计划见 [fix/](fix/README.md)。
+> 适用版本：v0.2.2
+> 状态：as-built（v0.2.2 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)，小版本修复计划见 [fix/](fix/README.md)。
 > 更新日期：2026-10-31
 > 用途：修改插件代码前先查这里，按「文件 → 函数 → 参数 → 返回」定位，不必通读源码。
 > 说明：行号为编写时的位置，改动后会偏移，**优先按名称搜索**。发版与升版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
@@ -50,7 +50,7 @@
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
 | `data/schema.json` | 字段定义的对外副本（生成物） | 7.3 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：18 个文件、194 项 | 4251 |
+| `test/*.mjs` | 回归测试：18 个文件、196 项 | 4251 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 
 > `lib/project.js` 是 2026-10-24 拆分后保留的转发层，`api.js`、`assets.js`、`docs.js`、
@@ -578,7 +578,7 @@ window.__ModuleLoader__.load({
 | `PlanTab` | 计划页：系统卡、任务卡 | `{project,setError}` |
 | `SystemEditor` / `TaskEditor` | 系统/任务编辑弹窗 | `{system/task,onSave,onCancel}` |
 | `ItemsTab` | 列表 / 画布、搜索、校验提示条、历史记录入口 | `{project,setProject,assets,schema,setError,reloadAssets}` |
-| `ItemEditor` | 19 字段分组编辑（带草稿恢复）；内容文本输入 | `{schema,item,project,images,setError,onSave,onCancel}` |
+| `ItemEditor` | 19 字段分组编辑（带草稿恢复）；内容文本输入；贴图按 `imageFor` 映射 | `{schema,item,project,imageFor,onTextureUploaded,setError,onSave,onCancel}` |
 | `HistoryModal` | 内容历史列表、范围/归档筛选、回到某一步 | `{project,itemId,onClose,onRolledBack,setError}` |
 | `AssetsTab` | 上传、预览、模型编辑 | `{project,assets,reloadAssets,setError}` |
 | `GuideTab` | 构建教程 | `{guide}` |
@@ -814,7 +814,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（18 个文件、194 项）
+# 全部测试（18 个文件、196 项）
 npm test
 
 # 只跑某一组
@@ -868,7 +868,7 @@ client.js
 | `09-agent.mjs` | 工具、摘要、校验 | 19 |
 | `10-schema-sync.mjs` | schema 一致性 | 2 |
 | `11-tool-bridge.mjs` | 原生工具定义与 notices | 8 |
-| `12-render.mjs` | 渲染结构、方块贴图回退、计划页、想法字段、历史弹窗与多行输入 | 21 |
+| `12-render.mjs` | 渲染结构、方块贴图回退、计划页、想法字段、历史弹窗、多行输入与贴图映射 | 23 |
 | `17-workbench.mjs` | 系统卡/任务包 CRUD、字段归一、计划读取 | 5 |
 | `18-content.mjs` | 语言/配方/模型/标签预览、应用、回滚、标准路径、多行解析、内容历史与归档 | 17 |
 | `13-block-assets.mjs` | 方块面贴图解析 | 7 |

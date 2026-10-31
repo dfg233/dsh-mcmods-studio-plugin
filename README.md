@@ -1,6 +1,6 @@
 # 模组工坊（dsh-mcmods-studio-plugin）
 
-> 当前版本：v0.2.1
+> 当前版本：v0.2.2
 > 更新日期：2026-10-31
 
 面向 **Minecraft 1.20.1**（Forge / NeoForge / Fabric）的模组制作插件，

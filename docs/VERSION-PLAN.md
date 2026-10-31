@@ -1,6 +1,6 @@
 # 插件版本规划
 
-> 适用版本：v0.2.1
+> 适用版本：v0.2.2
 > 更新日期：2026-10-31
 > 本文规定**插件自身**的版本号规则、发版流程与版本历史，与 Minecraft 适配版本无关。
 > 版本路线见 [PLAN.md](PLAN.md)，变更明细见 [CHANGELOG.md](CHANGELOG.md)，当前状态见 [STATUS.md](STATUS.md)。
@@ -82,7 +82,7 @@
 | 1 | 判断版本类型（PATCH / MINOR / MAJOR） | 本文第 1 节 |
 | 2 | 完成代码改动并补测试 | `test/*.mjs` |
 | 3 | 跑语法检查与全量回归 | `for f in index.js client.js lib/*.js; do node --check "$f"; done`；`npm test` |
-| 4 | 更新 `package.json` 的 `version` | 例如 `0.2.1` → `0.2.2` |
+| 4 | 更新 `package.json` 的 `version` | 例如 `0.2.2` → `0.2.3` |
 | 5 | 在 `CHANGELOG.md` 新增版本段 | `Added` / `Changed` / `Fixed` / `Docs` |
 | 6 | 更新全部文档的「适用版本」与「更新日期」 | 见第 4 节清单 |
 | 7 | 更新本文第 5 节版本历史 | 记录版本、日期、类型、要点 |
@@ -132,6 +132,7 @@
 | `v0.1.3` | 2026-10-28 | PATCH | 无 blockstate 方块贴图回退显示、创造模式标签独立类型与自动分类、素材上传/删除支持 block、测试 166 项 | `3a36770` |
 | `v0.2.0` | 2026-10-30 | MINOR | AI 工作台骨架与内容编辑：想法字段、系统卡、任务包、计划页；语言/有序/无序/熔炉配方/标签/模型；预览、备份、回滚；动作 48、工具 22、测试 18 文件 / 182 项 | `b18519f` |
 | `v0.2.1` | 2026-10-31 | PATCH | 内容编辑修复与历史：Pattern/材料键换行；`.mcstudio/content-history.json`、`content.history.list/rollback`；回到某步的递归回滚、rolledBack 保留、下次写入归档、非归档上限 50；旧 `content.rollback` 保留；动作 50、测试 18 文件 / 194 项 | `fd39a94` |
+| `v0.2.2` | 2026-10-31 | PATCH | 物品编辑器贴图预览修复：按 `thumbKey` 映射取图；上传后刷新缩略图；测试 18 文件 / 196 项 | 本次提交 |
 
 > v0.1.0 的提交范围以 `9a2ca08` 为界；v0.1.1 记录本次发版提交。
 > 详细变更以 [CHANGELOG.md](CHANGELOG.md) 为准，本表只做索引。

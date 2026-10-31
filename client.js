@@ -1288,21 +1288,20 @@ window.__ModuleLoader__.load({
         return () => { alive = false }
       }, [project?.path, items.length])
 
-      useEffect(() => {
-        if (!project) return
-        let alive = true
-        // 方块贴图名与 id 不同，按 assets.blocks 的解析结果构造读取规格
+      /** 读取全部物品缩略图：方块用解析出的主贴图名，物品用 item/<id>。 */
+      const loadImages = useCallback(async () => {
+        if (!project?.path) return
         const blockMap = new Map((assets?.blocks || []).map((entry) => [entry.id, entry]))
         const specs = items.map((item) => {
           const block = blockMap.get(item.id)
           if (block?.primary) return { id: block.primaryId, kind: block.primaryKind, key: block.primary }
           return { id: item.id, kind: 'item', key: `item/${item.id}` }
         })
-        call('assets.readMany', { path: project.path, ids: specs })
-          .then((data) => { if (alive) setImages(data.images || {}) })
-          .catch(() => {})
-        return () => { alive = false }
-      }, [project?.path, items.length, assets?.blocks])
+        const data = await call('assets.readMany', { path: project.path, ids: specs }).catch(() => null)
+        if (data) setImages(data.images || {})
+      }, [project?.path, items, assets?.blocks])
+
+      useEffect(() => { loadImages() }, [loadImages])
 
       /** 缩略图键：与 assets.readMany 返回的键保持一致。 */
       const thumbKey = useMemo(() => {
@@ -1561,7 +1560,12 @@ window.__ModuleLoader__.load({
           schema,
           assets,
           project,
-          images,
+          // 缩略图键由 thumbKey 决定（方块贴图名可能与 id 不同），编辑器不能直接按 id 取
+          imageFor: (id) => images[thumbKey(id)],
+          onTextureUploaded: async () => {
+            await loadImages()
+            await reloadAssets()
+          },
           onCancel: () => setEditing(null),
           onSave: saveItem,
           setError,
@@ -1652,7 +1656,7 @@ window.__ModuleLoader__.load({
     }
 
     function ItemEditor(props) {
-      const { schema, item, project, images, setError } = props
+      const { schema, item, project, setError, imageFor, onTextureUploaded } = props
       const draftState = useDraftState(
         draftKey(project.path, 'item', item.id),
         JSON.parse(JSON.stringify(item)),
@@ -1740,7 +1744,8 @@ window.__ModuleLoader__.load({
           const bytes = new Uint8Array(buffer)
           for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
           await call('assets.upload', { path: project.path, id: draft.id, base64: btoa(binary) })
-          props.onReload && props.onReload()
+          if (onTextureUploaded) await onTextureUploaded()
+          else props.onReload && props.onReload()
           setError('')
           window.alert('贴图已保存。')
         } catch (err) {
@@ -1749,6 +1754,9 @@ window.__ModuleLoader__.load({
           setUploading(false)
         }
       }
+
+      // 贴图预览：键由 ItemsTab 的 thumbKey 决定，方块贴图名可能与 id 不同
+      const texture = imageFor ? imageFor(draft.id) : ''
 
       return h(Modal, {
         title: item.id ? `编辑物品：${item.displayName}` : '新建物品',
@@ -1778,8 +1786,8 @@ window.__ModuleLoader__.load({
                   background: C.layer2, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 },
               },
-                images[draft.id]
-                  ? h('img', { src: images[draft.id], width: 40, height: 40, style: { imageRendering: 'pixelated' } })
+                texture
+                  ? h('img', { src: texture, width: 40, height: 40, style: { imageRendering: 'pixelated' } })
                   : h('span', { style: { fontSize: 10, color: C.muted } }, '无'),
               ),
               h('button', { style: S.btn(), disabled: uploading, onClick: () => fileRef.current && fileRef.current.click() },

@@ -535,6 +535,63 @@ const cases = [
     },
   },
   {
+    name: '物品编辑器显示已上传的贴图',
+    async run() {
+      const client = await loadClient()
+      const item = {
+        id: 'ruby', displayName: '红宝石', type: 'material',
+        properties: { maxStackSize: 64, rarity: 'common', glint: false, itemTags: [] },
+        tags: [], description: '', notes: '', canvas: { x: 0, y: 0 },
+      }
+      const dataUrl = 'data:image/png;base64,AAAA'
+      const tree = client.render(client.components.ItemEditor, {
+        schema, item, project: makeProject(),
+        imageFor: (id) => (id === 'ruby' ? dataUrl : ''),
+        setError: () => {}, onSave: () => {}, onCancel: () => {},
+      })
+
+      let preview = null
+      walk(tree, (node) => {
+        if (!preview && node.type === 'img' && node.props.src === dataUrl) preview = node
+      })
+      must(preview, '编辑器应按 imageFor 渲染贴图预览')
+    },
+  },
+  {
+    name: '物品页把缩略图映射传给编辑器',
+    async run() {
+      const dataUrl = 'data:image/png;base64,BBBB'
+      const client = await loadClient({
+        handler: async (action) => {
+          if (action === 'assets.readMany') return { images: { 'item/ruby': dataUrl } }
+          if (action === 'agent.validate') return { errors: [], warnings: [] }
+          return {}
+        },
+      })
+      const project = makeProject({
+        items: [{
+          id: 'ruby', displayName: '红宝石', type: 'material',
+          properties: { maxStackSize: 64, maxDamage: 0 }, canvas: { x: 0, y: 0 },
+        }],
+      })
+      const props = {
+        project, setProject: () => {}, assets: null, schema, setError: () => {}, reloadAssets: () => {},
+      }
+      let tree = await client.renderSettled(client.components.ItemsTab, props)
+
+      const edit = buttons(tree).find((entry) => entry.text === '编辑')
+      must(edit, '应有编辑按钮')
+      edit.node.props.onClick()
+
+      client.reactEnv.reset()
+      tree = client.components.ItemsTab(props)
+
+      const editor = findComponent(tree, (node) => node.type === client.components.ItemEditor)
+      must(editor, '应打开物品编辑器')
+      equal(editor.props.imageFor('ruby'), dataUrl, '编辑器应拿到按 thumbKey 映射的贴图')
+    },
+  },
+  {
     name: '测试钩子未启用时不暴露组件',
     async run() {
       const { readFile } = await import('node:fs/promises')
