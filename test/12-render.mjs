@@ -6,7 +6,17 @@
  */
 
 import { equal, must, runSuite } from './helpers.mjs'
-import { buttons, countTag, hasText, loadClient, tags, texts } from './render-harness.mjs'
+import { buttons, countTag, hasText, loadClient, tags, texts, walk } from './render-harness.mjs'
+
+/** 在元素树里找第一个匹配的组件节点（type 为函数）。 */
+function findComponent(tree, predicate) {
+  let found = null
+  walk(tree, (node) => {
+    if (found || typeof node.type !== 'function') return
+    if (node.props && predicate(node)) found = node
+  })
+  return found
+}
 
 /** 构造一个最小项目。 */
 function makeProject(overrides = {}) {
@@ -381,6 +391,147 @@ const cases = [
       must(hasText(tree, 'sapphire'), '应列出新增条目名')
       must(hasText(tree, 'old_item'), '应列出无资源条目名')
       must(hasText(tree, '判定提示'), '应显示判定提示')
+    },
+  },
+  {
+    name: '物品页提供常驻历史记录入口',
+    async run() {
+      const client = await loadClient()
+      const tree = client.render(client.components.ItemsTab, {
+        project: makeProject(), setProject: () => {}, assets: null,
+        schema, setError: () => {}, reloadAssets: () => {},
+      })
+
+      must(hasText(tree, '历史记录'), '应有常驻历史记录按钮')
+      must(!hasText(tree, '回滚上次内容'), '单次回滚提示应移除')
+      must(!hasText(tree, '上次内容写入已备份'), '单次备份提示应移除')
+    },
+  },
+  {
+    name: '历史弹窗列出步骤、状态与可回滚操作',
+    async run() {
+      const client = await loadClient({
+        handler: async (action) => {
+          if (action !== 'content.history.list') return {}
+          return {
+            entries: [
+              {
+                id: 'h4', sequence: 4, at: '2026-10-31T04:30:00.000Z', itemId: 'ruby_sword',
+                title: '红宝石剑：语言', status: 'rolledBack',
+                files: [{ kind: 'lang', path: 'a.json' }], latest: false,
+              },
+              {
+                id: 'h3', sequence: 3, at: '2026-10-31T04:20:00.000Z', itemId: 'ruby_sword',
+                title: '红宝石剑：配方', status: 'active',
+                files: [{ kind: 'recipe', path: 'b.json' }, { kind: 'model', path: 'c.json' }], latest: false,
+              },
+              {
+                id: 'h2', sequence: 2, at: '2026-10-31T04:10:00.000Z', itemId: 'ruby_sword',
+                title: '红宝石剑：模型', status: 'active',
+                files: [{ kind: 'model', path: 'c.json' }], latest: true,
+              },
+            ],
+            total: 3,
+            counts: { active: 2, rolledBack: 1, archived: 0, failed: 0 },
+            itemId: 'ruby_sword',
+            includeArchived: false,
+            options: { rollbackMode: 'toStep', keepBackups: true, scope: 'currentItem', maxEntries: 50 },
+            warning: null,
+          }
+        },
+      })
+      const tree = await client.renderSettled(client.components.HistoryModal, {
+        project: makeProject(), itemId: 'ruby_sword',
+        onClose: () => {}, onRolledBack: () => {}, setError: () => {},
+      })
+
+      must(hasText(tree, '红宝石剑：配方'), '应显示步骤标题')
+      must(hasText(tree, '已回滚'), '应标记已回滚步骤')
+      must(hasText(tree, '最新一步'), '最新 active 步骤不可回滚')
+      must(hasText(tree, '回到这一步'), '较早的 active 步骤应可回滚')
+      must(hasText(tree, '当前物品') && hasText(tree, '全部'), '应有范围切换')
+      must(hasText(tree, '显示已归档'), '应有归档开关')
+      must(hasText(tree, '2 个文件'), '应显示文件数')
+    },
+  },
+  {
+    name: 'Pattern 与材料键输入保留换行，保存时才解析',
+    async run() {
+      const client = await loadClient({
+        handler: async (action) => {
+          if (action === 'content.get') {
+            return {
+              lang: { zh: '', en: '' },
+              recipe: {
+                type: 'shaped', pattern: [' R '], keys: ['R=ruby'], ingredients: [],
+                count: 1, experience: 0, cookingTime: 200,
+              },
+              model: { parent: 'minecraft:item/generated' },
+              tags: [],
+            }
+          }
+          return { files: [] }
+        },
+      })
+      const item = {
+        id: 'ruby_sword', displayName: '红宝石剑', type: 'tool',
+        properties: { maxStackSize: 1, rarity: 'common', glint: false, itemTags: [] },
+        tags: [], description: '', notes: '', canvas: { x: 0, y: 0 },
+        createdAt: '2026-10-30T00:00:00.000Z',
+      }
+      let saved = null
+      const props = {
+        schema, item, project: makeProject(), images: {}, setError: () => {},
+        onSave: (draft, content) => { saved = content; return true },
+        onCancel: () => {},
+      }
+
+      let tree = await client.renderSettled(client.components.ItemEditor, props)
+
+      const patternInput = findComponent(tree, (node) => node.props.value === ' R ')
+      must(patternInput, '应渲染 Pattern 输入框')
+
+      // 模拟按 Enter：空行与末尾换行必须原样留在输入框里
+      const typedPattern = ' R \n\n R \n S \n'
+      patternInput.props.onChange(typedPattern)
+      client.reactEnv.reset()
+      tree = client.components.ItemEditor(props)
+      must(
+        findComponent(tree, (node) => node.props.value === typedPattern),
+        '输入的多行文本应原样保留（含空行与末尾换行）',
+      )
+
+      const keysInput = findComponent(tree, (node) => node.props.value === 'R=ruby')
+      must(keysInput, '应渲染材料键输入框')
+      keysInput.props.onChange('R=ruby\nS=minecraft:stick\n')
+      client.reactEnv.reset()
+      tree = client.components.ItemEditor(props)
+
+      must(
+        findComponent(tree, (node) => node.props.value === 'R=ruby\nS=minecraft:stick\n'),
+        '材料键输入应保留末尾换行',
+      )
+
+      // 弹窗 footer 由 Modal 内部渲染，渲染树里拿不到按钮；
+      // 保存前的解析走同一个纯函数，直接验证它。
+      const payload = client.helpers.contentPayload({
+        lang: { zh: '红宝石剑', en: '' },
+        recipe: {
+          type: 'shaped',
+          patternText: typedPattern,
+          keysText: 'R=ruby\nS=minecraft:stick\n',
+          ingredientsText: '',
+          count: 1, experience: 0, cookingTime: 200,
+        },
+        model: { parent: 'minecraft:item/generated' },
+        tagsText: 'minecraft:planks\n\nruby:lockable\n',
+      })
+      equal(payload.recipe.pattern.length, 3, '应解析出三行 pattern')
+      equal(payload.recipe.pattern[0], ' R ', 'pattern 空格应保留')
+      equal(payload.recipe.pattern[2], ' S ', 'pattern 第三行应保留')
+      equal(payload.recipe.keys.length, 2, '应解析出两个材料键')
+      equal(payload.recipe.keys[1], 'S=minecraft:stick', '材料键第二行应保留')
+      equal(payload.tags.length, 2, '资源标签空行应被忽略')
     },
   },
   {

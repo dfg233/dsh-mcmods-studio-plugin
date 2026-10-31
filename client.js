@@ -1266,7 +1266,8 @@ window.__ModuleLoader__.load({
       const [drag, setDrag] = useState(null)
       const [report, setReport] = useState(null)
       const [reportOpen, setReportOpen] = useState(false)
-      const [lastContentBackup, setLastContentBackup] = useState(null)
+      const [historyOpen, setHistoryOpen] = useState(false)
+      const [activeItemId, setActiveItemId] = useState(() => getStudioState().itemId || '')
       const positionsRef = useRef({})
       const movedRef = useRef(false)
 
@@ -1370,13 +1371,12 @@ window.__ModuleLoader__.load({
       const saveItem = async (item, content) => {
         try {
           const result = await call('items.save', { path: project.path, item })
-          if (content) {
-            const applied = await call('content.apply', { path: project.path, id: result.item.id, content })
-            if (applied.backupDir) setLastContentBackup(applied.backupDir)
-          }
+          if (content) await call('content.apply', { path: project.path, id: result.item.id, content })
           const next = items.filter((i) => i.id !== result.item.id)
           next.push(result.item)
           setProject({ ...project, items: next })
+          setActiveItemId(result.item.id)
+          setStudioState({ itemId: result.item.id })
           setEditing(null)
           reloadAssets()
           return true
@@ -1392,17 +1392,6 @@ window.__ModuleLoader__.load({
           await call('items.delete', { path: project.path, id })
           setProject({ ...project, items: items.filter((i) => i.id !== id) })
           reloadAssets()
-        } catch (err) { setError(err.message) }
-      }
-
-      const rollbackContent = async () => {
-        if (!lastContentBackup) return
-        if (!window.confirm('回滚上次内容写入？语言/配方/模型会恢复到写入前。')) return
-        try {
-          await call('content.rollback', { path: project.path, backupDir: lastContentBackup })
-          setLastContentBackup(null)
-          reloadAssets()
-          setError('')
         } catch (err) { setError(err.message) }
       }
 
@@ -1432,6 +1421,7 @@ window.__ModuleLoader__.load({
               onClick: () => setView('canvas'),
             }, '画布'),
           ),
+          h('button', { style: S.btn('ghost'), onClick: () => setHistoryOpen(true) }, '历史记录'),
           h('button', { style: S.btn(), onClick: newItem }, '新建物品'),
         ),
 
@@ -1466,13 +1456,6 @@ window.__ModuleLoader__.load({
             )
           : null,
 
-        lastContentBackup
-          ? h('div', { style: { ...S.card, padding: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' } },
-              h('span', { style: { ...S.hint, marginTop: 0, flex: 1 } }, '上次内容写入已备份，可回滚语言/配方/模型。'),
-              h('button', { style: S.btn('ghost'), onClick: rollbackContent }, '回滚上次内容'),
-            )
-          : null,
-
         filtered.length === 0
           ? h('div', { style: S.empty }, items.length === 0 ? '还没有物品。新建一个物品，填写属性后会生成属性文档。' : '没有匹配的物品。')
           : view === 'list'
@@ -1498,7 +1481,7 @@ window.__ModuleLoader__.load({
                     h('td', { style: S.td }, String(item.properties.maxStackSize)),
                     h('td', { style: S.td }, item.properties.maxDamage > 0 ? String(item.properties.maxDamage) : '—'),
                     h('td', { style: { ...S.td, whiteSpace: 'nowrap' } },
-                      h('button', { style: S.btn(), onClick: () => { setStudioState({ itemId: item.id }); setEditing(item) } }, '编辑'),
+                      h('button', { style: S.btn(), onClick: () => { setActiveItemId(item.id); setStudioState({ itemId: item.id }); setEditing(item) } }, '编辑'),
                       h('button', { style: { ...S.btn('ghost'), marginLeft: 6, color: C.danger }, onClick: () => removeItem(item.id) }, '删除'),
                     ),
                   ))),
@@ -1548,6 +1531,7 @@ window.__ModuleLoader__.load({
                         return
                       }
                       setStudioState({ itemId: item.id })
+                      setActiveItemId(item.id)
                       setEditing(item)
                     },
                   },
@@ -1582,7 +1566,89 @@ window.__ModuleLoader__.load({
           onSave: saveItem,
           setError,
         }) : null,
+
+        historyOpen ? h(HistoryModal, {
+          project,
+          itemId: activeItemId,
+          onClose: () => setHistoryOpen(false),
+          onRolledBack: () => {
+            reloadAssets()
+            call('agent.validate', { path: project.path }).then(setReport).catch(() => {})
+          },
+          setError,
+        }) : null,
       )
+    }
+
+    /**
+     * 配方编辑器的初始状态。
+     *
+     * Pattern / 材料键只保存**原始文本**：输入阶段不切数组、不过滤空行，
+     * 否则按 Enter 产生的末尾空行会被立刻滤掉，表现为「无法换行」。
+     * 解析发生在保存/预览前（`recipePayload`）。
+     */
+    function blankRecipe() {
+      return {
+        type: 'none',
+        patternText: '',
+        keysText: '',
+        ingredientsText: '',
+        count: 1,
+        experience: 0,
+        cookingTime: 200,
+      }
+    }
+
+    /** content.get 返回的数组 → 原始文本；保留 pattern 的每行空格。 */
+    function recipeStateFrom(recipe) {
+      const base = blankRecipe()
+      if (!recipe || typeof recipe !== 'object') return base
+      const pattern = Array.isArray(recipe.pattern) ? recipe.pattern : []
+      const keys = Array.isArray(recipe.keys) ? recipe.keys : []
+      const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : []
+      const number = (value, fallback) => (Number.isFinite(Number(value)) ? Number(value) : fallback)
+      return {
+        ...base,
+        type: typeof recipe.type === 'string' && recipe.type ? recipe.type : 'none',
+        patternText: pattern.join('\n'),
+        keysText: keys.join('\n'),
+        ingredientsText: ingredients.join('\n'),
+        count: number(recipe.count, 1),
+        experience: number(recipe.experience, 0),
+        cookingTime: number(recipe.cookingTime, 200),
+      }
+    }
+
+    /** Pattern：只丢弃完全空白的行，每行原样保留（空格代表空槽）。 */
+    function parsePatternText(value) {
+      return String(value || '').split(/\r?\n/).filter((line) => line.trim().length > 0)
+    }
+
+    /** 保存前把编辑器文本还原成接口需要的数组。 */
+    function recipePayload(recipe) {
+      return {
+        type: recipe.type,
+        pattern: parsePatternText(recipe.patternText),
+        keys: splitLines(recipe.keysText),
+        ingredients: splitLines(recipe.ingredientsText),
+        count: recipe.count,
+        experience: recipe.experience,
+        cookingTime: recipe.cookingTime,
+      }
+    }
+
+    /**
+     * 编辑器状态 → `content.preview` / `content.apply` 的 payload。
+     *
+     * 输入阶段只保存文本，解析统一发生在这里，避免边输入边切数组。
+     */
+    function contentPayload(content) {
+      return {
+        lang: content.lang,
+        recipe: recipePayload(content.recipe),
+        model: content.model,
+        tags: splitLines(content.tagsText),
+      }
     }
 
     function ItemEditor(props) {
@@ -1597,9 +1663,9 @@ window.__ModuleLoader__.load({
       const [contentLoading, setContentLoading] = useState(false)
       const [content, setContent] = useState({
         lang: { zh: item.displayName || '', en: '' },
-        recipe: { type: 'none', pattern: ['', '', ''], keys: [], ingredients: [], count: 1, experience: 0, cookingTime: 200 },
+        recipe: blankRecipe(),
         model: { parent: 'minecraft:item/generated' },
-        tags: [],
+        tagsText: '',
       })
       const fileRef = useRef(null)
 
@@ -1610,11 +1676,12 @@ window.__ModuleLoader__.load({
         call('content.get', { path: project.path, id: props.item.id })
           .then((data) => {
             if (!alive) return
+            const tags = Array.isArray(data?.tags) ? data.tags : []
             setContent({
               lang: { zh: data?.lang?.zh || props.item.displayName || '', en: data?.lang?.en || '' },
-              recipe: data?.recipe || { type: 'none', pattern: ['', '', ''], keys: [], ingredients: [], count: 1, experience: 0, cookingTime: 200 },
+              recipe: recipeStateFrom(data?.recipe),
               model: { parent: data?.model?.parent || 'minecraft:item/generated' },
-              tags: Array.isArray(data?.tags) ? data.tags : [],
+              tagsText: tags.join('\n'),
             })
           })
           .catch(() => {})
@@ -1639,14 +1706,15 @@ window.__ModuleLoader__.load({
 
       const save = async () => {
         if (saving) return
+        const payload = contentPayload(content)
         setSaving(true)
         try {
-          const preview = await call('content.preview', { path: project.path, id: draft.id, content, item: draft })
+          const preview = await call('content.preview', { path: project.path, id: draft.id, content: payload, item: draft })
           if (preview.files.length) {
             const list = preview.files.map((file) => `${file.action} ${file.path}`).join('\n')
             if (!window.confirm(`将修改以下文件：\n${list}\n\n继续保存？`)) return
           }
-          const ok = await props.onSave(draft, content)
+          const ok = await props.onSave(draft, payload)
           if (ok !== false) draftState.clear()
         } catch (err) {
           setError(err.message)
@@ -1749,31 +1817,35 @@ window.__ModuleLoader__.load({
           ),
           content.recipe.type === 'shaped'
             ? h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
-                h(Field, { label: 'Pattern', hint: '最多 3 行，空格表示空位；例如：\n R \n R \n S ' },
+                h(Field, { label: 'Pattern', hint: '最多 3 行，空格表示空位；空行保存时忽略。例如：\n R \n R \n S ' },
                   h(Textarea, {
-                    value: (content.recipe.pattern || []).join('\n'),
-                    onChange: (v) => setRecipe('pattern', v.split(/\r?\n/).filter((line) => line.length > 0)),
+                    value: content.recipe.patternText,
+                    placeholder: ' R \n R \n S ',
+                    style: { minHeight: 96, fontFamily: 'monospace' },
+                    onChange: (v) => setRecipe('patternText', v),
                   })),
                 h(Field, { label: '材料键', hint: '一行一个，例如 R=ruby；无命名空间默认当前模组' },
                   h(Textarea, {
-                    value: (content.recipe.keys || []).join('\n'),
-                    onChange: (v) => setRecipe('keys', splitLines(v)),
+                    value: content.recipe.keysText,
+                    placeholder: 'R=ruby\nS=minecraft:stick',
+                    style: { minHeight: 96 },
+                    onChange: (v) => setRecipe('keysText', v),
                   })),
               )
             : null,
           content.recipe.type === 'shapeless'
             ? h(Field, { label: '材料', hint: '一行一个，例如 ruby、minecraft:stick' },
                 h(Textarea, {
-                  value: (content.recipe.ingredients || []).join('\n'),
-                  onChange: (v) => setRecipe('ingredients', splitLines(v)),
+                  value: content.recipe.ingredientsText,
+                  onChange: (v) => setRecipe('ingredientsText', v),
                 }))
             : null,
           content.recipe.type === 'furnace'
             ? h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 } },
-                h(Field, { label: '材料' },
+                h(Field, { label: '材料', hint: '一行一个；熔炉使用第一行' },
                   h(TextInput, {
-                    value: (content.recipe.ingredients || [])[0] || '',
-                    onChange: (v) => setRecipe('ingredients', splitLines(v)),
+                    value: content.recipe.ingredientsText,
+                    onChange: (v) => setRecipe('ingredientsText', v),
                   })),
                 h(Field, { label: '经验' },
                   h(NumberInput, { value: content.recipe.experience, onChange: (v) => setRecipe('experience', v), min: 0, step: 0.1 })),
@@ -1783,8 +1855,8 @@ window.__ModuleLoader__.load({
             : null,
           h(Field, { label: '资源标签', hint: `一行一个，例如 minecraft:planks、lock:lockable；保存时写入 data/*/tags/${draft.type === 'block' ? 'blocks' : 'items'}` },
             h(Textarea, {
-              value: (content.tags || []).join('\n'),
-              onChange: (v) => setContent((prev) => ({ ...prev, tags: splitLines(v) })),
+              value: content.tagsText,
+              onChange: (v) => setContentField('tagsText', v),
             })),
           h(Field, { label: '物品模型', hint: '写入 models/item/<id>.json；不影响已有手写模型之外的文件' },
             h(Select, {
@@ -1813,6 +1885,180 @@ window.__ModuleLoader__.load({
             })),
           h(Field, { label: '备注' }, h(TextInput, { value: draft.notes, onChange: (v) => set('notes', v) })),
         ),
+      )
+    }
+
+    // ── 内容历史 ─────────────────────────────────────────────
+
+    /** 历史状态 → 徽章文案与色调。 */
+    const HISTORY_STATUS_META = {
+      active: { text: '可回滚', tone: 'success' },
+      rolledBack: { text: '已回滚', tone: 'warn' },
+      archived: { text: '已归档', tone: 'idle' },
+      failed: { text: '备份缺失', tone: 'danger' },
+    }
+
+    /** 历史时间：固定格式，不依赖运行环境的 locale。 */
+    function formatHistoryTime(value) {
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) return '—'
+      const pad = (number) => String(number).padStart(2, '0')
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+    }
+
+    /**
+     * 历史记录弹窗。
+     *
+     * 默认只看「当前物品」，可切到全部；已归档默认隐藏。
+     * 「回到这一步」= 保留该步结果、撤销其后步骤（toStep 语义）；
+     * 被撤销的记录保留在历史里，下一次修改时归档。
+     */
+    function HistoryModal(props) {
+      const { project, itemId, onClose, onRolledBack, setError } = props
+      const [scope, setScope] = useState(itemId ? 'item' : 'all')
+      const [showArchived, setShowArchived] = useState(false)
+      const [data, setData] = useState(null)
+      const [loading, setLoading] = useState(false)
+      const [busyId, setBusyId] = useState('')
+      const [notice, setNotice] = useState('')
+
+      const load = useCallback(async () => {
+        setLoading(true)
+        try {
+          const result = await call('content.history.list', {
+            path: project.path,
+            itemId: scope === 'item' ? itemId : '',
+            includeArchived: showArchived,
+          })
+          setData(result)
+        } catch (err) {
+          setError(err.message)
+        } finally {
+          setLoading(false)
+        }
+      }, [project.path, scope, itemId, showArchived, setError])
+
+      useEffect(() => { load() }, [load])
+
+      const entries = data?.entries || []
+      // 历史过长时只渲染最近 200 条，避免归档记录把弹窗撑爆。
+      const visibleEntries = entries.slice(0, 200)
+
+      /** 该步之后是否还有可撤销的 active 步骤。 */
+      const hasLaterActive = (entry) => entries.some(
+        (item) => item.status === 'active' && item.sequence > entry.sequence,
+      )
+
+      const rollback = async (entry) => {
+        const later = entries.filter((item) => item.status === 'active' && item.sequence > entry.sequence).length
+        if (!later) return
+        const confirmed = window.confirm(
+          `回到第 ${entry.sequence} 步？\n`
+          + `将保留这一步的结果，撤销其后的 ${later} 步。\n`
+          + '被撤销的步骤仍保留在历史里，下一次修改时归档。',
+        )
+        if (!confirmed) return
+        setBusyId(entry.id)
+        setNotice('')
+        try {
+          const result = await call('content.history.rollback', { path: project.path, entryId: entry.id })
+          setNotice(`已回到第 ${entry.sequence} 步：撤销 ${(result.rolledBack || []).length} 步，恢复 ${result.files || 0} 个文件。`)
+          setError('')
+          await load()
+          if (onRolledBack) await onRolledBack()
+        } catch (err) {
+          setError(err.message)
+          await load().catch(() => {})
+        } finally {
+          setBusyId('')
+        }
+      }
+
+      const scopeButton = (value, label, disabled) => h('button', {
+        style: {
+          ...S.btn('ghost'), borderRadius: 0, border: 'none',
+          background: scope === value ? C.layer2 : 'transparent',
+          opacity: disabled ? 0.5 : 1,
+        },
+        disabled,
+        onClick: () => setScope(value),
+      }, label)
+
+      return h(Modal, { title: '历史记录', onClose },
+        h('div', { style: { ...S.hint, marginTop: 0, marginBottom: 10 } },
+          '每次保存语言/配方/模型/标签前都会备份并记一步。「回到这一步」保留该步结果，撤销其后的步骤；'
+          + '被撤销的记录不会立即删除，下一次修改时归档。'),
+        h('div', { style: { ...S.row, marginBottom: 10 } },
+          h('div', { style: { display: 'flex', border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' } },
+            scopeButton('item', '当前物品', !itemId),
+            scopeButton('all', '全部', false),
+          ),
+          h('label', { style: { display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12.5 } },
+            h('input', {
+              type: 'checkbox',
+              checked: showArchived,
+              onChange: (event) => setShowArchived(event.target.checked),
+            }),
+            h('span', null, '显示已归档'),
+          ),
+          h('span', { style: { ...S.hint, marginTop: 0, flex: 1, textAlign: 'right' } },
+            loading ? '读取中…' : `共 ${entries.length} 条`),
+        ),
+        data?.warning
+          ? h('div', { style: { ...S.card, padding: 10, marginBottom: 10, borderColor: C.warn } },
+              h('span', { style: { color: C.warn, fontSize: 12 } }, data.warning))
+          : null,
+        notice
+          ? h('div', { style: { ...S.card, padding: 10, marginBottom: 10 } },
+              h('span', { style: { ...S.hint, marginTop: 0 } }, notice))
+          : null,
+        entries.length === 0
+          ? h('div', { style: S.empty },
+              loading ? '正在读取历史…' : '还没有内容历史。保存一次语言/配方/模型后会出现记录。')
+          : h('div', null,
+              entries.length > visibleEntries.length
+                ? h('div', { style: { ...S.hint, marginTop: 0, marginBottom: 6 } },
+                    `共 ${entries.length} 条，只显示最近 ${visibleEntries.length} 条。`)
+                : null,
+              h('div', { style: { ...S.card, padding: 0, overflow: 'hidden' } },
+                h('table', { style: S.table },
+                  h('thead', null, h('tr', null,
+                    h('th', { style: S.th }, '步骤'),
+                    h('th', { style: S.th }, '时间'),
+                    h('th', { style: S.th }, '物品'),
+                    h('th', { style: S.th }, '改动'),
+                    h('th', { style: S.th }, '状态'),
+                    h('th', { style: S.th }, ''),
+                  )),
+                  h('tbody', null, visibleEntries.map((entry) => {
+                    const meta = HISTORY_STATUS_META[entry.status] || HISTORY_STATUS_META.active
+                    const canRollback = entry.status === 'active' && hasLaterActive(entry)
+                    return h('tr', { key: entry.id },
+                      h('td', { style: S.td },
+                        h('div', null, `第 ${entry.sequence} 步`),
+                        h('div', { style: { ...S.hint, marginTop: 0 } }, entry.title || '内容修改'),
+                      ),
+                      h('td', { style: { ...S.td, whiteSpace: 'nowrap' } }, formatHistoryTime(entry.at)),
+                      h('td', { style: S.td }, h('code', null, entry.itemId || '—')),
+                      h('td', { style: S.td }, `${(entry.files || []).length} 个文件`),
+                      h('td', { style: S.td }, h('span', { style: S.badge(meta.tone) }, meta.text)),
+                      h('td', { style: { ...S.td, whiteSpace: 'nowrap' } },
+                        canRollback
+                          ? h('button', {
+                              style: S.btn('ghost'),
+                              disabled: busyId === entry.id,
+                              onClick: () => rollback(entry),
+                            }, busyId === entry.id ? '回滚中…' : '回到这一步')
+                          : h('span', { style: { ...S.hint, marginTop: 0 } },
+                              entry.status === 'active' ? '最新一步'
+                                : entry.status === 'rolledBack' ? '已回滚'
+                                  : entry.status === 'archived' ? '已归档' : '不可回滚'),
+                      ),
+                    )
+                  })),
+                ),
+              ),
+            ),
       )
     }
 
@@ -2780,8 +3026,12 @@ window.__ModuleLoader__.load({
             ProjectTab, FeaturesTab, ItemsTab, AssetsTab, GuideTab,
             StudioPage, StudioRoot, SidebarStudioPanel, ItemEditor, FeatureEditor, PlanTab, SystemEditor, TaskEditor,
             ProjectDetailModal, ImportConfirmModal, Icon, InfoRow, PathField,
+            HistoryModal,
           },
-          helpers: { call, pickFolder, getStudioState, setStudioState, defaultSlot },
+          helpers: {
+            call, pickFolder, getStudioState, setStudioState, defaultSlot,
+            contentPayload, parsePatternText, recipeStateFrom,
+          },
           constants: { CANVAS_COLUMNS, CANVAS_CELL_W, CANVAS_CELL_H, KEY, API },
         }
       : {}

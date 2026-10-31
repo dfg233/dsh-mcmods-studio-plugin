@@ -1,10 +1,10 @@
 # 项目状态：已实现、未实现与要求
 
-> 适用版本：模组工坊（`dsh-mcmods-studio-plugin`）v0.2.0
-> 更新日期：2026-10-30
+> 适用版本：模组工坊（`dsh-mcmods-studio-plugin`）v0.2.1
+> 更新日期：2026-10-31
 > 本文档回答三个问题：**现在能做什么**、**还不能做什么**、**必须遵守什么**。
 > 历史变更见 [CHANGELOG.md](CHANGELOG.md)，版本规则与发版流程见 [VERSION-PLAN.md](VERSION-PLAN.md)，开发方式见 [DEVELOPMENT.md](DEVELOPMENT.md)，当前主线见 [PLAN.md](PLAN.md)，代码索引见 [INDEX.md](INDEX.md)。
-> 本文区分 **as-built（v0.2.0 已实现）** 与 **目标能力（v0.3 起）**；旧路线已归档到 [archive/PLAN-v0.1.md](archive/PLAN-v0.1.md)。
+> 本文区分 **as-built（v0.2.1 已实现）** 与 **目标能力（v0.3 起）**；旧路线已归档到 [archive/PLAN-v0.1.md](archive/PLAN-v0.1.md)。
 
 ## 0. 设计目的
 
@@ -32,7 +32,7 @@
 | 4 | 贴图、模型管理页面 | 已实现 | 「贴图与模型」页；上传、预览、模型 JSON 编辑、缺失统计 |
 | 5 | 工程文件格式清晰，`docs/` 下存放 Markdown 更新日志与开发文档 | 已实现 | 项目数据集中在 `.mcstudio/`；插件自身文档在 `docs/` |
 | 6 | 允许编写代码（浏览 / 编辑源码、生成注册代码） | 计划中（v0.4） | 由模板 + AI 任务 + 标记区块生成承接；当前版本不含代码工作区 |
-| 7 | 图形化创建与修改模组内容（物品 / 方块 / 配方等） | 部分实现 | 物品已支持图形化创建与编辑；配方、标签、语言从 v0.2 开始 |
+| 7 | 图形化创建与修改模组内容（物品 / 方块 / 配方等） | 部分实现 | 物品已支持图形化创建与编辑；语言、配方、标签、模型与内容历史从 v0.2 起 |
 | 8 | 与 AI 对话定制模组，AI 有模板、上下文和任务边界 | 规划中（v0.2–v0.3） | 想法卡、系统卡、模板、任务包、上下文包；API 签名来自项目 classpath 索引；见 [PLAN.md](PLAN.md) |
 | 9 | 项目管理：想法/系统/任务/验收 | 规划中（v0.2–v0.3） | 工作台「计划」页与任务数据；见 [design/TASK-SPEC.md](design/TASK-SPEC.md) |
 
@@ -89,6 +89,7 @@
 - 物品类型：普通物品、方块、工具、武器、盔甲、食物、材料、创造模式标签（`creative_tab`，导入时自动归类，不计入物品）；
 - 删除物品；
 - 编辑草稿：未保存输入存 localStorage，重新打开自动恢复；离开页面提示、取消确认；
+- 内容历史：物品页顶部常驻「历史记录」，记录每次内容写入，可回到任一历史步骤（保留该步、撤销其后），被回滚记录在下一次修改时归档；
 - 导出 `docs/ITEMS.md`（总览）与 `docs/ITEMS/<id>.md`（单件详情）。
 
 ### 2.4 贴图与模型
@@ -130,17 +131,18 @@
 ### 2.8 运行与数据
 
 - 项目数据：`<项目>/.mcstudio/project.json`、`features.json`、`items/<id>.json`、
-  `studio.json`（工坊标记）、`summary.json`（派生摘要）、`structure.json`（派生代码结构）；
+  `studio.json`（工坊标记）、`content-history.json`（内容历史）、`summary.json`（派生摘要）、`structure.json`（派生代码结构）；
 - 插件注册表：`$DSH_HOME/mcmods-studio/registry.json`（记录扫描根目录与项目列表）；
 - 导入前备份：`$DSH_HOME/mcmods-studio/backups/`（`.mcstudio/` 与快照，失败时回滚）；
-- Host 接口：`POST /mcmods-studio/api`，共 **48 个动作**：
+- 内容备份：`$DSH_HOME/mcmods-studio/backups/<项目>/`（每次内容写入前复制相关资源文件，历史步骤引用它）；
+- Host 接口：`POST /mcmods-studio/api`，共 **50 个动作**：
 
 | 分组 | 动作 |
 | --- | --- |
 | 项目与注册表 | `boot`、`projects.scan`、`projects.add`、`projects.remove`、`projects.remember`、`registry.setRoot`、`project.create`、`project.open`、`project.import`、`project.analyzeImport`、`project.reimport`、`project.saveMeta` |
 | 构想与物品 | `features.list`、`features.save`、`features.delete`、`items.list`、`items.save`、`items.delete` |
 | 计划 | `workbench.plan`、`systems.list/save/delete`、`tasks.list/save/delete` |
-| 内容 | `content.get/preview/apply/rollback` |
+| 内容 | `content.get/preview/apply/rollback`、`content.history.list/rollback` |
 | 素材与文档 | `assets.list`、`assets.upload`、`assets.read`、`assets.readMany`、`assets.delete`、`assets.model.get`、`assets.model.save`、`assets.root`、`docs.export`、`guide` |
 | 代码结构 | `structure.refresh`、`structure.get`、`structure.find`、`structure.annotate` |
 | Agent 与诊断 | `agent.summary`、`agent.validate`、`agent.tools`、`agent.call`、`debug.clientGraph` |
@@ -292,11 +294,28 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 **v0.2.0 收口**：M1 完成。M2 进入 API 索引、模板、上下文包与检查；M1 的 `applied` 资源事务仍按“物品先保存、资源失败回滚”执行。
 
+### 3.0.10 v0.2.1 内容编辑修复与内容历史（已完成）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| Pattern/材料键换行 | `client.js` 的 `ItemEditor`、`contentPayload` | 输入阶段只保存原始文本（含空行、末尾换行、Pattern 空格），预览/保存时才解析；不再边输入边切数组 |
+| 多行解析 | `lib/content.js` 的 `lines` / `rawLines` | 同时接受数组与多行字符串，agent 直接调用也可用；Pattern 只丢空行、不 trim |
+| 内容历史 | `lib/history.js`、`.mcstudio/content-history.json` | 每次 `content.apply` 成功写入后记一步；元数据在项目内，备份仍在插件数据目录 |
+| 回到某步 | `content.history.rollback` | 逆序恢复目标步之后，目标步保持 `active`、后续标记 `rolledBack`；默认 `toStep`，`beforeStep` 为预留模式 |
+| 失败处理 | 同上 | 备份缺失/恢复失败立即停止，该步标记 `failed`，已完成的步骤保留 `rolledBack` 并落盘 |
+| 归档与上限 | `appendHistoryEntry` | 下一次成功写入时把 `rolledBack` 归档为 `archived`；非归档记录超过 50 条时归档最旧记录，不删记录与备份 |
+| 兼容 | `content.rollback` | 旧 `{backupDir}` 调用继续可用；新界面不再调用 |
+| UI | `ItemsTab` / `HistoryModal` | 常驻「历史记录」；列出时间、物品、改动类别、文件数与状态；确认文案写明「保留这一步，撤销其后 N 步」 |
+| 测试 | `test/18-content.mjs`、`test/12-render.mjs` | 多行解析、历史跨调用读取、中间步回滚、归档、备份缺失、损坏降级、50 条上限、渲染与输入保留；总计 18 文件 / 194 项 |
+
+**v0.2.1 收口**：四项历史配置以固定默认值落地（`toStep` / 保留备份 / 当前物品 / 50 条），设置页仍未实现，规划见 [plans/SETTINGS-PLAN.md](plans/SETTINGS-PLAN.md) §2.3。
+
 ### 3.1 目标能力（v0.3 起）
 
 | 里程碑 | 能力 | 说明 |
 | --- | --- | --- |
 | M1 / v0.2.0 | 工作台骨架 + 内容编辑 MVP | 想法卡、系统卡、任务卡最小页面；物品属性、配方、标签、语言、模型；应用预览、备份、回滚 |
+| M1 / v0.2.1 | 内容编辑修复与历史 | Pattern/材料键换行；内容历史持久化、回到某步的递归回滚、rolledBack 保留与归档 |
 | M2 / v0.3.0 | API 索引 + 模板 + 上下文包 + 检查 | 从 Gradle classpath 提取签名（含 protected/继承/嵌套类）；模板清单/参数/渲染；`context.pack`；允许路径、structure-diff、资源引用、注册配对检查 |
 | M3 / v0.4.0 | 代码生成 + Lock 试点 | 标记区块生成；方块实体/菜单、钥匙、网络同步模板；Lock「电子锁」端到端 |
 | M4 / v0.5.0 | 进阶内容与稳定 | 战利品表、创造标签、多加载器模板、性能基线 |
@@ -310,7 +329,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ### 3.2 当前版本不做
 
-- **v0.1.3 只含内容管理基础**；v0.2.0 已加入工作台计划与内容编辑，模板、API 索引与代码生成从 v0.3 起分阶段加入；
+- **v0.1.3 只含内容管理基础**；v0.2.0 已加入工作台计划与内容编辑，v0.2.1 补齐内容历史；模板、API 索引与代码生成从 v0.3 起分阶段加入；
 - 不做完整 IDE：不实现编译、运行、调试、反编译；
 - 不做自由节点式可视化编程：Java 逻辑仍由模板 + AI 任务完成；
 - 不做云端同步或多人协作；
@@ -352,17 +371,17 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**18 个文件、182 项全部通过**）：
+已通过自动化验证（`npm test`，**18 个文件、194 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
-| Host 业务 | 117 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| Host 业务 | 126 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
 | 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |
 | 可靠性 | 5 项 | 持久写入无临时残留、备份失败回滚、备份成功保留、首次导入失败清理、导入 proof 失效与重新导入 |
 | 客户端加载 | 8 项 | 假 `__ModuleLoader__` + 假 React，验证加载、模块 id、座位注册 |
-| 渲染结构 | 18 项 | 假 React 渲染组件，断言文本、按钮、条件分支 |
+| 渲染结构 | 21 项 | 假 React 渲染组件，断言文本、按钮、条件分支、历史列表与输入保留 |
 | schema 一致性 | 2 项 | 比对 `schema.js` 与 `data/schema.json` |
 
 接口级验证：
@@ -372,6 +391,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 - 可靠性：导入前备份、失败回滚、proof 拒绝过期预览均有自动化用例；
 - 数据：画布坐标持久化、快照生成、注册表读写、摘要重建；
 - 代码结构：真实 Forge 工程扫描 14 文件 / 15 类 / 38 方法，注册点按 `items` 归类；
+- 内容历史：多次修改后跨调用读取、回到中间步、rolledBack 保留、下一次写入归档、备份缺失停止、损坏降级、50 条上限均有自动化用例；
 - Agent：22 个工具全部注册到宿主，`agent.tools` 返回 22 工具 / 44 动作；
 - 槽位：`main`、`sidebar.panellist`、`sidebar.right.pane.tab` 均已确认注册且处于激活状态；
 - 安装：bundle 安装与卸载、接口新旧路径切换。

@@ -2,6 +2,48 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [Unreleased]
+
+### 计划中
+
+- 批量导入贴图（多选拖放）。
+- 素材文件内容级差异对比（重新导入时目前只比较条目与注册名）。
+- 方块状态与多方块模型的可视化编辑。
+- 设置页：页签栏最右侧齿轮入口，管理启动恢复、默认页签、物品默认视图、删除素材策略与 Agent 默认项目（规划中，见 [plans/SETTINGS-PLAN.md](plans/SETTINGS-PLAN.md)）。
+- 内容历史的备份清理与历史四项配置接入设置页（当前固定为 `toStep` / 保留备份 / 当前物品 / 50 条）。
+
+### 文档
+
+- 2026-10-29 产品方向调整：旧版 v0.1 路线归档到 `docs/archive/PLAN-v0.1.md`，`PLAN.md` 改为 AI 工作台主线；新增 `docs/design/` 的想法、系统、模板、任务、API 索引、内容编辑规格；同步更新 STATUS、VERSION-PLAN、plans/README 与 REFERENCE。
+- 2026-10-29 M0 文档验证：新增 `docs/validation/` 的 Lock 想法卡、7 张系统卡、电子锁任务包、真实 API 索引样例与 GAP-REPORT；按报告补强想法/系统/任务/模板/API 索引规格。
+- M0 只重构文档；M1.1–M1.3 已在 v0.2.0 落地。
+
+## [0.2.1] - 2026-10-31
+
+### 新增
+
+- 内容历史：新增 `lib/history.js` 与项目文件 `.mcstudio/content-history.json`。每次 `content.apply` 成功写入资源后记一步（保存该步写入前的备份目录），返回值增加 `historyEntry`；历史文件只存元数据，备份仍在插件数据目录。
+- 新增 `content.history.list` 与 `content.history.rollback` 两个动作。界面「物品」页顶部提供常驻「历史记录」按钮与弹窗：显示时间、物品、改动类别、文件数与状态，支持「当前物品 / 全部」筛选与「显示已归档」开关。
+- 回滚语义为「回到这一步」：保留目标步结果，从最后一步逆序恢复到目标步之后；目标步保持 `active`，后续步骤标记 `rolledBack`。被回滚的记录与备份都不删除，下一次成功写入时归档为 `archived`。
+- 非归档历史记录上限 50 条，超出时归档最旧记录（保留记录与备份，不物理删除）。四项配置默认值同步写入 [plans/SETTINGS-PLAN.md](plans/SETTINGS-PLAN.md) §2.3，本版本不实现设置页。
+
+### 修复
+
+- Pattern / 材料键输入框无法换行：受控 `Textarea` 原先每次输入都 `split → 过滤空行 → join`，按 Enter 产生的末尾空行立即被过滤，表现为「按 Enter 没反应」。现在输入阶段保留原始文本（含空行、末尾换行与 Pattern 空格），只在预览/保存时解析；`lib/content.js` 同时接受多行字符串与数组，agent 直接调用也不会丢行。
+- 无序配方材料、熔炉材料与资源标签的输入同样不再边输入边切数组。
+
+### 变更
+
+- `package.json` 版本由 `0.2.0` 升至 `0.2.1`。
+- 历史写入失败时用该步备份恢复资源并报错，避免「文件改了、历史里没有」的静默状态；同一项目的历史读改写按项目串行化。
+- 测试新增 12 项（`test/18-content.mjs` 9 项、`test/12-render.mjs` 3 项），总计 18 个文件 / 194 项。
+- 旧 `content.rollback { backupDir }` 保留，继续可用；新界面不再调用它。
+
+### 文档
+
+- 更新 [DATA-FORMAT.md](DATA-FORMAT.md)、[INDEX.md](INDEX.md)、[STATUS.md](STATUS.md)、[ARCHITECTURE.md](ARCHITECTURE.md)、[VERSION-PLAN.md](VERSION-PLAN.md)、[README.md](../README.md)。
+- [fix/V0.2.1-PLAN.md](fix/V0.2.1-PLAN.md) 标记实现与验收状态，补第 11 节验收结果。
+
 ## [0.2.0] - 2026-10-30
 
 ### 新增
@@ -11,21 +53,6 @@
 - M1.2 内容编辑：新增 `lib/content.js` 与 `content.get/preview/apply/rollback` 四个动作；支持语言、有序/无序/熔炉配方、物品模型，写入前备份、失败回滚；物品编辑器增加语言/配方/模型字段与变更预览。
 - 测试新增 `test/18-content.mjs`，与 M1.3 合计 18 个文件 / 182 项。
 - M1.3 标签与想法字段：资源标签按 `data/*/tags/items|blocks` 增删并保留其他成员；想法新增目标、玩法循环、约束、内容清单、系统、验收、假设、未决问题。
-
-## [Unreleased]
-
-### 计划中
-
-- 批量导入贴图（多选拖放）。
-- 素材文件内容级差异对比（重新导入时目前只比较条目与注册名）。
-- 方块状态与多方块模型的可视化编辑。
-- 设置页：页签栏最右侧齿轮入口，管理启动恢复、默认页签、物品默认视图、删除素材策略与 Agent 默认项目（规划中，见 [plans/SETTINGS-PLAN.md](plans/SETTINGS-PLAN.md)）。
-
-### 文档
-
-- 2026-10-29 产品方向调整：旧版 v0.1 路线归档到 `docs/archive/PLAN-v0.1.md`，`PLAN.md` 改为 AI 工作台主线；新增 `docs/design/` 的想法、系统、模板、任务、API 索引、内容编辑规格；同步更新 STATUS、VERSION-PLAN、plans/README 与 REFERENCE。
-- 2026-10-29 M0 文档验证：新增 `docs/validation/` 的 Lock 想法卡、7 张系统卡、电子锁任务包、真实 API 索引样例与 GAP-REPORT；按报告补强想法/系统/任务/模板/API 索引规格。
-- M0 只重构文档；M1.1–M1.3 已在 v0.2.0 落地。
 
 ## [0.1.3] - 2026-10-28
 

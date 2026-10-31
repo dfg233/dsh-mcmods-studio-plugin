@@ -1,8 +1,8 @@
 # 数据格式
 
-> 适用版本：v0.2.0
-> 状态：as-built（v0.2.0 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
-> 更新日期：2026-10-28
+> 适用版本：v0.2.1
+> 状态：as-built（v0.2.1 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
+> 更新日期：2026-10-31
 > 数据文件内的 `schemaVersion` 与插件版本号相互独立；插件升级不自动改写数据格式。
 > 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
 
@@ -19,6 +19,7 @@
 │   ├── features.json         # 构想/想法清单
 │   ├── systems.json          # 系统卡
 │   ├── tasks.json            # 任务包
+│   ├── content-history.json  # 内容历史（语言/配方/模型/标签的每次写入）
 │   ├── summary.json          # 派生摘要（供 agent 一次读取，可安全删除）
 │   ├── structure.json        # 代码结构文档（按文件哈希增量，可重建）
 │   └── items/
@@ -259,8 +260,58 @@ src/main/resources/data/<modid>/recipes/<id>.json
 - 资源标签写入 `data/<ns>/tags/items|blocks/<tag>.json`，保留其他成员与 `replace`；
 - 配方 id 默认为物品 id，支持 `minecraft:crafting_shaped`、`minecraft:crafting_shapeless`、`minecraft:smelting`；
 - 材料无命名空间时默认当前模组；
-- `content.apply` 前把目标文件复制到 `$DSH_HOME/mcmods-studio/backups/...`，失败自动恢复；
-- `content.rollback` 只接受备份目录内的清单，并拒绝越界目标路径。
+- `pattern` 与材料键接受数组或多行字符串：解析时 `pattern` 只丢弃完全空白的行、保留每行空格；
+- `content.apply` 前把目标文件复制到 `$DSH_HOME/mcmods-studio/backups/...`，失败自动恢复；成功后追加一条内容历史（见 3.4）；
+- `content.rollback` 只接受备份目录内的清单，并拒绝越界目标路径；它是兼容接口，界面改用 `content.history.rollback`。
+
+## 3.4 content-history.json（内容历史）
+
+每次 `content.apply` 成功写入资源后追加一步，记录该步写入前的备份目录。只存元数据，
+不复制资源内容；备份仍在插件数据目录，因此删掉本文件不会删除备份。
+
+```json
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "id": "h_1790000000000_ab12",
+      "sequence": 1,
+      "at": "2026-10-31T00:00:00.000Z",
+      "itemId": "ruby_sword",
+      "title": "红宝石剑：语言/配方/模型",
+      "files": [
+        { "kind": "lang", "path": ".mcstudio/assets/contentmod/lang/zh_cn.json" },
+        { "kind": "recipe", "path": ".mcstudio/data/contentmod/recipes/ruby_sword.json" }
+      ],
+      "backupDir": "<插件数据目录内的备份绝对路径>",
+      "status": "active"
+    }
+  ]
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `schemaVersion` | number | 结构版本，当前为 1 |
+| `entries[].id` | string | 历史步 id，格式 `h_<毫秒时间戳>_<4 位随机>` |
+| `entries[].sequence` | number | 递增序号，回滚范围按它比较 |
+| `entries[].at` | string | 写入时间（ISO 8601） |
+| `entries[].itemId` | string | 关联物品 id |
+| `entries[].title` | string | 人类可读摘要，如「红宝石剑：语言/配方/模型」 |
+| `entries[].files` | array | 该步写入的文件；`kind` 为 `lang` / `recipe` / `model` / `tag` |
+| `entries[].backupDir` | string | 该步写入前的备份目录（绝对路径，项目移动后可能失效） |
+| `entries[].status` | string | `active` / `rolledBack` / `archived` / `failed` |
+
+规则：
+
+- 新步骤为 `active`；
+- 「回到这一步」只撤销目标步之后的步骤：目标保持 `active`，后续标 `rolledBack`，记录与备份都保留；
+- 下一次成功 `content.apply` 时，旧的 `rolledBack` 归档为 `archived`，再追加新步骤；
+- 非归档记录（`active` / `rolledBack` / `failed`）上限 50 条，超出时把最旧记录归档，不物理删除；
+- 备份缺失或恢复失败的步骤标 `failed`，不可回滚；
+- 文件缺失或损坏时按空历史处理，`content.history.list` 返回 `warning`，不阻塞内容编辑；
+- 回滚只接受 `active` 步骤，且从最后一步逆序恢复，避免后续步骤再次覆盖目标状态。
+
 
 ## 4. items/<id>.json
 
@@ -553,6 +604,11 @@ $DSH_HOME/mcmods-studio/backups/
 - 操作失败自动用备份恢复；成功则保留备份，路径通过 `imported.backup` 返回；
 - 目前不自动清理旧备份，可由用户手动删除；
 - 备份只覆盖 `.mcstudio/` 与快照，不复制 `src/main/resources` 里的素材。
+
+内容写入的备份放在同一根目录下的 `<项目目录名>-<路径摘要>/<时间>-<随机>-content/`，
+只复制该步涉及的语言/配方/模型/标签文件，并带 `manifest.json` 记录每个文件写入前是否存在。
+`content-history.json` 的 `entries[].backupDir` 指向这些目录；回滚按清单恢复，不删除备份。
+
 
 ## 8. notices（导入判定提示）
 

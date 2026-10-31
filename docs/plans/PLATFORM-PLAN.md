@@ -135,7 +135,7 @@ index.js  sendJson(res, 200, {ok:true,data})
 | `setPluginRoot(dir)` | 注入插件目录，供读取内置教程 |
 | `setGraphProvider(fn)` | 注入客户端模块图读取器，仅诊断用 |
 
-动作清单（共 48 个）按前缀归属：
+动作清单按前缀归属（完整表见 [../INDEX.md](../INDEX.md) 3.2，共 50 个）：
 
 | 前缀 | 动作 |
 | --- | --- |
