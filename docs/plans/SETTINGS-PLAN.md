@@ -1,17 +1,17 @@
 # 设置与偏好模块计划
 
 > 模块编号：13
-> 适用插件版本：v0.2.0
+> 适用插件版本：v0.2.1
 > 目标版本：后移（v0.5+ 候选；不占用 v0.2）
 > 代码位置：拟新增 `lib/settings.js`；修改 `client.js`（`GearIcon`、`Tabs`、`SettingsTab`）、`lib/api.js`、`lib/entries.js`、`lib/tools.js`
 > 状态：**规划中（后移；方案保留，等基础工作台稳定后再评估）**
-> 最后更新：2026-10-28
+> 最后更新：2026-10-31
 
 ## 0. 一句话结论
 
 在页签栏最右侧增加一个齿轮按钮，打开一个**全局设置页**：管理启动行为、物品页默认视图、删除物品时的素材策略，以及 Agent 工具默认项目；页脚提供版本与运行数据等只读「关于」信息。
 
-方案已于 2026-10-28 确认：设置项范围、改动即保存、归入 v0.2.0、仅全局作用域均按本文推荐执行。**当前只更新文档，未改动代码**；先处理 v0.1.x 的遗留问题。
+方案已于 2026-10-28 确认：设置项范围、改动即保存、仅全局作用域均按本文推荐执行；设置页本身后移。2026-10-31 追加 4 项内容历史偏好（回滚语义、备份保留、默认范围、记录上限），v0.2.1 先以固定默认值实现历史，设置页实现时再展示这四项。**当前只更新文档，未改动代码。**
 
 设置存放在 `$DSH_HOME/mcmods-studio/settings.json`，不属于任何模组工程，不写入 `.mcstudio/`。
 
@@ -71,6 +71,10 @@ $DSH_HOME/mcmods-studio/
 | `defaultItemsView` | enum | `"list"` | `ItemsTab` 初始状态 | 可选 `list` / `canvas`；只影响首次进入物品页，切换后的视图不写回设置 |
 | `deleteAssetsWithItem` | boolean | `true` | 删除物品动作与工具 | `true` 保持现状，同时删贴图/模型/blockstate；`false` 只删物品条目，素材留在磁盘 |
 | `defaultProject` | string | `""` | `resolveProject`（Agent 工具） | 空字符串表示「自动」：注册表第一个可用项目；非空必须是已登记项目路径 |
+| `contentHistoryRollbackMode` | enum | `"toStep"` | 内容历史回滚 | `toStep`：回到该步，保留该步结果，只撤销其后步骤；`beforeStep`：回到该步之前。默认 `toStep`；设置页后移，v0.2.1 先固定为 `toStep` |
+| `contentHistoryKeepBackups` | boolean | `true` | 内容历史归档/回滚 | `true` 保留备份文件；归档/回滚都不物理删除 |
+| `contentHistoryScope` | enum | `"currentItem"` | 历史列表初始筛选 | `currentItem` 只看当前物品；`project` 显示全项目 |
+| `contentHistoryMaxEntries` | number | `50` | 内容历史写入 | 非归档记录上限，10–200；超过时归档最旧记录 |
 | `schemaVersion` | number | `1` | 读取/迁移 | 设置文件结构版本，与插件版本、项目 `schemaVersion` 都无关 |
 | `updatedAt` | string | — | 写入时自动 | ISO 时间，仅供诊断，不参与比较 |
 
@@ -91,6 +95,7 @@ $DSH_HOME/mcmods-studio/
 - `boolean` 只接受真正的布尔值；
 - `defaultTab` / `defaultItemsView` 只接受枚举值，非法值直接报错；
 - `defaultProject` 非空时必须能在注册表里找到，否则报错：「默认项目必须是已登记项目」；
+- `contentHistoryRollbackMode` / `contentHistoryScope` 只接受枚举值；`contentHistoryMaxEntries` 必须是 10–200 的整数；`contentHistoryKeepBackups` 只接受布尔值；
 - 合并写入，未提供的字段保持当前值；
 - 写入失败返回错误，不静默吞掉。
 
@@ -439,7 +444,7 @@ SettingsTab({ boot, settings, about, onSave, onReset, onReload })
 
 **已确认的决策（2026-10-28）**：
 
-- **D1 设置项范围**：先做 5 项（启动恢复、默认页签、物品默认视图、删除素材策略、Agent 默认项目）+ 关于；
+- **D1 设置项范围**：先做 5 项（启动恢复、默认页签、物品默认视图、删除素材策略、Agent 默认项目）+ 关于；2026-10-31 追加 4 项内容历史偏好（回滚语义、备份保留、默认范围、记录上限），设置页实现时一并展示；
   暂不做「打开项目自动刷新结构」「界面密度」「删除二次确认」等第二梯队项。
 - **D2 保存方式**：**改动即保存**，行级控件旁提示「已保存」；不设底部统一保存按钮。
 - **D3 版本归属**：设置页后移，不占用 v0.2.0；等工作台、模板/任务稳定后再评估（候选 v0.5+）。
