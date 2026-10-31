@@ -221,7 +221,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 | 事项 | 落地 | 说明 |
 | --- | --- | --- |
-| 版本规则 | 新增 [VERSION-PLAN.md](VERSION-PLAN.md) | 当时规则：每次优化或修复 bug 后 PATCH +1；MINOR 按路线阶段；MAJOR 用于稳定版。2026-10-31 调整为「MAJOR 仅用于破坏性更改、MINOR 对应路线里程碑、PATCH 覆盖里程碑内的修复与新增小功能」，见 VERSION-PLAN 第 1 节 |
+| 版本规则 | 新增 [VERSION-PLAN.md](VERSION-PLAN.md) | 当时规则：每次优化或修复 bug 后 PATCH +1；MINOR 按路线阶段；MAJOR 用于稳定版。2026-10-31 调整为「v0.x 为测试原型、v1.0.0 为正式稳定版、之后 MINOR 对应路线里程碑、PATCH 覆盖修复与里程碑内小功能、MAJOR 仅用于底层架构变化」，见 VERSION-PLAN 第 1 节 |
 | 发版流程 | 同上，第 3 节 | 测试 → 版本号 → CHANGELOG → 全部文档 → 版本历史 → 提交 |
 | 结构扫描修复 | `lib/structure.js` | 跨行字段声明、泛型方法与局部变量误判、`BlockEntity` 归类顺序、含 `/` 的注册 id |
 | 摘要同步 | `lib/tools.js` | `structure_refresh` / `structure_annotate` 工具路径与 HTTP 动作一致，写后刷新 `summary.json` |
