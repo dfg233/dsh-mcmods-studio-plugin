@@ -221,7 +221,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 | 事项 | 落地 | 说明 |
 | --- | --- | --- |
-| 版本规则 | 新增 [VERSION-PLAN.md](VERSION-PLAN.md) | 每次优化或修复 bug 后 PATCH +1（`0.1.0` → `0.1.1`）；MINOR 按路线阶段；MAJOR 用于稳定版与破坏性变更 |
+| 版本规则 | 新增 [VERSION-PLAN.md](VERSION-PLAN.md) | 当时规则：每次优化或修复 bug 后 PATCH +1；MINOR 按路线阶段；MAJOR 用于稳定版。2026-10-31 调整为「MAJOR 仅用于破坏性更改、MINOR 对应路线里程碑、PATCH 覆盖里程碑内的修复与新增小功能」，见 VERSION-PLAN 第 1 节 |
 | 发版流程 | 同上，第 3 节 | 测试 → 版本号 → CHANGELOG → 全部文档 → 版本历史 → 提交 |
 | 结构扫描修复 | `lib/structure.js` | 跨行字段声明、泛型方法与局部变量误判、`BlockEntity` 归类顺序、含 `/` 的注册 id |
 | 摘要同步 | `lib/tools.js` | `structure_refresh` / `structure_annotate` 工具路径与 HTTP 动作一致，写后刷新 `summary.json` |
@@ -408,6 +408,6 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 ## 6. 维护约定
 
 - 功能完成、取消或调整优先级时，同步更新本文档与 [CHANGELOG.md](CHANGELOG.md)；
-- 每次优化或修复 bug 后按 [VERSION-PLAN.md](VERSION-PLAN.md) 升 PATCH 版本，并同步全部文档；
+- 每次改动按 [VERSION-PLAN.md](VERSION-PLAN.md) 判断版本类型（PATCH / MINOR / MAJOR），并同步全部文档；
 - 本文档只描述**当前状态**，不记录历史；
 - 需求变更时先改第 1 节对照表，再改代码。

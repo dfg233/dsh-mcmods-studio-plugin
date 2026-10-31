@@ -153,7 +153,7 @@ lib/api.js ────────────────────► lib/t
   打开 `main` 里的 `mc-mod-studio` 面板；
 - 右侧栏注册 `sidebarRightTabs` 与 `sidebar.right.pane.tab`，通过模块级 `studioState`
   与主面板联动；
-- **每次优化或修复 bug 都要按 [VERSION-PLAN.md](VERSION-PLAN.md) 升 PATCH 版本，
+- **每次改动都要按 [VERSION-PLAN.md](VERSION-PLAN.md) 判断版本类型（PATCH / MINOR / MAJOR），
   并同步全部文档。**
 
 ## 7. 本地测试

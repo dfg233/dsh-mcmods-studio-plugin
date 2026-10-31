@@ -89,7 +89,7 @@
 ## 维护约定
 
 - 模块职责、事件、接口发生变化时，同步更新对应 `*-PLAN.md`；
-- 每次优化或修复 bug 后按 [VERSION-PLAN.md](../VERSION-PLAN.md) 升 PATCH 版本，
+- 每次改动按 [VERSION-PLAN.md](../VERSION-PLAN.md) 判断版本类型（PATCH / MINOR / MAJOR），
   并同步核心文档与本文的版本、状态、计数；
 - 新增模块时在本索引追加一行，并复制固定结构；
 - 状态列只有「已实现 / 规划中 / 部分实现」三种取值；

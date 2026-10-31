@@ -6,8 +6,9 @@
 面向 **Minecraft 1.20.1**（Forge / NeoForge / Fabric）的模组制作插件，
 运行在 DeepSeek Harness 的 Web UI 中。
 
-**版本策略**：插件自身遵循语义化版本，每次优化或修复 bug 后 PATCH +1
-（如 `v0.1.0` → `v0.1.1`），规则见[版本规划](docs/VERSION-PLAN.md)；
+**版本策略**：插件自身遵循语义化版本，三段各司其职——MAJOR 用于底层架构的破坏性更改，
+MINOR 对应路线中的一个里程碑，PATCH 覆盖 bug 修复、优化与里程碑内新增的小功能
+（规则见[版本规划](docs/VERSION-PLAN.md)）；
 Minecraft 适配版本当前固定为 1.20.1，v1.0.0 起先加 1.21.1（见[项目计划书](docs/PLAN.md)）。
 
 设计目的是把模组开发中可结构化的部分（想做什么、有哪些内容、每个内容的属性、素材在哪、

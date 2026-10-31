@@ -14,6 +14,7 @@
 
 ### 文档
 
+- 2026-10-31 版本号规则调整：MAJOR 只用于底层架构的破坏性更改，MINOR 对应路线中的一个里程碑（可含多个功能），PATCH 覆盖 bug 修复、优化与里程碑内新增的小功能；见 [VERSION-PLAN.md](VERSION-PLAN.md) 第 1 节。各文档中的旧表述已同步。
 - 2026-10-29 产品方向调整：旧版 v0.1 路线归档到 `docs/archive/PLAN-v0.1.md`，`PLAN.md` 改为 AI 工作台主线；新增 `docs/design/` 的想法、系统、模板、任务、API 索引、内容编辑规格；同步更新 STATUS、VERSION-PLAN、plans/README 与 REFERENCE。
 - 2026-10-29 M0 文档验证：新增 `docs/validation/` 的 Lock 想法卡、7 张系统卡、电子锁任务包、真实 API 索引样例与 GAP-REPORT；按报告补强想法/系统/任务/模板/API 索引规格。
 - M0 只重构文档；M1.1–M1.3 已在 v0.2.0 落地。

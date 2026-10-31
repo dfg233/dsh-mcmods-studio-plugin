@@ -48,5 +48,5 @@
 ## 5. 版本升级策略
 
 - 数据格式带 `schemaVersion`，升级时在 `lib/meta.js` 中做迁移；
-- 插件版本遵循语义化版本，破坏性变更写入 `CHANGELOG.md`；
+- 插件版本遵循语义化版本：MINOR 对应路线里程碑，PATCH 覆盖修复与里程碑内的小功能；破坏性变更升 MAJOR，并在 `CHANGELOG.md` 写明迁移说明；
 - 未来若支持 1.20.1 之外的版本，`loader` 与 `minecraft` 字段需扩展为矩阵。
