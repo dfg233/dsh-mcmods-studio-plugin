@@ -1,10 +1,10 @@
 # 项目状态：已实现、未实现与要求
 
-> 适用版本：模组工坊（`dsh-mcmods-studio-plugin`）v0.2.2
-> 更新日期：2026-10-31
+> 适用版本：模组工坊（`dsh-mcmods-studio-plugin`）v0.2.3
+> 更新日期：2026-11-01
 > 本文档回答三个问题：**现在能做什么**、**还不能做什么**、**必须遵守什么**。
 > 历史变更见 [CHANGELOG.md](CHANGELOG.md)，版本规则与发版流程见 [VERSION-PLAN.md](VERSION-PLAN.md)，开发方式见 [DEVELOPMENT.md](DEVELOPMENT.md)，当前主线见 [PLAN.md](PLAN.md)，代码索引见 [INDEX.md](INDEX.md)。
-> 本文区分 **as-built（v0.2.2 已实现）** 与 **目标能力（v0.3 起）**；旧路线已归档到 [archive/PLAN-v0.1.md](archive/PLAN-v0.1.md)。
+> 本文区分 **as-built（v0.2.3 已实现）** 与 **目标能力（v0.3 起）**；旧路线已归档到 [archive/PLAN-v0.1.md](archive/PLAN-v0.1.md)。
 
 ## 0. 设计目的
 
@@ -88,6 +88,8 @@
   - 兼容性：加载器差异备注；
 - 物品类型：普通物品、方块、工具、武器、盔甲、食物、材料、创造模式标签（`creative_tab`，导入时自动归类，不计入物品）；
 - 删除物品；
+- 编辑器分页：基础（含中文名 / 英文名）/ 属性 / 配方 / 标签 / 模型与备注 5 个页签，切换页签不丢失输入；
+- 语言页：集中查看与编辑全部物品语言键，支持缺失筛选、行内编辑与批量保存；语言键随物品创建 / 删除维护；
 - 编辑草稿：未保存输入存 localStorage，重新打开自动恢复；离开页面提示、取消确认；
 - 内容历史：物品页顶部常驻「历史记录」，记录每次内容写入，可回到任一历史步骤（保留该步、撤销其后），被回滚记录在下一次修改时归档；
 - 导出 `docs/ITEMS.md`（总览）与 `docs/ITEMS/<id>.md`（单件详情）。
@@ -132,10 +134,11 @@
 
 - 项目数据：`<项目>/.mcstudio/project.json`、`features.json`、`items/<id>.json`、
   `studio.json`（工坊标记）、`content-history.json`（内容历史）、`summary.json`（派生摘要）、`structure.json`（派生代码结构）；
+- 语言文件：`assets/<modid>/lang/zh_cn.json`、`en_us.json`（标准工程）或 `.mcstudio/assets/<modid>/lang/`（回退）；语言键随物品创建 / 删除维护；
 - 插件注册表：`$DSH_HOME/mcmods-studio/registry.json`（记录扫描根目录与项目列表）；
 - 导入前备份：`$DSH_HOME/mcmods-studio/backups/`（`.mcstudio/` 与快照，失败时回滚）；
-- 内容备份：`$DSH_HOME/mcmods-studio/backups/<项目>/`（每次内容写入前复制相关资源文件，历史步骤引用它）；
-- Host 接口：`POST /mcmods-studio/api`，共 **50 个动作**：
+- 内容备份：`$DSH_HOME/mcmods-studio/backups/<项目>/`（每次内容或语言写入前复制相关资源文件，历史步骤引用它）；
+- Host 接口：`POST /mcmods-studio/api`，共 **54 个动作**：
 
 | 分组 | 动作 |
 | --- | --- |
@@ -143,6 +146,7 @@
 | 构想与物品 | `features.list`、`features.save`、`features.delete`、`items.list`、`items.save`、`items.delete` |
 | 计划 | `workbench.plan`、`systems.list/save/delete`、`tasks.list/save/delete` |
 | 内容 | `content.get/preview/apply/rollback`、`content.history.list/rollback` |
+| 语言 | `lang.list`、`lang.preview`、`lang.save`、`lang.ensure` |
 | 素材与文档 | `assets.list`、`assets.upload`、`assets.read`、`assets.readMany`、`assets.delete`、`assets.model.get`、`assets.model.save`、`assets.root`、`docs.export`、`guide` |
 | 代码结构 | `structure.refresh`、`structure.get`、`structure.find`、`structure.annotate` |
 | Agent 与诊断 | `agent.summary`、`agent.validate`、`agent.tools`、`agent.call`、`debug.clientGraph` |
@@ -318,6 +322,17 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | 上传后不刷新 | 同上 | 编辑器上传成功后调用 `onTextureUploaded`，重新读取缩略图并刷新素材列表 |
 | 测试 | `test/12-render.mjs` | 编辑器按 `imageFor` 渲染贴图；物品页点「编辑」后编辑器拿到正确的映射；总计 18 文件 / 196 项 |
 
+### 3.0.12 v0.2.3 编辑器分页与语言页（已完成）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| 编辑器分页 | `client.js` 的 `ItemEditor` | 5 页签：基础（含中文名 / 英文名）/ 属性 / 配方 / 标签 / 模型与备注；切换不丢输入，保存 payload 不变 |
+| 语言页 | `client.js` 的 `LangTab`、`lib/lang.js` | 列出全部物品语言键，缺失统计与筛选，行内编辑、批量保存；未知键只读 |
+| 语言生命周期 | `lib/lang.js`、`lib/api.js` | 创建物品连带建键（英文回填）、删除连带删键、旧项目补建；失败返回 `warnings`，不阻塞物品操作 |
+| 历史适配 | `lib/history.js`、`HistoryModal` | 历史条目新增 `scope`；语言页 / 补建记项目级，创建 / 删除记物品级；弹窗显示「项目级」徽章 |
+| 接口 | `lib/api.js` | 新增 `lang.list/preview/save/ensure`；动作 50 → 54 |
+| 测试 | `test/19-lang.mjs`、`test/12-render.mjs` | 语言列表、保存、删除、补建、损坏、路径、分页与语言页渲染；总计 19 文件 / 210 项 |
+
 ### 3.1 目标能力（v0.3 起）
 
 | 里程碑 | 能力 | 说明 |
@@ -325,6 +340,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | M1 / v0.2.0 | 工作台骨架 + 内容编辑 MVP | 想法卡、系统卡、任务卡最小页面；物品属性、配方、标签、语言、模型；应用预览、备份、回滚 |
 | M1 / v0.2.1 | 内容编辑修复与历史 | Pattern/材料键换行；内容历史持久化、回到某步的递归回滚、rolledBack 保留与归档 |
 | M1 / v0.2.2 | 物品编辑器贴图预览修复 | 按缩略图键映射取图；上传后立即刷新预览与素材 |
+| M1 / v0.2.3 | 编辑器分页与语言页 | 5 页签；语言页、语言键生命周期与语言写入历史 |
 | M2 / v0.3.0 | API 索引 + 模板 + 上下文包 + 检查 | 从 Gradle classpath 提取签名（含 protected/继承/嵌套类）；模板清单/参数/渲染；`context.pack`；允许路径、structure-diff、资源引用、注册配对检查 |
 | M3 / v0.4.0 | 代码生成 + Lock 试点 | 标记区块生成；方块实体/菜单、钥匙、网络同步模板；Lock「电子锁」端到端 |
 | M4 / v0.5.0 | 进阶内容与稳定 | 战利品表、创造标签、多加载器模板、性能基线 |
@@ -380,17 +396,17 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**18 个文件、196 项全部通过**）：
+已通过自动化验证（`npm test`，**19 个文件、210 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
-| Host 业务 | 126 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| Host 业务 | 136 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
 | 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |
 | 可靠性 | 5 项 | 持久写入无临时残留、备份失败回滚、备份成功保留、首次导入失败清理、导入 proof 失效与重新导入 |
 | 客户端加载 | 8 项 | 假 `__ModuleLoader__` + 假 React，验证加载、模块 id、座位注册 |
-| 渲染结构 | 23 项 | 假 React 渲染组件，断言文本、按钮、条件分支、历史列表、输入保留与贴图映射 |
+| 渲染结构 | 27 项 | 假 React 渲染组件，断言文本、按钮、条件分支、历史列表、输入保留、贴图映射与语言页 |
 | schema 一致性 | 2 项 | 比对 `schema.js` 与 `data/schema.json` |
 
 接口级验证：

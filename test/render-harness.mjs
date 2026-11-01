@@ -137,6 +137,9 @@ export async function loadClient(overrides = {}) {
         fakeWindow.__definition = definition
       },
     },
+    // useDraftState 的 beforeunload 监听；测试里不需要真实事件
+    addEventListener() {},
+    removeEventListener() {},
   }
 
   const fakeDocument = {

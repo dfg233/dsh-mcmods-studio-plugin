@@ -12,6 +12,10 @@ async function makeProject(ws) {
   const dir = ws.path('content')
   await ws.call('project.create', { path: dir, name: '内容测试', modid: 'contentmod', loader: 'forge' })
   await ws.call('items.save', { path: dir, item: { id: 'ruby_sword', displayName: '红宝石剑', type: 'tool' } })
+  // v0.2.3 起创建物品会连带创建语言键并记历史；本套用例验证内容编辑本身，
+  // 先清掉语言文件与历史，保持与旧行为一致的起点。
+  await rm(join(dir, '.mcstudio', 'assets', 'contentmod', 'lang'), { recursive: true, force: true })
+  await rm(join(dir, '.mcstudio', 'content-history.json'), { force: true })
   return dir
 }
 

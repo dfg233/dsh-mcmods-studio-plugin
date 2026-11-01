@@ -267,6 +267,10 @@ window.__ModuleLoader__.load({
         padding: '12px 16px', borderBottom: `1px solid ${C.border}`, flexShrink: 0,
       },
       modalBody: { padding: 16, overflowY: 'auto', minHeight: 0 },
+      modalTabs: {
+        display: 'flex', gap: 4, padding: '0 0 10px', marginBottom: 12,
+        borderBottom: `1px solid ${C.border}`, overflowX: 'auto',
+      },
       modalFoot: {
         display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '10px 16px',
         borderTop: `1px solid ${C.border}`, flexShrink: 0,
@@ -301,7 +305,7 @@ window.__ModuleLoader__.load({
             h('div', { style: S.sectionTitle }, props.title),
             h('button', { style: S.btn('ghost'), onClick: props.onClose }, '关闭'),
           ),
-          h('div', { style: S.modalBody }, props.children),
+          h('div', { style: S.modalBody, ref: props.bodyRef }, props.children),
           props.footer ? h('div', { style: S.modalFoot }, props.footer) : null,
         ),
       )
@@ -1665,6 +1669,8 @@ window.__ModuleLoader__.load({
       const [uploading, setUploading] = useState(false)
       const [saving, setSaving] = useState(false)
       const [contentLoading, setContentLoading] = useState(false)
+      const [page, setPage] = useState('basic')
+      const bodyRef = useRef(null)
       const [content, setContent] = useState({
         lang: { zh: item.displayName || '', en: '' },
         recipe: blankRecipe(),
@@ -1758,17 +1764,36 @@ window.__ModuleLoader__.load({
       // 贴图预览：键由 ItemsTab 的 thumbKey 决定，方块贴图名可能与 id 不同
       const texture = imageFor ? imageFor(draft.id) : ''
 
-      return h(Modal, {
-        title: item.id ? `编辑物品：${item.displayName}` : '新建物品',
-        onClose: cancel,
-        footer: [
-          h('button', { key: 'cancel', style: S.btn('ghost'), onClick: cancel }, '取消'),
-          h('button', { key: 'save', style: S.btn(), disabled: saving || contentLoading, onClick: save }, saving ? '保存中…' : contentLoading ? '读取内容…' : '保存'),
-        ],
-      },
-        draftState.restored
-          ? h('div', { style: { ...S.hint, marginBottom: 8 } }, '已恢复上次未保存的草稿。')
-          : null,
+      const PAGES = [
+        { id: 'basic', label: '基础' },
+        { id: 'attributes', label: '属性' },
+        { id: 'recipe', label: '配方' },
+        { id: 'tags', label: '标签' },
+        { id: 'extra', label: '模型与备注' },
+      ]
+
+      /** 贴图上传块：基础页使用。 */
+      const textureField = h(Field, { label: '贴图' },
+        h('div', { style: { display: 'flex', gap: 10, alignItems: 'center' } },
+          h('div', {
+            style: {
+              width: 48, height: 48, borderRadius: 8, border: `1px solid ${C.border}`,
+              background: C.layer2, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            },
+          },
+            texture
+              ? h('img', { src: texture, width: 40, height: 40, style: { imageRendering: 'pixelated' } })
+              : h('span', { style: { fontSize: 10, color: C.muted } }, '无'),
+          ),
+          h('button', { style: S.btn(), disabled: uploading, onClick: () => fileRef.current && fileRef.current.click() },
+            uploading ? '上传中…' : '上传 PNG'),
+          h('input', {
+            ref: fileRef, type: 'file', accept: 'image/png', style: { display: 'none' },
+            onChange: (e) => upload(e.target.files && e.target.files[0]),
+          }),
+        ))
+
+      const renderBasicPage = () => h('div', null,
         h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
           h(Field, { label: '注册名（id）', required: true, hint: '只能包含小写字母、数字和下划线' },
             h(TextInput, { value: draft.id, onChange: (v) => set('id', v.toLowerCase()) })),
@@ -1778,121 +1803,386 @@ window.__ModuleLoader__.load({
             value: draft.type, onChange: (v) => set('type', v),
             options: schema.types.map((t) => ({ value: t.id, label: t.label })),
           })),
-          h(Field, { label: '贴图' },
-            h('div', { style: { display: 'flex', gap: 10, alignItems: 'center' } },
-              h('div', {
-                style: {
-                  width: 48, height: 48, borderRadius: 8, border: `1px solid ${C.border}`,
-                  background: C.layer2, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                },
-              },
-                texture
-                  ? h('img', { src: texture, width: 40, height: 40, style: { imageRendering: 'pixelated' } })
-                  : h('span', { style: { fontSize: 10, color: C.muted } }, '无'),
-              ),
-              h('button', { style: S.btn(), disabled: uploading, onClick: () => fileRef.current && fileRef.current.click() },
-                uploading ? '上传中…' : '上传 PNG'),
-              h('input', {
-                ref: fileRef, type: 'file', accept: 'image/png', style: { display: 'none' },
-                onChange: (e) => upload(e.target.files && e.target.files[0]),
-              }),
-            )),
+          textureField,
+        ),
+        h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
+          h(Field, { label: '中文名' },
+            h(TextInput, { value: content.lang.zh, onChange: (v) => setLang('zh', v), placeholder: draft.displayName })),
+          h(Field, { label: '英文名' },
+            h(TextInput, { value: content.lang.en, onChange: (v) => setLang('en', v), placeholder: draft.displayName })),
         ),
         h(Field, { label: '描述' }, h(Textarea, { value: draft.description, onChange: (v) => set('description', v) })),
+      )
 
-        h('div', { style: { marginTop: 14 } },
-          h('div', { style: { ...S.sectionTitle, marginBottom: 6 } }, '语言与配方'),
-          contentLoading ? h('div', { style: S.hint }, '正在读取语言/配方…') : null,
-          h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
-            h(Field, { label: '中文名' },
-              h(TextInput, { value: content.lang.zh, onChange: (v) => setLang('zh', v), placeholder: draft.displayName })),
-            h(Field, { label: '英文名' },
-              h(TextInput, { value: content.lang.en, onChange: (v) => setLang('en', v), placeholder: draft.displayName })),
-          ),
-          h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
-            h(Field, { label: '配方类型' },
-              h(Select, {
-                value: content.recipe.type, onChange: (v) => setRecipe('type', v),
-                options: [
-                  { value: 'none', label: '不生成配方' },
-                  { value: 'shaped', label: '有序合成' },
-                  { value: 'shapeless', label: '无序合成' },
-                  { value: 'furnace', label: '熔炉' },
-                ],
-              })),
-            h(Field, { label: '产出数量' },
-              h(NumberInput, { value: content.recipe.count, onChange: (v) => setRecipe('count', v), min: 1, max: 64 })),
-          ),
-          content.recipe.type === 'shaped'
-            ? h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
-                h(Field, { label: 'Pattern', hint: '最多 3 行，空格表示空位；空行保存时忽略。例如：\n R \n R \n S ' },
-                  h(Textarea, {
-                    value: content.recipe.patternText,
-                    placeholder: ' R \n R \n S ',
-                    style: { minHeight: 96, fontFamily: 'monospace' },
-                    onChange: (v) => setRecipe('patternText', v),
-                  })),
-                h(Field, { label: '材料键', hint: '一行一个，例如 R=ruby；无命名空间默认当前模组' },
-                  h(Textarea, {
-                    value: content.recipe.keysText,
-                    placeholder: 'R=ruby\nS=minecraft:stick',
-                    style: { minHeight: 96 },
-                    onChange: (v) => setRecipe('keysText', v),
-                  })),
-              )
-            : null,
-          content.recipe.type === 'shapeless'
-            ? h(Field, { label: '材料', hint: '一行一个，例如 ruby、minecraft:stick' },
-                h(Textarea, {
-                  value: content.recipe.ingredientsText,
-                  onChange: (v) => setRecipe('ingredientsText', v),
-                }))
-            : null,
-          content.recipe.type === 'furnace'
-            ? h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 } },
-                h(Field, { label: '材料', hint: '一行一个；熔炉使用第一行' },
-                  h(TextInput, {
-                    value: content.recipe.ingredientsText,
-                    onChange: (v) => setRecipe('ingredientsText', v),
-                  })),
-                h(Field, { label: '经验' },
-                  h(NumberInput, { value: content.recipe.experience, onChange: (v) => setRecipe('experience', v), min: 0, step: 0.1 })),
-                h(Field, { label: '烧炼时间（tick）' },
-                  h(NumberInput, { value: content.recipe.cookingTime, onChange: (v) => setRecipe('cookingTime', v), min: 1, step: 20 })),
-              )
-            : null,
-          h(Field, { label: '资源标签', hint: `一行一个，例如 minecraft:planks、lock:lockable；保存时写入 data/*/tags/${draft.type === 'block' ? 'blocks' : 'items'}` },
-            h(Textarea, {
-              value: content.tagsText,
-              onChange: (v) => setContentField('tagsText', v),
-            })),
-          h(Field, { label: '物品模型', hint: '写入 models/item/<id>.json；不影响已有手写模型之外的文件' },
+      const renderAttributesPage = () => h('div', null,
+        contentLoading ? h('div', { style: S.hint }, '正在读取内容…') : null,
+        groups.map((group) => {
+          const fields = schema.fields.filter((field) => field.group === group && field.type !== 'tags')
+          if (!fields.length) return null
+          return h('div', { key: group, style: { marginTop: 14 } },
+            h('div', { style: { ...S.sectionTitle, marginBottom: 6 } }, group),
+            h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 } },
+              fields.map((field) => h(Field, {
+                key: field.key, label: field.label, hint: field.hint,
+              }, renderField(field, draft.properties[field.key], (v) => setProperty(field.key, v)))),
+            ),
+          )
+        }),
+      )
+
+      const renderRecipePage = () => h('div', null,
+        h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
+          h(Field, { label: '配方类型' },
             h(Select, {
-              value: content.model.parent, onChange: (v) => setContentField('model', { parent: v }),
+              value: content.recipe.type, onChange: (v) => setRecipe('type', v),
               options: [
-                { value: 'minecraft:item/generated', label: 'generated（普通物品）' },
-                { value: 'minecraft:item/handheld', label: 'handheld（工具/武器）' },
+                { value: 'none', label: '不生成配方' },
+                { value: 'shaped', label: '有序合成' },
+                { value: 'shapeless', label: '无序合成' },
+                { value: 'furnace', label: '熔炉' },
               ],
             })),
+          h(Field, { label: '产出数量' },
+            h(NumberInput, { value: content.recipe.count, onChange: (v) => setRecipe('count', v), min: 1, max: 64 })),
         ),
+        content.recipe.type === 'shaped'
+          ? h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
+              h(Field, { label: 'Pattern', hint: '最多 3 行，空格表示空位；空行保存时忽略。例如：\n R \n R \n S ' },
+                h(Textarea, {
+                  value: content.recipe.patternText,
+                  placeholder: ' R \n R \n S ',
+                  style: { minHeight: 96, fontFamily: 'monospace' },
+                  onChange: (v) => setRecipe('patternText', v),
+                })),
+              h(Field, { label: '材料键', hint: '一行一个，例如 R=ruby；无命名空间默认当前模组' },
+                h(Textarea, {
+                  value: content.recipe.keysText,
+                  placeholder: 'R=ruby\nS=minecraft:stick',
+                  style: { minHeight: 96 },
+                  onChange: (v) => setRecipe('keysText', v),
+                })),
+            )
+          : null,
+        content.recipe.type === 'shapeless'
+          ? h(Field, { label: '材料', hint: '一行一个，例如 ruby、minecraft:stick' },
+              h(Textarea, {
+                value: content.recipe.ingredientsText,
+                onChange: (v) => setRecipe('ingredientsText', v),
+              }))
+          : null,
+        content.recipe.type === 'furnace'
+          ? h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 } },
+              h(Field, { label: '材料', hint: '一行一个；熔炉使用第一行' },
+                h(TextInput, {
+                  value: content.recipe.ingredientsText,
+                  onChange: (v) => setRecipe('ingredientsText', v),
+                })),
+              h(Field, { label: '经验' },
+                h(NumberInput, { value: content.recipe.experience, onChange: (v) => setRecipe('experience', v), min: 0, step: 0.1 })),
+              h(Field, { label: '烧炼时间（tick）' },
+                h(NumberInput, { value: content.recipe.cookingTime, onChange: (v) => setRecipe('cookingTime', v), min: 1, step: 20 })),
+            )
+          : null,
+      )
 
-        groups.map((group) => h('div', { key: group, style: { marginTop: 14 } },
-          h('div', { style: { ...S.sectionTitle, marginBottom: 6 } }, group),
-          h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 } },
-            schema.fields.filter((f) => f.group === group).map((field) => h(Field, {
-              key: field.key, label: field.label, hint: field.hint,
-            }, renderField(field, draft.properties[field.key], (v) => setProperty(field.key, v)))),
+      const renderTagsPage = () => h('div', null,
+        schema.fields.filter((field) => field.type === 'tags').map((field) => h(Field, {
+          key: field.key, label: field.label, hint: field.hint,
+        }, renderField(field, draft.properties[field.key], (v) => setProperty(field.key, v)))),
+        h(Field, { label: '资源标签', hint: `一行一个，例如 minecraft:planks、lock:lockable；保存时写入 data/*/tags/${draft.type === 'block' ? 'blocks' : 'items'}` },
+          h(Textarea, {
+            value: content.tagsText,
+            onChange: (v) => setContentField('tagsText', v),
+          })),
+        h(Field, { label: '自定义标签', hint: '逗号分隔，例如 minecraft:planks, c:gems' },
+          h(TextInput, {
+            value: (draft.tags || []).join(', '),
+            onChange: (v) => set('tags', v.split(',').map((s) => s.trim()).filter(Boolean)),
+          })),
+      )
+
+      const renderExtraPage = () => h('div', null,
+        h(Field, { label: '物品模型', hint: '写入 models/item/<id>.json；不影响已有手写模型之外的文件' },
+          h(Select, {
+            value: content.model.parent, onChange: (v) => setContentField('model', { parent: v }),
+            options: [
+              { value: 'minecraft:item/generated', label: 'generated（普通物品）' },
+              { value: 'minecraft:item/handheld', label: 'handheld（工具/武器）' },
+            ],
+          })),
+        h(Field, { label: '备注' }, h(TextInput, { value: draft.notes, onChange: (v) => set('notes', v) })),
+      )
+
+      const pageBody = page === 'basic' ? renderBasicPage()
+        : page === 'attributes' ? renderAttributesPage()
+          : page === 'recipe' ? renderRecipePage()
+            : page === 'tags' ? renderTagsPage()
+              : renderExtraPage()
+
+      const goPage = (nextPage) => {
+        setPage(nextPage)
+        if (bodyRef.current) bodyRef.current.scrollTop = 0
+      }
+
+      return h(Modal, {
+        title: item.id ? `编辑物品：${item.displayName}` : '新建物品',
+        onClose: cancel,
+        bodyRef,
+        footer: [
+          h('button', { key: 'cancel', style: S.btn('ghost'), onClick: cancel }, '取消'),
+          h('button', { key: 'save', style: S.btn(), disabled: saving || contentLoading, onClick: save }, saving ? '保存中…' : contentLoading ? '读取内容…' : '保存'),
+        ],
+      },
+        draftState.restored
+          ? h('div', { style: { ...S.hint, marginBottom: 8 } }, '已恢复上次未保存的草稿。')
+          : null,
+        h('div', { style: S.modalTabs }, PAGES.map((pageDef) => h('div', {
+          key: pageDef.id,
+          style: S.tab(page === pageDef.id),
+          onClick: () => goPage(pageDef.id),
+        }, pageDef.label))),
+        pageBody,
+      )
+    }
+
+    // ── 语言页 ───────────────────────────────────────────────
+
+    /** 缺失状态 → 中文文案。 */
+    function missingLabel(missing) {
+      if (Array.isArray(missing) && missing.length >= 2) return '缺中英文'
+      return missing && missing[0] === 'zh_cn' ? '缺中文' : '缺英文'
+    }
+
+    /**
+     * 语言文件总览。
+     *
+     * 语言键只允许编辑已存在的键；缺少键的物品用「补建缺失键」处理，
+     * 未知键（其他模组 / 已删除物品）只读展示。
+     */
+    function LangTab(props) {
+      const { project, setError } = props
+      const [data, setData] = useState(null)
+      const [draft, setDraft] = useState({})
+      const [loading, setLoading] = useState(false)
+      const [saving, setSaving] = useState(false)
+      const [filter, setFilter] = useState('all')
+      const [query, setQuery] = useState('')
+      const [notice, setNotice] = useState('')
+      const [othersOpen, setOthersOpen] = useState(false)
+
+      const load = useCallback(async () => {
+        if (!project?.path) return
+        setLoading(true)
+        try {
+          const result = await call('lang.list', { path: project.path })
+          setData(result)
+          const next = {}
+          for (const entry of result.entries || []) {
+            next[entry.key] = { zh: entry.zh, en: entry.en }
+          }
+          setDraft(next)
+        } catch (err) {
+          setError(err.message)
+        } finally {
+          setLoading(false)
+        }
+      }, [project?.path, setError])
+
+      useEffect(() => { load() }, [load])
+
+      if (!project) return h('div', { style: S.empty }, '请先在「项目」中打开一个项目。')
+      if (!data) return h('div', { style: S.empty }, loading ? '正在读取语言文件…' : '正在准备语言页…')
+
+      const entries = data.entries || []
+      const editable = !data.warning
+      const baseOf = (entry) => ({ zh: entry.zh, en: entry.en })
+      const currentOf = (entry) => draft[entry.key] || baseOf(entry)
+      const isChanged = (entry) => {
+        const current = currentOf(entry)
+        const base = baseOf(entry)
+        return current.zh !== base.zh || current.en !== base.en || entry.zhFromEn
+      }
+
+      const keyword = query.trim().toLowerCase()
+      const filtered = entries.filter((entry) => {
+        if (filter === 'missingZh' && !entry.missing.includes('zh_cn')) return false
+        if (filter === 'missingEn' && !entry.missing.includes('en_us')) return false
+        if (filter === 'changed' && !isChanged(entry)) return false
+        if (filter === 'keyMissing' && !entry.keyMissing) return false
+        if (!keyword) return true
+        const current = currentOf(entry)
+        return [entry.id, entry.displayName, entry.key, current.zh, current.en]
+          .some((value) => String(value || '').toLowerCase().includes(keyword))
+      })
+
+      const changedKeys = entries.filter((entry) => isChanged(entry))
+
+      const setValue = (entry, locale, value) => {
+        setDraft((prev) => ({
+          ...prev,
+          [entry.key]: { ...(prev[entry.key] || baseOf(entry)), [locale]: value },
+        }))
+      }
+
+      const prepareChanges = () => {
+        const changes = { zh_cn: {}, en_us: {} }
+        for (const entry of changedKeys) {
+          const current = currentOf(entry)
+          changes.zh_cn[entry.key] = current.zh
+          changes.en_us[entry.key] = current.en
+        }
+        return changes
+      }
+
+      const save = async () => {
+        if (!editable || !changedKeys.length) return
+        if (!window.confirm(`将写入 ${changedKeys.length} 个语言键（中文 / 英文），继续保存？`)) return
+        setSaving(true)
+        setNotice('')
+        try {
+          const result = await call('lang.save', { path: project.path, changes: prepareChanges() })
+          setNotice(`已保存：写入 ${result.files.length} 个语言文件。`)
+          setError('')
+          await load()
+        } catch (err) {
+          setError(err.message)
+        } finally {
+          setSaving(false)
+        }
+      }
+
+      const ensureKeys = async () => {
+        setSaving(true)
+        setNotice('')
+        try {
+          const result = await call('lang.ensure', { path: project.path })
+          setNotice(result.created ? `已补建 ${result.created} 个物品的语言键。` : '没有需要补建的键。')
+          await load()
+        } catch (err) {
+          setError(err.message)
+        } finally {
+          setSaving(false)
+        }
+      }
+
+      const filterButton = (value, label) => h('button', {
+        style: { ...S.btn('ghost'), background: filter === value ? C.layer2 : 'transparent' },
+        onClick: () => setFilter(value),
+      }, label)
+
+      return h('div', { style: { display: 'flex', flexDirection: 'column', gap: 12 } },
+        h('div', { style: { ...S.card, padding: 12 } },
+          h('div', { style: S.row },
+            h('div', { style: { flex: 1, minWidth: 240 } },
+              h('div', { style: { fontSize: 12.5 } },
+                '语言文件：',
+                h('code', null, data.files.zh_cn),
+                ' / ',
+                h('code', null, data.files.en_us),
+              ),
+              h('div', { style: { ...S.hint, marginTop: 4 } },
+                `${data.standard ? '标准资源目录' : '.mcstudio 回退目录'} · 物品 ${data.stats.total} · `
+                + `缺中文 ${data.stats.missingZh} · 缺英文 ${data.stats.missingEn} · 其他键 ${data.stats.unknown}`),
+            ),
+            h('button', { style: S.btn('ghost'), onClick: load, disabled: loading }, loading ? '读取中…' : '重新读取'),
+            h('button', { style: S.btn(), onClick: save, disabled: saving || !editable || !changedKeys.length },
+              saving ? '保存中…' : `保存修改（${changedKeys.length}）`),
           ),
-        )),
-
-        h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 8 } },
-          h(Field, { label: '自定义标签', hint: '逗号分隔，例如 minecraft:planks, c:gems' },
-            h(TextInput, {
-              value: (draft.tags || []).join(', '),
-              onChange: (v) => set('tags', v.split(',').map((s) => s.trim()).filter(Boolean)),
-            })),
-          h(Field, { label: '备注' }, h(TextInput, { value: draft.notes, onChange: (v) => set('notes', v) })),
+          data.warning
+            ? h('div', { style: { ...S.hint, marginTop: 8, color: C.warn } },
+                `${data.warning}；当前为只读模式，请先修复文件。`)
+            : null,
+          notice ? h('div', { style: { ...S.hint, marginTop: 8 } }, notice) : null,
+          data.stats.missingKey > 0
+            ? h('div', { style: { ...S.row, marginTop: 10 } },
+                h('span', { style: { ...S.hint, marginTop: 0, flex: 1 } },
+                  `${data.stats.missingKey} 个物品还没有语言键（旧项目），可一次性补建。`),
+                h('button', { style: S.btn('ghost'), onClick: ensureKeys, disabled: saving || !editable }, '补建缺失键'),
+              )
+            : null,
         ),
+
+        h('div', { style: S.row },
+          h('div', { style: { display: 'flex', gap: 4, flexWrap: 'wrap' } },
+            filterButton('all', '全部'),
+            filterButton('missingZh', '缺中文'),
+            filterButton('missingEn', '缺英文'),
+            filterButton('changed', '有修改'),
+            filterButton('keyMissing', '缺键'),
+          ),
+          h('div', { style: { flex: 1, minWidth: 200 } },
+            h(TextInput, { value: query, onChange: setQuery, placeholder: '搜索 id、显示名、键或值…' })),
+        ),
+
+        filtered.length === 0
+          ? h('div', { style: S.empty }, entries.length === 0 ? '这个项目还没有物品。' : '没有匹配的语言键。')
+          : h('div', { style: { ...S.card, padding: 0, overflow: 'hidden' } },
+              h('table', { style: S.table },
+                h('thead', null, h('tr', null,
+                  h('th', { style: S.th }, '键'),
+                  h('th', { style: S.th }, '类型'),
+                  h('th', { style: S.th }, '显示名'),
+                  h('th', { style: S.th }, '中文'),
+                  h('th', { style: S.th }, '英文'),
+                  h('th', { style: S.th }, '状态'),
+                )),
+                h('tbody', null, filtered.slice(0, 300).map((entry) => {
+                  const current = currentOf(entry)
+                  const changed = isChanged(entry)
+                  const missing = entry.missing.length > 0
+                  return h('tr', { key: entry.key },
+                    h('td', { style: S.td }, h('code', { style: { fontSize: 11 } }, entry.key)),
+                    h('td', { style: S.td }, entry.kind === 'block' ? '方块' : '物品'),
+                    h('td', { style: S.td }, entry.displayName),
+                    h('td', { style: S.td }, h(TextInput, {
+                      value: current.zh,
+                      disabled: !editable,
+                      placeholder: entry.zhFromEn ? '英文回填' : '',
+                      onChange: (value) => setValue(entry, 'zh', value),
+                    })),
+                    h('td', { style: S.td }, h(TextInput, {
+                      value: current.en,
+                      disabled: !editable,
+                      onChange: (value) => setValue(entry, 'en', value),
+                    })),
+                    h('td', { style: { ...S.td, whiteSpace: 'nowrap' } },
+                      entry.keyMissing
+                        ? h('span', { style: S.badge('danger') }, '缺键')
+                        : changed
+                          ? h('span', { style: S.badge('warn') }, '待保存')
+                          : missing
+                            ? h('span', { style: S.badge('idle') }, missingLabel(entry.missing))
+                            : h('span', { style: S.badge('success') }, '完整')),
+                  )
+                })),
+              ),
+            ),
+
+        data.others.length > 0
+          ? h('div', { style: { ...S.card, padding: 10 } },
+              h('div', { style: { ...S.row, cursor: 'pointer' }, onClick: () => setOthersOpen((value) => !value) },
+                h('span', { style: { ...S.hint, marginTop: 0, flex: 1 } },
+                  `其他键（${data.others.length}）：不在物品列表中，只读`),
+                h('span', { style: S.hint }, othersOpen ? '收起' : '展开'),
+              ),
+              othersOpen
+                ? h('div', { style: { ...S.card, padding: 0, overflow: 'hidden', marginTop: 8 } },
+                    h('table', { style: S.table },
+                      h('thead', null, h('tr', null,
+                        h('th', { style: S.th }, '键'),
+                        h('th', { style: S.th }, '中文'),
+                        h('th', { style: S.th }, '英文'),
+                      )),
+                      h('tbody', null, data.others.slice(0, 200).map((entry) => h('tr', { key: entry.key },
+                        h('td', { style: S.td }, h('code', { style: { fontSize: 11 } }, entry.key)),
+                        h('td', { style: S.td }, entry.zh || '—'),
+                        h('td', { style: S.td }, entry.en || '—'),
+                      ))),
+                    ),
+                  )
+                : null,
+            )
+          : null,
       )
     }
 
@@ -1995,7 +2285,7 @@ window.__ModuleLoader__.load({
       return h(Modal, { title: '历史记录', onClose },
         h('div', { style: { ...S.hint, marginTop: 0, marginBottom: 10 } },
           '每次保存语言/配方/模型/标签前都会备份并记一步。「回到这一步」保留该步结果，撤销其后的步骤；'
-          + '被撤销的记录不会立即删除，下一次修改时归档。'),
+          + '被撤销的记录不会立即删除，下一次修改时归档。语言文件写入记为「项目级」步骤，在「全部」中可见。'),
         h('div', { style: { ...S.row, marginBottom: 10 } },
           h('div', { style: { display: 'flex', border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' } },
             scopeButton('item', '当前物品', !itemId),
@@ -2044,7 +2334,11 @@ window.__ModuleLoader__.load({
                     return h('tr', { key: entry.id },
                       h('td', { style: S.td },
                         h('div', null, `第 ${entry.sequence} 步`),
-                        h('div', { style: { ...S.hint, marginTop: 0 } }, entry.title || '内容修改'),
+                        h('div', { style: { ...S.hint, marginTop: 0 } },
+                          entry.title || '内容修改',
+                          entry.scope === 'project'
+                            ? h('span', { style: { ...S.badge('idle'), marginLeft: 6 } }, '项目级')
+                            : null),
                       ),
                       h('td', { style: { ...S.td, whiteSpace: 'nowrap' } }, formatHistoryTime(entry.at)),
                       h('td', { style: S.td }, h('code', null, entry.itemId || '—')),
@@ -2404,6 +2698,7 @@ window.__ModuleLoader__.load({
         { id: 'features', label: '构想' },
         { id: 'plan', label: '计划' },
         { id: 'items', label: '物品' },
+        { id: 'lang', label: '语言' },
         { id: 'assets', label: '贴图与模型' },
         { id: 'guide', label: '构建教程' },
       ]
@@ -2466,9 +2761,11 @@ window.__ModuleLoader__.load({
                   ? h(PlanTab, { project, setError })
                   : tab === 'items'
                   ? h(ItemsTab, { project, setProject, assets, schema: boot.schema, setError, reloadAssets })
-                  : tab === 'assets'
-                    ? h(AssetsTab, { project, assets, reloadAssets, setError })
-                    : h(GuideTab, { guide: boot.guide }),
+                  : tab === 'lang'
+                    ? h(LangTab, { project, setError })
+                    : tab === 'assets'
+                      ? h(AssetsTab, { project, assets, reloadAssets, setError })
+                      : h(GuideTab, { guide: boot.guide }),
         ),
 
         createOpen ? h(CreateProjectModal, {
@@ -3034,7 +3331,7 @@ window.__ModuleLoader__.load({
             ProjectTab, FeaturesTab, ItemsTab, AssetsTab, GuideTab,
             StudioPage, StudioRoot, SidebarStudioPanel, ItemEditor, FeatureEditor, PlanTab, SystemEditor, TaskEditor,
             ProjectDetailModal, ImportConfirmModal, Icon, InfoRow, PathField,
-            HistoryModal,
+            HistoryModal, LangTab,
           },
           helpers: {
             call, pickFolder, getStudioState, setStudioState, defaultSlot,

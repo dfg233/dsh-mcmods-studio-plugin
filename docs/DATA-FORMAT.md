@@ -1,8 +1,8 @@
 # 数据格式
 
-> 适用版本：v0.2.2
-> 状态：as-built（v0.2.1 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
-> 更新日期：2026-10-31
+> 适用版本：v0.2.3
+> 状态：as-built（v0.2.3 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
+> 更新日期：2026-11-01
 > 数据文件内的 `schemaVersion` 与插件版本号相互独立；插件升级不自动改写数据格式。
 > 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
 
@@ -257,6 +257,7 @@ src/main/resources/data/<modid>/recipes/<id>.json
 
 - 标准工程不存在 `src/main/resources` 时，回退到 `.mcstudio/assets/`、`.mcstudio/data/`；
 - 语言键为 `item.<modid>.<id>`；方块类型用 `block.<modid>.<id>`；
+- 语言键随物品维护：创建物品时连带创建（英文取 `displayName`，中文缺失时用英文回填），删除物品时连带删除；语言页只编辑已有键，清空即删除；
 - 资源标签写入 `data/<ns>/tags/items|blocks/<tag>.json`，保留其他成员与 `replace`；
 - 配方 id 默认为物品 id，支持 `minecraft:crafting_shaped`、`minecraft:crafting_shapeless`、`minecraft:smelting`；
 - 材料无命名空间时默认当前模组；
@@ -284,7 +285,8 @@ src/main/resources/data/<modid>/recipes/<id>.json
         { "kind": "recipe", "path": ".mcstudio/data/contentmod/recipes/ruby_sword.json" }
       ],
       "backupDir": "<插件数据目录内的备份绝对路径>",
-      "status": "active"
+      "status": "active",
+      "scope": "item"
     }
   ]
 }
@@ -296,21 +298,23 @@ src/main/resources/data/<modid>/recipes/<id>.json
 | `entries[].id` | string | 历史步 id，格式 `h_<毫秒时间戳>_<4 位随机>` |
 | `entries[].sequence` | number | 递增序号，回滚范围按它比较 |
 | `entries[].at` | string | 写入时间（ISO 8601） |
-| `entries[].itemId` | string | 关联物品 id |
+| `entries[].itemId` | string | 关联物品 id；项目级步骤为空串 |
 | `entries[].title` | string | 人类可读摘要，如「红宝石剑：语言/配方/模型」 |
 | `entries[].files` | array | 该步写入的文件；`kind` 为 `lang` / `recipe` / `model` / `tag` |
 | `entries[].backupDir` | string | 该步写入前的备份目录（绝对路径，项目移动后可能失效） |
 | `entries[].status` | string | `active` / `rolledBack` / `archived` / `failed` |
+| `entries[].scope` | string | `item`（默认，旧记录按此处理）或 `project`（语言文件等跨物品写入） |
 
 规则：
 
 - 新步骤为 `active`；
 - 「回到这一步」只撤销目标步之后的步骤：目标保持 `active`，后续标 `rolledBack`，记录与备份都保留；
-- 下一次成功 `content.apply` 时，旧的 `rolledBack` 归档为 `archived`，再追加新步骤；
+- 下一次成功写入（`content.apply` / 语言写入）时，旧的 `rolledBack` 归档为 `archived`，再追加新步骤；
 - 非归档记录（`active` / `rolledBack` / `failed`）上限 50 条，超出时把最旧记录归档，不物理删除；
 - 备份缺失或恢复失败的步骤标 `failed`，不可回滚；
 - 文件缺失或损坏时按空历史处理，`content.history.list` 返回 `warning`，不阻塞内容编辑；
-- 回滚只接受 `active` 步骤，且从最后一步逆序恢复，避免后续步骤再次覆盖目标状态。
+- 回滚只接受 `active` 步骤，且从最后一步逆序恢复，避免后续步骤再次覆盖目标状态；
+- 语言写入记 `scope`：语言页保存 / 补建为 `project`，创建 / 删除物品连带为 `item`。
 
 
 ## 4. items/<id>.json

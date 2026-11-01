@@ -1,8 +1,8 @@
 # 代码索引
 
-> 适用版本：v0.2.2
-> 状态：as-built（v0.2.2 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)，小版本修复计划见 [fix/](fix/README.md)。
-> 更新日期：2026-10-31
+> 适用版本：v0.2.3
+> 状态：as-built（v0.2.3 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)，小版本修复计划见 [fix/](fix/README.md)。
+> 更新日期：2026-11-01
 > 用途：修改插件代码前先查这里，按「文件 → 函数 → 参数 → 返回」定位，不必通读源码。
 > 说明：行号为编写时的位置，改动后会偏移，**优先按名称搜索**。发版与升版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
 
@@ -27,16 +27,17 @@
 | `package.json` | bundle 清单：版本、包名、`dsh.bundle.patch`、`dsh.client` | 46 |
 | `cordis.patch.yml` | 向 Loader 插入 `id: mc-mod-studio` | 12 |
 | `index.js` | Host 入口：HTTP 路由、原生工具注册、卸载清理 | 121 |
-| `client.js` | 浏览器半：全部 UI（单文件模块） | 3072 |
-| `lib/api.js` | 50 个动作的声明式路由表与分派 | 667 |
+| `client.js` | 浏览器半：全部 UI（单文件模块） | 3390 |
+| `lib/api.js` | 54 个动作的声明式路由表与分派 | 716 |
 | `lib/paths.js` | `.mcstudio/` 路径、id 校验、路径归属 | 75 |
 | `lib/schema.js` | 加载器、构想状态、物品类型（含创造模式标签）、19 个字段 | 185 |
 | `lib/meta.js` | `project.json` 与 `studio.json` 读写、项目创建 | 217 |
 | `lib/entries.js` | 构想与物品 CRUD、字段纠偏、`readProject` | 227 |
 | `lib/import.js` | 工程识别、资源扫描、身份解析、差异、快照、导入 proof、标签分类 | 838 |
 | `lib/workbench.js` | 系统卡与任务包读写、字段归一与引用校验 | 207 |
-| `lib/content.js` | 语言/配方/模型/标签资源预览、写入、历史记录与回滚 | 546 |
-| `lib/history.js` | 内容历史的存储、归档、上限、按项目写锁与查询 | 276 |
+| `lib/content.js` | 语言/配方/模型/标签资源预览、写入、历史记录与回滚 | 558 |
+| `lib/history.js` | 内容历史的存储、归档、上限、按项目写锁与查询 | 305 |
+| `lib/lang.js` | 语言文件读写、总览、保存事务与语言键生命周期 | 320 |
 | `lib/gradle.js` | `gradle.properties` 解析、占位符处理 | 205 |
 | `lib/assets.js` | 贴图与模型：路径、PNG 校验、上传、读取、方块面解析 | 536 |
 | `lib/docs.js` | 五份 Markdown 的渲染 | 256 |
@@ -50,7 +51,7 @@
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
 | `data/schema.json` | 字段定义的对外副本（生成物） | 7.3 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：18 个文件、196 项 | 4251 |
+| `test/*.mjs` | 回归测试：19 个文件、210 项 | 4667 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 
 > `lib/project.js` 是 2026-10-24 拆分后保留的转发层，`api.js`、`assets.js`、`docs.js`、
@@ -345,7 +346,7 @@ export * from './import.js'
 | `readPlan(path)` | 一次返回 `{ideas, systems, tasks}` |
 | `SYSTEM_STATUS` / `TASK_STATUS` | 状态枚举 |
 
-### 2.18 `lib/content.js`（5 个导出）
+### 2.18 `lib/content.js`（6 个导出）
 
 | 函数 | 用途 |
 | --- | --- |
@@ -354,13 +355,14 @@ export * from './import.js'
 | `applyContent(path,id,content)` | 备份后写入语言/配方/模型/标签，追加历史；失败自动回滚资源 |
 | `restoreContent(path,backupDir)` | 用备份清单恢复资源；校验备份与目标路径 |
 | `rollbackContentHistory(path,entryId,{mode})` | 回到某步历史；逆序恢复并标记状态 |
+| `backupContentFiles(path,files)` | 备份一组资源文件，返回备份目录；语言写入复用同一 manifest 格式 |
 
 支持 `shaped` / `shapeless` / `furnace` 三种配方；语言写入 `assets/<modid>/lang/*.json`；模型写入 `models/item/<id>.json`；标签写入 `data/<ns>/tags/items|blocks/<tag>.json`。
 
 `applyContent` 返回 `{files[], backupDir, historyEntry{id,sequence,at,title,status}}`；没有实际变更时返回 `{files: [], backupDir: null}` 且不写历史。
 `lines` / `rawLines` 同时接受数组与多行字符串，`pattern` 只丢弃完全空白的行、不 trim。
 
-### 2.19 `lib/history.js`（11 个导出）
+### 2.19 `lib/history.js`（12 个导出）
 
 内容历史：`.mcstudio/content-history.json`，只存元数据，备份仍在插件数据目录。
 
@@ -373,10 +375,32 @@ export * from './import.js'
 | `writeHistoryStore(path,store)` | 原子写回 |
 | `withHistoryLock(path,fn)` | 按项目串行化历史读改写，返回 `fn` 的结果 |
 | `appendHistoryEntry(path,input,options?)` | 追加一步：先把旧 `rolledBack` 归档，再按上限归档最旧记录 |
-| `toPublicHistoryEntry(entry)` | 对外视图，不含 `backupDir` |
-| `listHistoryEntries(path,{itemId,includeArchived})` | 列表：默认不含归档，按序号倒序，标记 `latest`，回显默认配置与告警 |
+| `appendHistoryEntryUnlocked(path,input,options?)` | 调用方已持锁时追加一步；语言写入等复合事务内部使用 |
+| `toPublicHistoryEntry(entry)` | 对外视图，不含 `backupDir`；带 `scope` |
+| `listHistoryEntries(path,{itemId,scope,includeArchived})` | 列表：默认不含归档，按序号倒序，标记 `latest`，回显默认配置与告警 |
+
+`entry.scope` 为 `item`（默认，旧记录按此处理）或 `project`（语言文件等跨物品写入）；`listHistoryEntries` 支持按 `scope` 过滤。
 
 状态流转：`active` →（回滚撤销）→ `rolledBack` →（下一次成功写入）→ `archived`；备份缺失或恢复失败的步骤标记 `failed`。
+
+### 2.20 `lib/lang.js`（10 个导出）
+
+语言文件：`assets/<modid>/lang/zh_cn.json`、`en_us.json`；写入复用 `content` 的备份与 `history` 的历史。
+
+| 导出 | 用途 |
+| --- | --- |
+| `LANG_LOCALES` | `['zh_cn', 'en_us']` |
+| `langKeyForItem(modid,item)` | 物品 `item.<modid>.<id>` / 方块 `block.<modid>.<id>` |
+| `langFiles(path)` | 语言文件路径与标准/回退标记 |
+| `readLanguage(path)` | 读取两个文件；损坏时返回空对象与 `warning` |
+| `listLanguages(path)` | 聚合物品语言键、未知键、缺失统计；`zh` 缺失时用英文回填并标记 `zhFromEn` |
+| `previewLanguage(path,changes)` | 计算将写入的文件与增删改统计 |
+| `applyLanguage(path,changes,{allowCreate,scope,itemId,title})` | 备份 → 写文件 → 记历史；失败回滚 |
+| `ensureItemLanguage(path,item)` | 创建物品时连带创建语言键 |
+| `removeItemLanguage(path,item)` | 删除物品时连带删除语言键 |
+| `ensureAllLanguage(path)` | 为旧项目补建缺失语言键 |
+
+写入规则：语言页只允许改已存在的键；`allowCreate` 仅用于生命周期与补建；空串表示删除键。
 
 ## 3. 接口层
 
@@ -387,7 +411,7 @@ export * from './import.js'
 - 成功：`{"ok": true, "data": ...}`；失败：`{"ok": false, "error": "中文信息"}`；
 - 非 POST 返回 405；未知 action 抛 `未知动作：xxx`。
 
-### 3.2 动作表（50 个）
+### 3.2 动作表（54 个）
 
 **路由声明**：`lib/api.js` 的 `routes` 对象，每个动作声明 `scope` 与 `run`，
 可选 `summary: true` 在执行后刷新摘要。
@@ -457,6 +481,10 @@ export * from './import.js'
 | `content.rollback` | `{path, backupDir}` | `{ok:true}` | studio |
 | `content.history.list` | `{path, itemId?, includeArchived?}` | `{entries[],total,counts,itemId,includeArchived,options,warning}` | studio |
 | `content.history.rollback` | `{path, entryId, mode?}` | `{entry,rolledBack[],files,mode}` | studio |
+| `lang.list` | `{path}` | `{modid,standard,root,files,entries,others,stats,warning?}` | studio |
+| `lang.preview` | `{path, changes}` | `{files[],changes}` | studio |
+| `lang.save` | `{path, changes}` | `{files[],backupDir,historyEntry}` | studio |
+| `lang.ensure` | `{path}` | `{created,files,backupDir,historyEntry}` | studio |
 
 #### 素材与文档
 
@@ -578,7 +606,8 @@ window.__ModuleLoader__.load({
 | `PlanTab` | 计划页：系统卡、任务卡 | `{project,setError}` |
 | `SystemEditor` / `TaskEditor` | 系统/任务编辑弹窗 | `{system/task,onSave,onCancel}` |
 | `ItemsTab` | 列表 / 画布、搜索、校验提示条、历史记录入口 | `{project,setProject,assets,schema,setError,reloadAssets}` |
-| `ItemEditor` | 19 字段分组编辑（带草稿恢复）；内容文本输入；贴图按 `imageFor` 映射 | `{schema,item,project,imageFor,onTextureUploaded,setError,onSave,onCancel}` |
+| `ItemEditor` | 5 页签编辑（基础含语言 / 属性 / 配方 / 标签 / 模型与备注），带草稿恢复；贴图按 `imageFor` 映射 | `{schema,item,project,imageFor,onTextureUploaded,setError,onSave,onCancel}` |
+| `LangTab` | 语言文件总览、缺失筛选、行内编辑、批量保存、补建缺失键 | `{project,setError}` |
 | `HistoryModal` | 内容历史列表、范围/归档筛选、回到某一步 | `{project,itemId,onClose,onRolledBack,setError}` |
 | `AssetsTab` | 上传、预览、模型编辑 | `{project,assets,reloadAssets,setError}` |
 | `GuideTab` | 构建教程 | `{guide}` |
@@ -596,7 +625,9 @@ window.__ModuleLoader__.load({
 const tabs = [
   { id: 'project', label: '项目' },
   { id: 'features', label: '构想' },
+  { id: 'plan', label: '计划' },
   { id: 'items', label: '物品' },
+  { id: 'lang', label: '语言' },
   { id: 'assets', label: '贴图与模型' },
   { id: 'guide', label: '构建教程' },
 ]
@@ -760,7 +791,8 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
         { "kind": "recipe", "path": "src/main/resources/data/mymod/recipes/ruby_sword.json" }
       ],
       "backupDir": "<插件数据目录内的备份绝对路径>",
-      "status": "active"
+      "status": "active",
+      "scope": "item"
     }
   ]
 }
@@ -771,15 +803,33 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 | `id` | 历史步 id，稳定唯一 |
 | `sequence` | 递增序号，回滚范围按它比较 |
 | `at` | 写入时间（ISO） |
-| `itemId` | 关联物品 |
+| `itemId` | 关联物品；项目级步骤为空串 |
 | `title` | 人类可读摘要，由物品名与改动类别生成 |
 | `files` | 该步写入的文件（`kind` 为 lang / recipe / model / tag） |
 | `backupDir` | 该步写入前的备份目录，位于 `$DSH_HOME/mcmods-studio/backups/<项目>/` |
 | `status` | `active` / `rolledBack` / `archived` / `failed` |
+| `scope` | `item`（默认，旧记录按此处理）或 `project`（语言文件等跨物品写入） |
 
 状态流转：新步骤 `active`；被回滚的步骤 `rolledBack`（记录与备份保留）；下一次成功写入时
 `rolledBack` 归档为 `archived`；备份缺失或恢复失败的步骤标 `failed`。归档记录默认不在
 列表展示，`includeArchived: true` 可见。非归档记录上限 50 条，超出时把最旧记录归档，不物理删除。
+
+`scope`：语言页保存与补建记 `project`（`itemId` 为空）；创建 / 删除物品连带的语言写入记 `item`。
+历史弹窗「当前物品」只显示 `item` 且 `itemId` 匹配的步骤，「全部」显示所有步骤并标注「项目级」。
+
+### 6.9 语言文件
+
+`assets/<modid>/lang/zh_cn.json`、`en_us.json`；没有标准资源目录时回退到
+`.mcstudio/assets/<modid>/lang/`。
+
+| 项 | 规则 |
+| --- | --- |
+| 键 | 物品 `item.<modid>.<id>`；方块 `block.<modid>.<id>` |
+| 创建物品 | 连带创建两个 locale 的键；`en` 取 `displayName`，`zh` 缺失时用英文回填 |
+| 删除物品 | 连带删除两个 locale 的键 |
+| 语言页保存 | 只改已存在的键；空串删除该键；未知键（其他模组 / 旧物品）只读 |
+| 旧项目 | 「补建缺失键」为缺少键的物品创建键，等价于创建时的连带创建 |
+| 写入保护 | 写前备份（与 `content.apply` 同格式）、写后记历史；失败回滚；文件损坏时只读并拒绝保存 |
 
 ## 7. 常见改动检索
 
@@ -795,6 +845,8 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 | 加系统卡/任务包字段 | `lib/workbench.js` | `DATA-FORMAT` 3.1/3.2、`test/17` |
 | 加设置页 / 改默认行为 | 规划见 [plans/SETTINGS-PLAN.md](plans/SETTINGS-PLAN.md)；实现后改 `lib/settings.js`、`SettingsTab` | 启动恢复、默认页签、删除素材、Agent 默认项目 |
 | 改内容历史 / 回滚语义 | `lib/history.js`、`lib/content.js` 的 `applyContent` / `rollbackContentHistory` | `test/18-content.mjs`；状态流转与上限归档 |
+| 改语言写入 / 语言键生命周期 | `lib/lang.js`、`lib/api.js` 的 `items.save` / `items.delete` | `test/19-lang.mjs`；`scope` 与备份格式 |
+| 改编辑器分页 | `client.js` 的 `ItemEditor` 与 `PAGES` | `test/12-render.mjs`；保存 payload 不变 |
 | 改多行输入解析 | `client.js` 的 `contentPayload` / `parsePatternText`、`lib/content.js` 的 `lines` / `rawLines` | `test/12-render.mjs`、`test/18-content.mjs` |
 | 改数据可靠性 / 原子写 / 导入回滚 | 参考 [REFERENCE-CUIGENGJI.md](REFERENCE-CUIGENGJI.md) 第 1、2、11 节 | `lib/registry.js` 的 `writeJson`、`lib/import.js` |
 | 改侧栏顺序 | `apply(ctx)` 的 `order` | 侧栏截图核对 |
@@ -814,7 +866,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（18 个文件、196 项）
+# 全部测试（19 个文件、210 项）
 npm test
 
 # 只跑某一组
@@ -838,6 +890,7 @@ index.js
   │    ├─ docs
   │    ├─ content（依赖 history；恢复资源与记录历史）
   │    │    └─ history（只依赖 registry + paths，不反向依赖 content）
+  │    ├─ lang（依赖 content 的备份工具 + history；语言读写与生命周期）
   │    ├─ summary（依赖 meta + entries + assets + structure）
   │    ├─ structure（依赖 paths + meta + registry）
   │    └─ validate（依赖 schema + paths + meta + entries + assets）
@@ -868,9 +921,10 @@ client.js
 | `09-agent.mjs` | 工具、摘要、校验 | 19 |
 | `10-schema-sync.mjs` | schema 一致性 | 2 |
 | `11-tool-bridge.mjs` | 原生工具定义与 notices | 8 |
-| `12-render.mjs` | 渲染结构、方块贴图回退、计划页、想法字段、历史弹窗、多行输入与贴图映射 | 23 |
+| `12-render.mjs` | 渲染结构、方块贴图回退、计划页、想法字段、历史弹窗、多行输入、贴图映射、编辑器分页与语言页 | 27 |
 | `17-workbench.mjs` | 系统卡/任务包 CRUD、字段归一、计划读取 | 5 |
 | `18-content.mjs` | 语言/配方/模型/标签预览、应用、回滚、标准路径、多行解析、内容历史与归档 | 17 |
+| `19-lang.mjs` | 语言列表、保存、空串删除、备份与历史、损坏拒绝、路径、创建/删除生命周期、补建 | 10 |
 | `13-block-assets.mjs` | 方块面贴图解析 | 7 |
 | `14-persist.mjs` | 项目切换持久化 | 10 |
 | `15-structure.mjs` | 代码结构文档 | 15 |

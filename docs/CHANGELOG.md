@@ -2,6 +2,28 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.2.3] - 2026-11-01
+
+### 新增
+
+- 物品编辑器分页：按内容类型拆成 5 个页签——基础（含中文名 / 英文名）、属性、配方、标签、模型与备注；切换页签不丢失输入，保存 payload 不变。
+- 工作台「语言」页：列出全部物品与方块的语言键（`zh_cn` / `en_us`），显示缺失状态，支持搜索、筛选（缺中文 / 缺英文 / 有修改 / 缺键）、行内编辑与批量保存；未知键只读。
+- 语言键生命周期：创建物品时连带创建语言键（英文取 `displayName`，中文缺失时用英文回填）、删除物品时连带删除；旧项目可「补建缺失键」。
+- 新增 `lang.list` / `lang.preview` / `lang.save` / `lang.ensure` 四个动作（动作 50 → 54）。
+- 历史条目新增可选 `scope` 字段（`item` / `project`）：语言页保存与补建记为项目级，创建 / 删除连带记为物品级；历史弹窗显示「项目级」徽章。
+
+### 变更
+
+- `items.save` 新建物品时自动写语言键；`items.delete` 删除物品时清理语言键。语言写入失败不阻塞物品操作，返回 `warnings`。
+- 语言写入复用内容备份与 `content-history.json`，备份格式与 `content.apply` 一致，旧 `content.rollback` 可恢复。
+- `lib/content.js` 导出 `backupContentFiles`；`lib/history.js` 增加 `appendHistoryEntryUnlocked` 并支持 `scope`。
+- 测试新增 `test/19-lang.mjs`（10 项），调整 `test/12-render.mjs` 与 `test/18-content.mjs`；总计 19 个文件 / 210 项。
+
+### 文档
+
+- 更新 [DATA-FORMAT.md](DATA-FORMAT.md)（语言写入语义与 `scope`）、[INDEX.md](INDEX.md)、[STATUS.md](STATUS.md)、[ARCHITECTURE.md](ARCHITECTURE.md)、[VERSION-PLAN.md](VERSION-PLAN.md)、[README.md](../README.md)。
+- [fix/V0.2.3-PLAN.md](fix/V0.2.3-PLAN.md) 标记已实现并补验收结果。
+
 ## [0.2.2] - 2026-10-31
 
 ### 修复

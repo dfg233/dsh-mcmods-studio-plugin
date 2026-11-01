@@ -18,6 +18,18 @@ function findComponent(tree, predicate) {
   return found
 }
 
+/** 点击文本完全匹配且带 onClick 的元素（页签等）。 */
+function clickText(tree, label) {
+  let target = null
+  walk(tree, (node) => {
+    if (target || node.type === '#text') return
+    if (typeof node.props?.onClick === 'function' && texts(node).some((text) => text === label)) target = node
+  })
+  if (!target) throw new Error(`找不到可点击元素：${label}`)
+  target.props.onClick()
+  return target
+}
+
 /** 构造一个最小项目。 */
 function makeProject(overrides = {}) {
   return {
@@ -26,6 +38,32 @@ function makeProject(overrides = {}) {
     items: [],
     features: [],
     ...overrides,
+  }
+}
+
+/** 语言页的模拟返回。 */
+function makeLangData() {
+  return {
+    modid: 'demomod',
+    standard: true,
+    root: 'D:/demo/src/main/resources/assets/demomod',
+    files: {
+      zh_cn: 'src/main/resources/assets/demomod/lang/zh_cn.json',
+      en_us: 'src/main/resources/assets/demomod/lang/en_us.json',
+    },
+    entries: [
+      {
+        key: 'item.demomod.ruby', kind: 'item', id: 'ruby', displayName: '红宝石',
+        zh: '红宝石', en: 'Ruby', zhFromEn: false, missing: [], keyMissing: false,
+      },
+      {
+        key: 'block.demomod.ruby_block', kind: 'block', id: 'ruby_block', displayName: '红宝石块',
+        zh: '红宝石块', en: '', zhFromEn: false, missing: ['en_us'], keyMissing: false,
+      },
+    ],
+    others: [{ key: 'item.demomod.removed', zh: '旧物品', en: '' }],
+    stats: { total: 2, missingZh: 0, missingEn: 1, missingKey: 0, unknown: 1 },
+    warning: null,
   }
 }
 
@@ -237,7 +275,7 @@ const cases = [
     name: '物品编辑器渲染分组与字段',
     async run() {
       const client = await loadClient()
-      const tree = client.render(client.components.ItemEditor, {
+      const props = {
         schema,
         item: {
           id: 'ruby', displayName: '红宝石', type: 'material',
@@ -246,16 +284,67 @@ const cases = [
         },
         project: makeProject(), images: {}, setError: () => {},
         onSave: () => {}, onCancel: () => {},
-      })
+      }
+      let tree = client.render(client.components.ItemEditor, props)
 
-      must(hasText(tree, '最大堆叠'), '应渲染数字字段标签')
-      must(hasText(tree, '稀有度'), '应渲染下拉字段标签')
-      must(hasText(tree, '基础属性'), '应渲染分组标题')
-      must(hasText(tree, '上传 PNG'), '应渲染贴图上传入口')
-      must(hasText(tree, '中文名'), '应渲染语言字段')
-      must(hasText(tree, '配方类型'), '应渲染配方字段')
-      must(hasText(tree, '物品模型'), '应渲染模型选择')
-      must(hasText(tree, '资源标签'), '应渲染资源标签')
+      must(hasText(tree, '注册名（id）'), '基础页应渲染注册名')
+      must(hasText(tree, '上传 PNG'), '基础页应渲染贴图上传入口')
+      must(hasText(tree, '中文名') && hasText(tree, '英文名'), '语言应并入基础页')
+      must(hasText(tree, '描述'), '基础页应渲染描述')
+      must(!hasText(tree, '最大堆叠'), '默认页不应显示属性字段')
+      must(!hasText(tree, '配方类型'), '默认页不应显示配方字段')
+
+      clickText(tree, '属性')
+      client.reactEnv.reset()
+      tree = client.components.ItemEditor(props)
+      must(hasText(tree, '最大堆叠'), '属性页应渲染数字字段标签')
+      must(hasText(tree, '稀有度'), '属性页应渲染下拉字段标签')
+      must(hasText(tree, '基础属性'), '属性页应渲染分组标题')
+
+      clickText(tree, '配方')
+      client.reactEnv.reset()
+      tree = client.components.ItemEditor(props)
+      must(hasText(tree, '配方类型'), '配方页应渲染配方字段')
+
+      clickText(tree, '标签')
+      client.reactEnv.reset()
+      tree = client.components.ItemEditor(props)
+      must(hasText(tree, '资源标签'), '标签页应渲染资源标签')
+
+      clickText(tree, '模型与备注')
+      client.reactEnv.reset()
+      tree = client.components.ItemEditor(props)
+      must(hasText(tree, '物品模型'), '模型页应渲染模型选择')
+    },
+  },
+  {
+    name: '物品编辑器切换页签不丢失输入',
+    async run() {
+      const client = await loadClient()
+      const props = {
+        schema,
+        item: {
+          id: 'ruby', displayName: '红宝石', type: 'material',
+          properties: { maxStackSize: 64 }, tags: [], description: '', notes: '', canvas: { x: 0, y: 0 },
+        },
+        project: makeProject(), setError: () => {},
+        onSave: () => {}, onCancel: () => {},
+      }
+      let tree = client.render(client.components.ItemEditor, props)
+      const nameInput = findComponent(tree, (node) => node.props.value === '红宝石')
+      must(nameInput, '应渲染显示名输入框')
+      nameInput.props.onChange('红宝石剑')
+
+      client.reactEnv.reset()
+      tree = client.components.ItemEditor(props)
+      clickText(tree, '属性')
+      client.reactEnv.reset()
+      tree = client.components.ItemEditor(props)
+      clickText(tree, '基础')
+      client.reactEnv.reset()
+      tree = client.components.ItemEditor(props)
+
+      must(findComponent(tree, (node) => node.props.value === '红宝石剑'), '切页后显示名应保留')
     },
   },
   {
@@ -487,6 +576,9 @@ const cases = [
       }
 
       let tree = await client.renderSettled(client.components.ItemEditor, props)
+      clickText(tree, '配方')
+      client.reactEnv.reset()
+      tree = client.components.ItemEditor(props)
 
       const patternInput = findComponent(tree, (node) => node.props.value === ' R ')
       must(patternInput, '应渲染 Pattern 输入框')
@@ -589,6 +681,61 @@ const cases = [
       const editor = findComponent(tree, (node) => node.type === client.components.ItemEditor)
       must(editor, '应打开物品编辑器')
       equal(editor.props.imageFor('ruby'), dataUrl, '编辑器应拿到按 thumbKey 映射的贴图')
+    },
+  },
+  {
+    name: '语言页渲染物品语言键与统计',
+    async run() {
+      const client = await loadClient({
+        handler: async (action) => (action === 'lang.list' ? makeLangData() : {}),
+      })
+      const tree = await client.renderSettled(client.components.LangTab, {
+        project: makeProject(), setError: () => {},
+      })
+
+      must(hasText(tree, 'lang/zh_cn.json'), '应显示语言文件路径')
+      must(hasText(tree, 'item.demomod.ruby'), '应显示语言键')
+      must(hasText(tree, '红宝石块'), '应显示方块行')
+      must(hasText(tree, '其他键（1）'), '应显示其他键统计')
+      must(hasText(tree, '保存修改（0）'), '无修改时按钮显示 0')
+      must(hasText(tree, '缺英文'), '应有缺英文筛选')
+    },
+  },
+  {
+    name: '语言页按缺失筛选',
+    async run() {
+      const client = await loadClient({
+        handler: async (action) => (action === 'lang.list' ? makeLangData() : {}),
+      })
+      const props = { project: makeProject(), setError: () => {} }
+      let tree = await client.renderSettled(client.components.LangTab, props)
+
+      clickText(tree, '缺英文')
+      client.reactEnv.reset()
+      tree = client.components.LangTab(props)
+
+      must(hasText(tree, '红宝石块'), '缺英文筛选应保留该行')
+      must(!hasText(tree, 'Ruby'), '缺英文筛选应隐藏完整的行')
+    },
+  },
+  {
+    name: '语言页有修改时保存按钮可用',
+    async run() {
+      const client = await loadClient({
+        handler: async (action) => (action === 'lang.list' ? makeLangData() : {}),
+      })
+      const props = { project: makeProject(), setError: () => {} }
+      let tree = await client.renderSettled(client.components.LangTab, props)
+
+      const zhInput = findComponent(tree, (node) => node.props.value === '红宝石')
+      must(zhInput, '应渲染中文输入框')
+      zhInput.props.onChange('红宝石（改）')
+
+      client.reactEnv.reset()
+      tree = client.components.LangTab(props)
+      const saveButton = buttons(tree).find((entry) => entry.text.includes('保存修改（1）'))
+      must(saveButton, '有修改时按钮应显示 1')
+      must(saveButton.node.props.disabled === false, '保存按钮应可用')
     },
   },
   {

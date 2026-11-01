@@ -1,8 +1,8 @@
 # 架构说明
 
-> 适用版本：v0.2.2
+> 适用版本：v0.2.3
 > 状态：as-built（v0.2.1 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
-> 更新日期：2026-10-31
+> 更新日期：2026-11-01
 > 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)，实现状态见 [STATUS.md](STATUS.md)。
 
 ## 1. 总体结构
@@ -22,6 +22,7 @@
 │      ├─ 项目      （项目列表 / 新建 / 扫描 / 导入）        │
 │      ├─ 构想      （构想条目 CRUD）                        │
 │      ├─ 物品      （列表 / 画布 / 属性编辑 / 校验提示 / 历史记录）    │
+│      ├─ 语言      （语言文件总览 / 缺失筛选 / 行内编辑 / 批量保存）  │
 │      ├─ 贴图与模型（上传/预览/方块面贴图/模型 JSON）       │
 │      └─ 构建教程  （内置 markdown）                        │
 │   sidebar.right.pane.tab: 项目概览与选中物品属性           │
@@ -33,7 +34,7 @@
 │ DSH Host（Node 进程）                                     │
 │   index.js  →  webServer.register('/mcmods-studio/api')     │
 │             →  tools.register(22 个 mcmods_* 工具)        │
-│   lib/api.js → 50 个动作的声明式路由表                     │
+│   lib/api.js → 54 个动作的声明式路由表                     │
 │      ├─ registry.js   注册表（$DSH_HOME/mcmods-studio）     │
 │      ├─ paths.js      .mcstudio 路径与 id 校验            │
 │      ├─ schema.js     加载器 / 状态 / 类型 / 19 个字段     │
@@ -42,6 +43,7 @@
 │      ├─ workbench.js  系统卡与任务包                      │
 │      ├─ content.js    语言/配方/模型资源、内容历史与回滚    │
 │      ├─ history.js    内容历史存储、归档、上限与写锁        │
+│      ├─ lang.js       语言文件读写、保存事务与语言键生命周期 │
 │      ├─ import.js     识别 / 扫描 / 差异 / 快照 / proof    │
 │      ├─ backup.js     导入前备份与失败回滚                  │
 │      ├─ gradle.js     gradle.properties 解析与占位符       │
@@ -81,8 +83,9 @@
 | 插件代码 | `D:\program\dsh-mcmods-studio-plugin` | 是 | 本仓库 |
 | 插件注册表 | `$DSH_HOME/mcmods-studio/registry.json` | 否 | 本机项目索引与默认根目录 |
 | 导入前备份 | `$DSH_HOME/mcmods-studio/backups/` | 否 | `.mcstudio/` 与快照的副本，失败时回滚 |
-| 内容备份 | `$DSH_HOME/mcmods-studio/backups/<项目>/` | 否 | 每次内容写入前复制的资源文件，历史步骤引用它 |
+| 内容备份 | `$DSH_HOME/mcmods-studio/backups/<项目>/` | 否 | 每次内容或语言写入前复制的资源文件，历史步骤引用它 |
 | 项目设计数据 | `<项目>/.mcstudio/` | 建议是 | 元数据、构想、系统卡、任务包、物品、内容历史、工坊标记 |
+| 项目语言 | `<项目>/src/main/resources/assets/<modid>/lang/` | 是 | `zh_cn.json` / `en_us.json`；无标准资源目录时回退到 `.mcstudio/assets/` |
 | 项目素材 | `<项目>/src/main/resources/assets/` | 是 | 贴图与模型（标准路径） |
 | 导出文档 | `<项目>/docs/` | 是 | 人读的 Markdown |
 

@@ -1,8 +1,8 @@
 # 开发文档
 
-> 适用版本：v0.2.2
+> 适用版本：v0.2.3
 > 状态：as-built（v0.2.0 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
-> 更新日期：2026-10-31
+> 更新日期：2026-11-01
 > 发版与版本号规则见 [VERSION-PLAN.md](VERSION-PLAN.md)，函数级索引见 [INDEX.md](INDEX.md)。
 
 ## 1. 插件形态
@@ -47,7 +47,7 @@ dsh-mcmods-studio-plugin/
 ├── index.js              # Host 入口：HTTP 路由、原生工具注册、卸载清理
 ├── client.js             # Client 入口：单文件 UI 模块
 ├── lib/
-│   ├── api.js            # 50 个动作的声明式路由表与 dispatch
+│   ├── api.js            # 54 个动作的声明式路由表与 dispatch
 │   ├── registry.js       # 注册表、路径工具、原子写文件
 │   ├── paths.js          # .mcstudio/ 路径、id 校验、路径归属
 │   ├── schema.js         # 加载器、状态、类型、19 个字段
@@ -57,6 +57,7 @@ dsh-mcmods-studio-plugin/
 │   ├── workbench.js      # 系统卡与任务包
 │   ├── content.js        # 语言/配方/模型资源、内容历史与回滚
 │   ├── history.js        # 内容历史存储、归档、上限与写锁
+│   ├── lang.js           # 语言文件读写、保存事务与语言键生命周期
 │   ├── backup.js         # 导入前备份与失败回滚
 │   ├── gradle.js         # gradle.properties 解析与占位符
 │   ├── assets.js         # 贴图、模型、方块面解析
@@ -69,7 +70,7 @@ dsh-mcmods-studio-plugin/
 │   └── project.js        # 转发层：export * 五个数据模块（不能删）
 ├── data/schema.json      # 字段定义对外副本（由脚本生成）
 ├── scripts/gen-schema.mjs
-├── test/                 # 18 个回归用例文件、194 项
+├── test/                 # 19 个回归用例文件、210 项
 ├── locale/               # 插件显示名与描述
 └── docs/                 # 本目录
 ```
@@ -166,7 +167,7 @@ Host 层可以脱离 DSH 直接测试：设置 `DSH_HOME` 到临时目录，
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（18 个文件、194 项）
+# 全部测试（19 个文件、210 项）
 npm test
 
 # 只跑某一组
