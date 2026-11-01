@@ -1,6 +1,6 @@
 # 架构说明
 
-> 适用版本：v0.2.3
+> 适用版本：v0.2.4
 > 状态：as-built（v0.2.1 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
 > 更新日期：2026-11-01
 > 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)，实现状态见 [STATUS.md](STATUS.md)。
@@ -11,7 +11,7 @@
 ┌──────────────────────────────────────────────────────────┐
 │ 使用方                                                     │
 │   用户 → DSH Web UI（浏览器）                              │
-│   Agent → 22 个原生工具（mcmods_*）或 HTTP 动作             │
+│   Agent → 23 个原生工具（mcmods_*）或 HTTP 动作             │
 └───────────────────────┬──────────────────────────────────┘
                         │ POST /mcmods-studio/api
                         ▼
@@ -33,7 +33,7 @@
 ┌──────────────────────────────────────────────────────────┐
 │ DSH Host（Node 进程）                                     │
 │   index.js  →  webServer.register('/mcmods-studio/api')     │
-│             →  tools.register(22 个 mcmods_* 工具)        │
+│             →  tools.register(23 个 mcmods_* 工具)        │
 │   lib/api.js → 54 个动作的声明式路由表                     │
 │      ├─ registry.js   注册表（$DSH_HOME/mcmods-studio）     │
 │      ├─ paths.js      .mcstudio 路径与 id 校验            │

@@ -1,10 +1,10 @@
 # 项目状态：已实现、未实现与要求
 
-> 适用版本：模组工坊（`dsh-mcmods-studio-plugin`）v0.2.3
+> 适用版本：模组工坊（`dsh-mcmods-studio-plugin`）v0.2.4
 > 更新日期：2026-11-01
 > 本文档回答三个问题：**现在能做什么**、**还不能做什么**、**必须遵守什么**。
 > 历史变更见 [CHANGELOG.md](CHANGELOG.md)，版本规则与发版流程见 [VERSION-PLAN.md](VERSION-PLAN.md)，开发方式见 [DEVELOPMENT.md](DEVELOPMENT.md)，当前主线见 [PLAN.md](PLAN.md)，代码索引见 [INDEX.md](INDEX.md)。
-> 本文区分 **as-built（v0.2.3 已实现）** 与 **目标能力（v0.3 起）**；旧路线已归档到 [archive/PLAN-v0.1.md](archive/PLAN-v0.1.md)。
+> 本文区分 **as-built（v0.2.4 已实现）** 与 **目标能力（v0.3 起）**；旧路线已归档到 [archive/PLAN-v0.1.md](archive/PLAN-v0.1.md)。
 
 ## 0. 设计目的
 
@@ -161,7 +161,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 | 能力 | 落地 | 说明 |
 | --- | --- | --- |
-| 原生工具 | `lib/tools.js` + `lib/tool-bridge.js` | 22 个工具，注册为 DSH 原生 `mcmods_*` 工具，agent 可直接调用 |
+| 原生工具 | `lib/tools.js` + `lib/tool-bridge.js` | 23 个工具，注册为 DSH 原生 `mcmods_*` 工具，agent 可直接调用 |
 | 项目摘要 | `lib/summary.js` | `.mcstudio/summary.json`，12 物品约 1.2 KB，写操作后自动刷新 |
 | 紧凑 / 详细双表示 | `item_list` / `item_get` | 列举仅回 id / 名称 / 类型（12 物品约 300 字节）；详情才回 19 个字段 |
 | schema 外置 | `data/schema.json` | 由 `lib/schema.js` 生成，`test/10-schema-sync.mjs` 守住一致性 |
@@ -333,6 +333,13 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | 接口 | `lib/api.js` | 新增 `lang.list/preview/save/ensure`；动作 50 → 54 |
 | 测试 | `test/19-lang.mjs`、`test/12-render.mjs` | 语言列表、保存、删除、补建、损坏、路径、分页与语言页渲染；总计 19 文件 / 210 项 |
 
+### 3.0.13 v0.2.4 注册表清理工具（已完成）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| 移除登记 | `lib/tools.js` 的 `project_remove` | 从注册表移除项目，不删除目录；目录已删除时也可移除；未登记时返回 `removed: false` |
+| 测试 | `test/09-agent.mjs`、`test/11-tool-bridge.mjs` | 正常移除、目录已删除；工具数 22 → 23；总计 19 文件 / 212 项 |
+
 ### 3.1 目标能力（v0.3 起）
 
 | 里程碑 | 能力 | 说明 |
@@ -341,6 +348,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | M1 / v0.2.1 | 内容编辑修复与历史 | Pattern/材料键换行；内容历史持久化、回到某步的递归回滚、rolledBack 保留与归档 |
 | M1 / v0.2.2 | 物品编辑器贴图预览修复 | 按缩略图键映射取图；上传后立即刷新预览与素材 |
 | M1 / v0.2.3 | 编辑器分页与语言页 | 5 页签；语言页、语言键生命周期与语言写入历史 |
+| M1 / v0.2.4 | 注册表清理工具 | 新增 `project_remove`，支持目录已删除时清理登记 |
 | M2 / v0.3.0 | API 索引 + 模板 + 上下文包 + 检查 | 从 Gradle classpath 提取签名（含 protected/继承/嵌套类）；模板清单/参数/渲染；`context.pack`；允许路径、structure-diff、资源引用、注册配对检查 |
 | M3 / v0.4.0 | 代码生成 + Lock 试点 | 标记区块生成；方块实体/菜单、钥匙、网络同步模板；Lock「电子锁」端到端 |
 | M4 / v0.5.0 | 进阶内容与稳定 | 战利品表、创造标签、多加载器模板、性能基线 |
@@ -396,11 +404,11 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**19 个文件、210 项全部通过**）：
+已通过自动化验证（`npm test`，**19 个文件、212 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
-| Host 业务 | 136 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| Host 业务 | 138 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
 | 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |
@@ -417,7 +425,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 - 数据：画布坐标持久化、快照生成、注册表读写、摘要重建；
 - 代码结构：真实 Forge 工程扫描 14 文件 / 15 类 / 38 方法，注册点按 `items` 归类；
 - 内容历史：多次修改后跨调用读取、回到中间步、rolledBack 保留、下一次写入归档、备份缺失停止、损坏降级、50 条上限均有自动化用例；
-- Agent：22 个工具全部注册到宿主，`agent.tools` 返回 22 工具 / 50 动作；
+- Agent：23 个工具全部注册到宿主，`agent.tools` 返回 23 工具 / 54 动作；
 - 槽位：`main`、`sidebar.panellist`、`sidebar.right.pane.tab` 均已确认注册且处于激活状态；
 - 安装：bundle 安装与卸载、接口新旧路径切换。
 

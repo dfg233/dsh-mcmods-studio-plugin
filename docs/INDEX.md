@@ -1,7 +1,7 @@
 # 代码索引
 
-> 适用版本：v0.2.3
-> 状态：as-built（v0.2.3 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)，小版本修复计划见 [fix/](fix/README.md)。
+> 适用版本：v0.2.4
+> 状态：as-built（v0.2.4 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)，小版本修复计划见 [fix/](fix/README.md)。
 > 更新日期：2026-11-01
 > 用途：修改插件代码前先查这里，按「文件 → 函数 → 参数 → 返回」定位，不必通读源码。
 > 说明：行号为编写时的位置，改动后会偏移，**优先按名称搜索**。发版与升版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
@@ -45,13 +45,13 @@
 | `lib/backup.js` | 导入前项目备份、失败回滚、备份路径 | 109 |
 | `lib/summary.js` | `.mcstudio/summary.json` 的构建（含创造模式标签计数） | 114 |
 | `lib/validate.js` | 9 类项目校验 | 171 |
-| `lib/tools.js` | 22 个 agent 工具的定义与调用 | 498 |
+| `lib/tools.js` | 23 个 agent 工具的定义与调用 | 529 |
 | `lib/structure.js` | Java 源码结构解析、按哈希增量、注解读写 | 794 |
 | `lib/tool-bridge.js` | 把工具注册为 DSH 原生工具 | 87 |
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
 | `data/schema.json` | 字段定义的对外副本（生成物） | 7.3 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：19 个文件、210 项 | 4667 |
+| `test/*.mjs` | 回归测试：19 个文件、212 项 | 4715 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 
 > `lib/project.js` 是 2026-10-24 拆分后保留的转发层，`api.js`、`assets.js`、`docs.js`、
@@ -302,7 +302,7 @@
 
 | 导出 | 用途 |
 | --- | --- |
-| `TOOLS` | 22 个工具定义的数组 |
+| `TOOLS` | 23 个工具定义的数组 |
 | `listTools()` | 精简清单（name / description / input） |
 | `callTool(name, args)` | 按名调用，未知工具抛错 |
 
@@ -519,7 +519,7 @@ export * from './import.js'
 4. 前端用 `call('your.action', {...})`；
 5. 若也想暴露给 agent，在 `lib/tools.js` 的 `TOOLS` 加一项。
 
-## 4. Agent 工具（22 个）
+## 4. Agent 工具（23 个）
 
 原生工具名带 `mcmods_` 前缀，与 `TOOLS.name` 一一对应。
 
@@ -527,6 +527,7 @@ export * from './import.js'
 | --- | --- | --- |
 | `project_summary` | 项目全貌 | `{project?}` |
 | `project_list` | 列出已登记项目 | — |
+| `project_remove` | 从注册表移除登记（不删目录） | `{path}` |
 | `project_create` | 新建项目 | `{path,name,modid,loader}` |
 | `project_import` | 导入已有工程 | `{path,modid?}` |
 | `project_analyze` | 分析导入影响 | `{path}` |
@@ -866,7 +867,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（19 个文件、210 项）
+# 全部测试（19 个文件、212 项）
 npm test
 
 # 只跑某一组
@@ -918,7 +919,7 @@ client.js
 | `06-docs.mjs` | 五份导出、幂等 | 8 |
 | `07-scan.mjs` | 扫描、判定、差异、重新导入、标签分类 | 13 |
 | `08-client-load.mjs` | 客户端加载、座位注册 | 8 |
-| `09-agent.mjs` | 工具、摘要、校验 | 19 |
+| `09-agent.mjs` | 工具、摘要、校验、注册表清理 | 21 |
 | `10-schema-sync.mjs` | schema 一致性 | 2 |
 | `11-tool-bridge.mjs` | 原生工具定义与 notices | 8 |
 | `12-render.mjs` | 渲染结构、方块贴图回退、计划页、想法字段、历史弹窗、多行输入、贴图映射、编辑器分页与语言页 | 27 |

@@ -2,7 +2,7 @@
  * 用例 09：Agent 能力（工具清单、工具调用、摘要、校验）。
  */
 
-import { readFile } from 'node:fs/promises'
+import { readFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { equal, makePngBase64, must, rejects, runSuite, writeNeoForgeProject } from './helpers.mjs'
 
@@ -21,7 +21,7 @@ const cases = [
       must(result.tools.length >= 15, `工具数应不少于 15，实际 ${result.tools.length}`)
 
       const names = result.tools.map((tool) => tool.name)
-      for (const expected of ['project_summary', 'item_list', 'item_save', 'project_validate', 'schema_get']) {
+      for (const expected of ['project_summary', 'project_remove', 'item_list', 'item_save', 'project_validate', 'schema_get']) {
         must(names.includes(expected), `应包含工具 ${expected}`)
       }
 
@@ -278,6 +278,35 @@ const cases = [
 
       const result = await ws.call('agent.call', { tool: 'project_scan', args: { root: ws.root } })
       must(result.candidates.some((item) => item.path === dir && item.imported === false), '应报告未导入的候选')
+    },
+  },
+  {
+    name: 'project_remove 移除登记但不删除目录',
+    async run(ws) {
+      const dir = await newProject(ws)
+      const before = await ws.call('agent.call', { tool: 'project_list', args: {} })
+      must(before.projects.some((item) => item.path === dir), '创建后应登记')
+
+      const result = await ws.call('agent.call', { tool: 'project_remove', args: { path: dir } })
+      equal(result.removed, true, '应移除登记')
+      must(!result.projects.some((item) => item.path === dir), '返回列表不应再包含该项目')
+
+      const after = await ws.call('agent.call', { tool: 'project_list', args: {} })
+      must(!after.projects.some((item) => item.path === dir), '注册表应不再包含该项目')
+      const projectFile = await readFile(join(dir, '.mcstudio', 'project.json'), 'utf8')
+      must(projectFile.includes('agentmod'), '移除登记不应删除项目目录')
+    },
+  },
+  {
+    name: 'project_remove 支持目录已删除的项目',
+    async run(ws) {
+      const dir = await newProject(ws, 'gonemod')
+      await rm(dir, { recursive: true, force: true })
+
+      const result = await ws.call('agent.call', { tool: 'project_remove', args: { path: dir } })
+      equal(result.removed, true, '目录不存在时仍应移除登记')
+      const list = await ws.call('agent.call', { tool: 'project_list', args: {} })
+      must(!list.projects.some((item) => item.path === dir), '注册表应清理该路径')
     },
   },
 ]

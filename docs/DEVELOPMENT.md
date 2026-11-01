@@ -1,6 +1,6 @@
 # 开发文档
 
-> 适用版本：v0.2.3
+> 适用版本：v0.2.4
 > 状态：as-built（v0.2.0 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
 > 更新日期：2026-11-01
 > 发版与版本号规则见 [VERSION-PLAN.md](VERSION-PLAN.md)，函数级索引见 [INDEX.md](INDEX.md)。
@@ -65,7 +65,7 @@ dsh-mcmods-studio-plugin/
 │   ├── summary.js        # summary.json（agent 摘要）
 │   ├── structure.js      # Java 结构解析、按哈希增量、语义注解
 │   ├── validate.js       # 9 类校验
-│   ├── tools.js          # 22 个 agent 工具的定义与调用
+│   ├── tools.js          # 23 个 agent 工具的定义与调用
 │   ├── tool-bridge.js    # 把工具注册为 DSH 原生工具
 │   └── project.js        # 转发层：export * 五个数据模块（不能删）
 ├── data/schema.json      # 字段定义对外副本（由脚本生成）

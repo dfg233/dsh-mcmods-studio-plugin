@@ -2,6 +2,25 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.2.4] - 2026-11-01
+
+### 新增
+
+- 新增 agent 工具 `project_remove { path }`：从工坊注册表移除项目登记，不删除项目目录；目录已不存在时也可移除。工具数 22 → 23。
+
+### 修复
+
+- Agent 创建项目后删除项目目录时，没有清理注册表登记的工具，只能直接改 `registry.json`；现在可用 `project_remove` 移除登记，`project_list` 同步更新。
+
+### 变更
+
+- `package.json` 版本由 `0.2.3` 升至 `0.2.4`。
+- 测试新增 2 项（`test/09-agent.mjs`），`test/11-tool-bridge.mjs` 工具数改为 23；总计 19 个文件 / 212 项。
+
+### 文档
+
+- 新增 [fix/V0.2.4-PLAN.md](fix/V0.2.4-PLAN.md)；更新 INDEX、STATUS、VERSION-PLAN、ARCHITECTURE、DEVELOPMENT、README 的工具数。
+
 ## [0.2.3] - 2026-11-01
 
 ### 新增
