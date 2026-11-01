@@ -2,6 +2,25 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.2.5] - 2026-11-01
+
+### 新增
+
+- 新增 agent 工具 `content`：`get` / `preview` / `apply` / `history.list` / `history.rollback`，覆盖物品编辑器的语言/配方/模型/标签与内容历史。
+- 新增 agent 工具 `lang`：`list` / `preview` / `save` / `ensure`，覆盖语言页的查看、保存与补建。
+- 新增 agent 工具 `asset`：`list` / `upload` / `delete` / `model.get` / `model.save`，支持上传 PNG、删除贴图与模型读写。
+- 新增 agent 工具 `project_admin`：`reimport` / `add` / `saveMeta` / `setRoot`，覆盖重新导入、添加已有项目、元数据与扫描根目录。
+- `workbench` 工具新增 `system.delete` / `task.delete` 动作。
+
+### 变更
+
+- `package.json` 版本由 `0.2.4` 升至 `0.2.5`；工具数 23 → 27，动作数不变。
+- 测试新增 `test/20-agent-tools.mjs`（8 项），`test/09-agent.mjs` 与 `test/11-tool-bridge.mjs` 同步；总计 20 个文件 / 220 项。
+
+### 文档
+
+- 新增 [fix/V0.2.5-PLAN.md](fix/V0.2.5-PLAN.md)；更新 INDEX（工具表与计数）、STATUS、VERSION-PLAN、README、ARCHITECTURE、DEVELOPMENT、AGENT-PLAN、SETTINGS-PLAN。
+
 ## [0.2.4] - 2026-11-01
 
 ### 新增

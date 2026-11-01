@@ -1,7 +1,7 @@
 # Agent 结合与发展建议
 
 > 文档编号：AGENT-PLAN
-> 适用版本：v0.2.4
+> 适用版本：v0.2.5
 > 状态：**建议 1–6 与代码结构文档已实施；建议 7–9 后移，下一步扩展模板/任务/上下文工具**（2026-10-29 更新）
 > 更新日期：2026-10-28
 > 配套：[VERSION-PLAN.md](../VERSION-PLAN.md)（版本规则）、[PLAN.md](../PLAN.md)（宗旨与路线）、[STATUS.md](../STATUS.md)（实现状态）、[INDEX.md](../INDEX.md)（代码索引）
@@ -11,7 +11,7 @@
 
 | 建议 | 内容 | 状态 | 落地 |
 | --- | --- | --- | --- |
-| 1 | 注册为 agent 工具 | **已完成** | 23 个工具，DSH 原生 `mcmods_*`，见 `lib/tools.js`、`lib/tool-bridge.js` |
+| 1 | 注册为 agent 工具 | **已完成** | 27 个工具，DSH 原生 `mcmods_*`，见 `lib/tools.js`、`lib/tool-bridge.js` |
 | 2 | `summary.json` 聚合 | **已完成** | `lib/summary.js`，写操作后自动刷新 |
 | 3 | 紧凑 / 详细双表示 | **已完成** | `item_list`（约 300 字节 / 12 物品）与 `item_get`（19 字段带标签） |
 | 4 | 字段知识外置 | **已完成** | `data/schema.json` + `scripts/gen-schema.mjs` + 一致性测试 |
