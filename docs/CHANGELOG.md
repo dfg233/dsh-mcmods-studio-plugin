@@ -2,6 +2,28 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.3.0] - 2026-11-04
+
+### 新增
+
+- **API 索引**：`lib/api-index.js` 从项目依赖 classpath（Gradle 精确导出 / 静态扫描）提取类、方法、字段签名，支持 protected、继承合并与嵌套类；分片缓存到 `$DSH_HOME/mcmods-studio/cache/api/`；无 JDK 时降级为类名清单。
+- **模板**：`templates/` 9 个内置模板（simple-item / tool-set / block-basic / shaped / shapeless / furnace / item-tag / block-tag / lang-pair），`lib/templates.js` 负责参数校验、渲染、冲突跳过、JSON 合并、备份与回滚。
+- **上下文包**：`lib/context.js` 按任务打包系统卡、模板、API 签名、代码摘录与资源，默认 10 文件 / 12KB / 20 类预算，超限裁剪并记录 `truncated`。
+- **检查器**：`lib/checks.js` 提供 `allowed-paths`、`guard-paths`、`structure-diff`、`resource-exists`、`registration-pair`、`lang-key`、`compile-java`。
+- **任务执行**：`lib/tasks.js` 的 `start`（结构快照）/ `apply`（只写允许路径、备份、失败回滚）/ `verify`（写检查结果）/ `rollback`；同 `requestId` 幂等。
+- **接口与工具**：动作 54 → 68（api / template / context / task），工具 27 → 31（`api`、`template`、`context`、`task`）。
+- **计划页**：任务卡显示模板与检查统计，新增「上下文」「验证」「回滚」按钮与上下文预览弹窗。
+
+### 变更
+
+- `package.json` 版本由 `0.2.5` 升至 `0.3.0`；`files` 增加 `templates/**`。
+- 任务字段补全：`templateRefs.parameters` 保留，供上下文打包使用。
+- 测试新增 `test/21-api-index`、`22-templates`、`23-context`、`24-checks`、`25-tasks`；总计 25 文件 / 261 项。
+
+### 文档
+
+- 新增 [major/V0.3.0-PLAN.md](major/V0.3.0-PLAN.md) 与 [major/README.md](major/README.md)；更新 INDEX、STATUS、VERSION-PLAN、ARCHITECTURE、DEVELOPMENT、AGENT-PLAN、SETTINGS-PLAN、DATA-FORMAT。
+
 ## [0.2.5] - 2026-11-01
 
 ### 新增

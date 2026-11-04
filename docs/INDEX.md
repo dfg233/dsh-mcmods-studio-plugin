@@ -1,7 +1,7 @@
 # 代码索引
 
-> 适用版本：v0.2.5
-> 状态：as-built（v0.2.5 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)，小版本修复计划见 [fix/](fix/README.md)。
+> 适用版本：v0.3.0
+> 状态：as-built（v0.3.0 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)，小版本修复计划见 [fix/](fix/README.md)。
 > 更新日期：2026-11-01
 > 用途：修改插件代码前先查这里，按「文件 → 函数 → 参数 → 返回」定位，不必通读源码。
 > 说明：行号为编写时的位置，改动后会偏移，**优先按名称搜索**。发版与升版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
@@ -27,8 +27,8 @@
 | `package.json` | bundle 清单：版本、包名、`dsh.bundle.patch`、`dsh.client` | 46 |
 | `cordis.patch.yml` | 向 Loader 插入 `id: mc-mod-studio` | 12 |
 | `index.js` | Host 入口：HTTP 路由、原生工具注册、卸载清理 | 121 |
-| `client.js` | 浏览器半：全部 UI（单文件模块） | 3390 |
-| `lib/api.js` | 54 个动作的声明式路由表与分派 | 716 |
+| `client.js` | 浏览器半：全部 UI（单文件模块） | 3459 |
+| `lib/api.js` | 68 个动作的声明式路由表与分派 | 812 |
 | `lib/paths.js` | `.mcstudio/` 路径、id 校验、路径归属 | 75 |
 | `lib/schema.js` | 加载器、构想状态、物品类型（含创造模式标签）、19 个字段 | 185 |
 | `lib/meta.js` | `project.json` 与 `studio.json` 读写、项目创建 | 217 |
@@ -45,13 +45,18 @@
 | `lib/backup.js` | 导入前项目备份、失败回滚、备份路径 | 109 |
 | `lib/summary.js` | `.mcstudio/summary.json` 的构建（含创造模式标签计数） | 114 |
 | `lib/validate.js` | 9 类项目校验 | 171 |
-| `lib/tools.js` | 27 个 agent 工具的定义与调用 | 691 |
+| `lib/tools.js` | 31 个 agent 工具的定义与调用 | 821 |
+| `lib/api-index.js` | API 索引：classpath 发现、javap 解析、缓存与查询 | 629 |
+| `lib/templates.js` | 模板清单、参数校验、渲染、预览与应用 | 252 |
+| `lib/context.js` | 任务上下文打包与预算裁剪 | 198 |
+| `lib/checks.js` | 任务级检查器（allowed/guard/structure-diff 等） | 301 |
+| `lib/tasks.js` | 任务执行：start / apply / verify / rollback | 174 |
 | `lib/structure.js` | Java 源码结构解析、按哈希增量、注解读写 | 794 |
 | `lib/tool-bridge.js` | 把工具注册为 DSH 原生工具 | 87 |
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
 | `data/schema.json` | 字段定义的对外副本（生成物） | 7.3 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：20 个文件、220 项 | 4896 |
+| `test/*.mjs` | 回归测试：25 个文件、261 项 | 5890 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 
 > `lib/project.js` 是 2026-10-24 拆分后保留的转发层，`api.js`、`assets.js`、`docs.js`、
@@ -302,7 +307,7 @@
 
 | 导出 | 用途 |
 | --- | --- |
-| `TOOLS` | 27 个工具定义的数组 |
+| `TOOLS` | 31 个工具定义的数组 |
 | `listTools()` | 精简清单（name / description / input） |
 | `callTool(name, args)` | 按名调用，未知工具抛错 |
 
@@ -402,6 +407,18 @@ export * from './import.js'
 
 写入规则：语言页只允许改已存在的键；`allowCreate` 仅用于生命周期与补建；空串表示删除键。
 
+### 2.21 M2 模块（api-index / templates / context / checks / tasks）
+
+| 文件 | 导出 | 用途 |
+| --- | --- | --- |
+| `lib/api-index.js` | `apiStatus`、`refreshApiIndex`、`apiSearch`、`apiGet`、`apiContext`、`parseJavapOutput`、`listZipEntries`、`filterClassName`、`apiCacheDir` | classpath 发现、javap 解析、分片缓存 |
+| `lib/templates.js` | `listTemplates`、`getTemplate`、`renderTemplate`、`applyTemplate` | 模板清单、渲染、备份/回滚 |
+| `lib/context.js` | `packContext` | 任务上下文打包与预算裁剪 |
+| `lib/checks.js` | `runChecks`、`CHECKS`、`writeStructureSnapshot`、`matchesPath` | 任务级检查 |
+| `lib/tasks.js` | `startTask`、`applyTask`、`verifyTask`、`rollbackTask` | 任务执行状态机 |
+
+存储：API 缓存 `$DSH_HOME/mcmods-studio/cache/api/`，结构快照 `cache/structure/`，模板 `templates/`。
+
 ## 3. 接口层
 
 ### 3.1 HTTP 约定
@@ -411,7 +428,7 @@ export * from './import.js'
 - 成功：`{"ok": true, "data": ...}`；失败：`{"ok": false, "error": "中文信息"}`；
 - 非 POST 返回 405；未知 action 抛 `未知动作：xxx`。
 
-### 3.2 动作表（54 个）
+### 3.2 动作表（68 个）
 
 **路由声明**：`lib/api.js` 的 `routes` 对象，每个动作声明 `scope` 与 `run`，
 可选 `summary: true` 在执行后刷新摘要。
@@ -486,6 +503,25 @@ export * from './import.js'
 | `lang.save` | `{path, changes}` | `{files[],backupDir,historyEntry}` | studio |
 | `lang.ensure` | `{path}` | `{created,files,backupDir,historyEntry}` | studio |
 
+#### API、模板、上下文与任务
+
+| action | payload | 返回 | scope |
+| --- | --- | --- | --- |
+| `api.status` | `{path}` | `{available,stale,source,stats,generatedAt,build}` | studio |
+| `api.refresh` | `{path, mode?}` | `{available,source,javap,stats,classpathHash}` | studio |
+| `api.search` | `{path, query?, package?, kind?, limit?}` | `{available,results[],count}` | studio |
+| `api.get` | `{path, class, includeInherited?}` | `{found,name,class}` | studio |
+| `api.context` | `{path, classRefs?, taskId?, budget?}` | `{available,classes[],truncated,bytes}` | studio |
+| `template.list` | — | `{templates[]}` | none |
+| `template.get` | `{id}` | `{...manifest, files[]}` | none |
+| `template.render` | `{path, id, params}` | `{id,name,params,files[],conflicts[]}` | studio |
+| `template.apply` | `{path, id, params}` | `{id,files[],conflicts[],backupDir}` | studio |
+| `context.pack` | `{path, taskId, budget?}` | 上下文包 | studio |
+| `task.start` | `{path, id}` | `{task, context}` | studio |
+| `task.apply` | `{path, id, files[], requestId?}` | `{task, files[], backupDir}` | studio |
+| `task.verify` | `{path, id, compile?}` | `{task, checks[], failed}` | studio |
+| `task.rollback` | `{path, id}` | `{task, restored}` | studio |
+
 #### 素材与文档
 
 | action | payload | 返回 | scope |
@@ -547,6 +583,10 @@ export * from './import.js'
 | `structure_get` | 读结构文档 | `{project?,compact?}` |
 | `structure_find` | 按 id 查注册位置 | `{id,project?}` |
 | `structure_annotate` | 写语义注解 | `{file,summary?,members?,project?}` |
+| `api` | API 索引：status / refresh / search / get / context | `{action,project?,mode?,query?,className?,classRefs?,taskId?,budget?}` |
+| `template` | 模板：list / get / render / apply | `{action,project?,id?,params?}` |
+| `context` | 任务上下文包 | `{project?,taskId,budget?}` |
+| `task` | 任务：start / apply / verify / rollback | `{action,id,project?,files?,requestId?,compile?}` |
 | `content` | 内容资源：get / preview / apply / history.list / history.rollback | `{action,project?,id?,content?,entryId?,mode?,itemId?}` |
 | `lang` | 语言文件：list / preview / save / ensure | `{action,project?,changes?}` |
 | `asset` | 素材：list / upload / delete / model.get / model.save | `{action,project?,id?,kind?,base64?,model?}` |
@@ -871,7 +911,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（20 个文件、220 项）
+# 全部测试（25 个文件、261 项）
 npm test
 
 # 只跑某一组
@@ -930,7 +970,12 @@ client.js
 | `17-workbench.mjs` | 系统卡/任务包 CRUD、字段归一、计划读取 | 5 |
 | `18-content.mjs` | 语言/配方/模型/标签预览、应用、回滚、标准路径、多行解析、内容历史与归档 | 17 |
 | `19-lang.mjs` | 语言列表、保存、空串删除、备份与历史、损坏拒绝、路径、创建/删除生命周期、补建 | 10 |
-| `20-agent-tools.mjs` | content / lang / asset / project_admin 工具与 workbench 删除 | 8 |
+| `20-agent-tools.mjs` | content / lang / asset / project_admin / api 工具与 workbench 删除 | 9 |
+| `21-api-index.mjs` | javap 解析、过滤、zip 目录、缓存查询、继承合并、预算 | 7 |
+| `22-templates.mjs` | 模板清单、渲染、参数校验、冲突、JSON 合并、应用 | 9 |
+| `23-context.mjs` | 上下文组成、codeRefs、预算裁剪、工具 | 7 |
+| `24-checks.mjs` | allowed/guard/structure-diff/resource/registration/lang | 8 |
+| `25-tasks.mjs` | start / apply / 幂等 / verify / rollback / 工具 | 8 |
 | `13-block-assets.mjs` | 方块面贴图解析 | 7 |
 | `14-persist.mjs` | 项目切换持久化 | 10 |
 | `15-structure.mjs` | 代码结构文档 | 15 |

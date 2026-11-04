@@ -1,7 +1,7 @@
 # 数据格式
 
-> 适用版本：v0.2.5
-> 状态：as-built（v0.2.5 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
+> 适用版本：v0.3.0
+> 状态：as-built（v0.3.0 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
 > 更新日期：2026-11-01
 > 数据文件内的 `schemaVersion` 与插件版本号相互独立；插件升级不自动改写数据格式。
 > 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
@@ -614,7 +614,69 @@ $DSH_HOME/mcmods-studio/backups/
 `content-history.json` 的 `entries[].backupDir` 指向这些目录；回滚按清单恢复，不删除备份。
 
 
-## 8. notices（导入判定提示）
+## 8. v0.3.0 新增数据
+
+### 8.1 API 索引缓存（插件级）
+
+```text
+$DSH_HOME/mcmods-studio/cache/api/<projectHash>/current.json   # {classpathHash}
+$DSH_HOME/mcmods-studio/cache/api/<projectHash>/<classpathHash>/
+  meta.json     # loader/mcVersion/mappings/javaVersion/source/jars/stats/generatedAt
+  index.json    # {schemaVersion, count, classes: {name: {kind, shard}}}
+  classes/<package>.json   # 类签名数组
+```
+
+- 派生数据，可删除重建；不写入项目 `.mcstudio/`；
+- `current.json` 指向当前索引；构建文件或依赖变化会生成新目录，旧目录保留可清理；
+- `meta.source` 记录来源：`gradle-classpath` / `static-scan`（可能追加 `+javap` / `+jar-list`）。
+
+### 8.2 结构快照（任务基线）
+
+```text
+$DSH_HOME/mcmods-studio/cache/structure/<hash>.json   # structure.json 的副本
+```
+
+任务 `start` 时写入，`verify` 的 `structure-diff` 用它作为基线；缺失时降级为「未验证结构」。
+
+### 8.3 模板目录
+
+```text
+<插件根>/templates/<id>/
+  template.json   # id/name/version/loaders/mcVersion/parameters/apiRefs/files/checks
+  files/*.tpl     # {{变量}} 占位符
+```
+
+`files[].merge` 支持 `json`（深合并）；已存在文件默认跳过。模板随插件发布，位于 `package.json` 的 `files` 白名单。
+
+### 8.4 任务扩展字段
+
+`tasks.json` 中每个任务新增（旧任务缺省为空）：
+
+| 字段 | 说明 |
+| --- | --- |
+| `templateRefs[]` | `{id, version, parameters?}` |
+| `apiRefs[]` | 依赖 classpath 的类名 |
+| `codeRefs[]` | 项目自身类（`class:Name` 或 `Name`） |
+| `baseStructureHash` | 任务开始时的结构快照 hash |
+| `result` | `{files[], backupDir, checks[], startedAt, appliedAt, verifiedAt, rolledBackAt, requestId}` |
+
+`task.apply` 的备份写入 `$DSH_HOME/mcmods-studio/backups/<项目>/<stamp>-<随机>-content/`，manifest 与 `content.apply` 一致，`task.rollback` 复用 `restoreContent`。
+
+### 8.5 上下文包（`context.pack` 输出）
+
+```json
+{
+  "task": {}, "system": {}, "templates": [],
+  "api": [], "classes": [], "resources": [],
+  "invariants": [], "allowedPaths": [], "guardPaths": [], "codeRefs": [],
+  "apiUnknown": false, "missingRefs": [],
+  "budget": { "files": 10, "bytes": 12000, "apiClasses": 20, "truncated": [] }
+}
+```
+
+超预算时按 resources → class excerpt → api 的顺序裁剪，`truncated` 记录被裁剪项与原因。
+
+## 9. notices（导入判定提示）
 
 `project.import`、`project.reimport` 的 `imported.notices` 与 `project.analyzeImport` 的
 `notices` 字段，记录导入过程中系统做的判断。

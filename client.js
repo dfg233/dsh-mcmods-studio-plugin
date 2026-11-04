@@ -969,6 +969,7 @@ window.__ModuleLoader__.load({
       const [loading, setLoading] = useState(false)
       const [systemEditing, setSystemEditing] = useState(null)
       const [taskEditing, setTaskEditing] = useState(null)
+      const [contextTask, setContextTask] = useState(null)
 
       const load = useCallback(async () => {
         if (!project) return
@@ -1027,6 +1028,14 @@ window.__ModuleLoader__.load({
         if (!window.confirm(`删除任务「${task.title}」？`)) return
         try {
           await call('tasks.delete', { path: project.path, id: task.id })
+          await load()
+        } catch (err) { setError(err.message) }
+      }
+
+      const runTaskAction = async (task, action) => {
+        try {
+          if (action === 'verify') await call('task.verify', { path: project.path, id: task.id })
+          else if (action === 'rollback') await call('task.rollback', { path: project.path, id: task.id })
           await load()
         } catch (err) { setError(err.message) }
       }
@@ -1106,10 +1115,22 @@ window.__ModuleLoader__.load({
                     h('span', { style: S.badge('idle') }, task.systemId),
                   ),
                   task.goal ? h('div', { style: { ...S.hint, marginTop: 6 } }, task.goal) : null,
+                  task.templateRefs?.length
+                    ? h('div', { style: { ...S.hint, marginTop: 4 } }, `模板：${task.templateRefs.map((ref) => ref.id).join('、')}`)
+                    : null,
+                  task.result?.checks?.length
+                    ? h('div', { style: { ...S.hint, marginTop: 2 } },
+                        `检查：通过 ${task.result.checks.filter((check) => check.status === 'pass').length} · 失败 ${task.result.checks.filter((check) => check.status === 'fail').length} · 跳过 ${task.result.checks.filter((check) => check.status === 'skip').length}`)
+                    : null,
                   h('div', { style: { ...S.hint, marginTop: 4 } },
                     `允许修改 ${task.allowedPaths?.length || 0} 个路径 · 验收 ${task.acceptance?.length || 0} 条 · 检查 ${task.verify?.length || 0} 项`),
                 ),
-                h('div', { style: { display: 'flex', gap: 6, flexShrink: 0 } },
+                h('div', { style: { display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' } },
+                  h('button', { style: S.btn('ghost'), onClick: () => setContextTask(task) }, '上下文'),
+                  h('button', { style: S.btn('ghost'), onClick: () => runTaskAction(task, 'verify') }, '验证'),
+                  task.result?.backupDir
+                    ? h('button', { style: { ...S.btn('ghost'), color: C.danger }, onClick: () => runTaskAction(task, 'rollback') }, '回滚')
+                    : null,
                   h('button', { style: S.btn('ghost'), onClick: () => setTaskEditing(task) }, '编辑'),
                   h('button', { style: { ...S.btn('ghost'), color: C.danger }, onClick: () => removeTask(task) }, '删除'),
                 ),
@@ -1128,7 +1149,55 @@ window.__ModuleLoader__.load({
           onSave: saveTask,
           onCancel: () => setTaskEditing(null),
         }) : null,
+
+        contextTask ? h(ContextModal, {
+          project,
+          task: contextTask,
+          onClose: () => setContextTask(null),
+        }) : null,
       )
+    }
+
+    function ContextModal(props) {
+      const { project, task, onClose } = props
+      const [data, setData] = useState(null)
+      const [error, setError] = useState('')
+
+      useEffect(() => {
+        let cancelled = false
+        call('context.pack', { path: project.path, taskId: task.id })
+          .then((result) => { if (!cancelled) setData(result) })
+          .catch((err) => { if (!cancelled) setError(err.message) })
+        return () => { cancelled = true }
+      }, [project.path, task.id])
+
+      const body = error
+        ? h('div', { style: { color: C.danger } }, error)
+        : !data
+          ? h('div', { style: S.hint }, '打包中…')
+          : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 } },
+              h('div', null, h('b', null, '任务'), '：', data.task.title),
+              data.system ? h('div', null, h('b', null, '系统'), '：', data.system.name) : null,
+              data.templates.length
+                ? h('div', null, h('b', null, '模板'), '：', data.templates.map((item) => `${item.id} v${item.version}`).join('、'))
+                : null,
+              data.apiUnknown
+                ? h('div', { style: { color: C.warning } }, 'API 索引不可用，上下文不含签名。')
+                : h('div', null, h('b', null, 'API'), '：', data.api.length ? data.api.map((item) => item.name).join('、') : '（无）'),
+              data.classes.length ? h('div', null, h('b', null, '代码引用'), '：', data.classes.map((item) => item.path).join('、')) : null,
+              data.allowedPaths.length ? h('div', null, h('b', null, '允许路径'), '：', data.allowedPaths.map((item) => item.path).join('、')) : null,
+              data.guardPaths.length ? h('div', null, h('b', null, '保护路径'), '：', data.guardPaths.join('、')) : null,
+              data.budget.truncated.length
+                ? h('div', { style: { color: C.warning } }, `已裁剪 ${data.budget.truncated.length} 项：${data.budget.truncated.map((item) => item.id).slice(0, 5).join('、')}`)
+                : null,
+              h('div', { style: S.hint }, `预算：文件 ${data.budget.files} · 字节 ${data.budget.bytes} · API 类 ${data.budget.apiClasses}`),
+            )
+
+      return h(Modal, {
+        title: `上下文：${task.title}`,
+        onClose,
+        footer: [h('button', { key: 'close', style: S.btn(), onClick: onClose }, '关闭')],
+      }, body)
     }
 
     function SystemEditor(props) {
@@ -3331,7 +3400,7 @@ window.__ModuleLoader__.load({
             ProjectTab, FeaturesTab, ItemsTab, AssetsTab, GuideTab,
             StudioPage, StudioRoot, SidebarStudioPanel, ItemEditor, FeatureEditor, PlanTab, SystemEditor, TaskEditor,
             ProjectDetailModal, ImportConfirmModal, Icon, InfoRow, PathField,
-            HistoryModal, LangTab,
+            HistoryModal, LangTab, ContextModal,
           },
           helpers: {
             call, pickFolder, getStudioState, setStudioState, defaultSlot,

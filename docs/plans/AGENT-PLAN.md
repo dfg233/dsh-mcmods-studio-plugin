@@ -1,7 +1,7 @@
 # Agent 结合与发展建议
 
 > 文档编号：AGENT-PLAN
-> 适用版本：v0.2.5
+> 适用版本：v0.3.0
 > 状态：**建议 1–6 与代码结构文档已实施；建议 7–9 后移，下一步扩展模板/任务/上下文工具**（2026-10-29 更新）
 > 更新日期：2026-10-28
 > 配套：[VERSION-PLAN.md](../VERSION-PLAN.md)（版本规则）、[PLAN.md](../PLAN.md)（宗旨与路线）、[STATUS.md](../STATUS.md)（实现状态）、[INDEX.md](../INDEX.md)（代码索引）
@@ -11,13 +11,14 @@
 
 | 建议 | 内容 | 状态 | 落地 |
 | --- | --- | --- | --- |
-| 1 | 注册为 agent 工具 | **已完成** | 27 个工具，DSH 原生 `mcmods_*`，见 `lib/tools.js`、`lib/tool-bridge.js` |
+| 1 | 注册为 agent 工具 | **已完成** | 31 个工具，DSH 原生 `mcmods_*`，见 `lib/tools.js`、`lib/tool-bridge.js` |
 | 2 | `summary.json` 聚合 | **已完成** | `lib/summary.js`，写操作后自动刷新 |
 | 3 | 紧凑 / 详细双表示 | **已完成** | `item_list`（约 300 字节 / 12 物品）与 `item_get`（19 字段带标签） |
 | 4 | 字段知识外置 | **已完成** | `data/schema.json` + `scripts/gen-schema.mjs` + 一致性测试 |
 | 5 | 校验器 | **已完成** | `lib/validate.js`，9 类检查，分级 error / warning |
 | 6 | 导入提示 | **已完成** | `notices[]` 随导入与分析返回，界面已展示 |
 | 附加 | 代码结构文档 | **已完成（v0.1.1）** | `lib/structure.js` + 4 个动作 + 4 个工具；按文件哈希增量，支持 agent 注解 |
+| 附加 | M2 工具（v0.3.0） | **已完成** | `api` / `template` / `context` / `task`；动作 54 → 68，工具 27 → 31，清单见 [INDEX.md](../INDEX.md) 第 4 节 |
 | 7 | 关系可视化 | 待做 | 归入 v0.2，复用构想已有的 `items` 关联字段 |
 | 8 | 编辑提效 | 待做 | 内联编辑与批量操作，归入 v0.2 |
 | 9 | 文档双向同步 | 待做 | 后续版本 |

@@ -404,6 +404,8 @@ const cases = [
                 id: 't_1', title: '新增电子锁', systemId: 'lock-core', status: 'todo',
                 goal: '新增类型', allowedPaths: [{ path: 'a.java', mode: 'modify' }],
                 acceptance: ['编译通过'], verify: [{ id: 'compile-java' }],
+                templateRefs: [{ id: 'simple-item', version: 1 }],
+                result: { checks: [{ id: 'allowed-paths', status: 'pass' }, { id: 'compile-java', status: 'skip' }] },
               }],
             }
           }
@@ -418,6 +420,46 @@ const cases = [
       must(hasText(tree, '新增电子锁'), '应显示任务卡')
       must(hasText(tree, '系统'), '应有系统分组')
       must(hasText(tree, '任务'), '应有任务分组')
+      must(hasText(tree, '模板：simple-item'), '应显示任务模板')
+      must(hasText(tree, '检查：通过 1'), '应显示检查统计')
+      must(hasText(tree, '上下文'), '应有上下文按钮')
+      must(hasText(tree, '验证'), '应有验证按钮')
+    },
+  },
+  {
+    name: '上下文弹窗展示打包结果',
+    async run() {
+      const client = await loadClient({
+        handler: async (action) => {
+          if (action === 'context.pack') {
+            return {
+              task: { id: 't_1', title: '新增电子锁' },
+              system: { id: 'lock-core', name: '锁核心' },
+              templates: [{ id: 'simple-item', version: 1, name: '普通物品' }],
+              api: [{ name: 'net.minecraft.world.item.Item' }],
+              classes: [],
+              resources: [],
+              invariants: [],
+              allowedPaths: [{ path: 'a.java', mode: 'modify' }],
+              guardPaths: [],
+              codeRefs: [],
+              apiUnknown: false,
+              missingRefs: [],
+              budget: { files: 10, bytes: 12000, apiClasses: 20, truncated: [] },
+            }
+          }
+          return {}
+        },
+      })
+      const tree = await client.renderSettled(client.components.ContextModal, {
+        project: makeProject(),
+        task: { id: 't_1', title: '新增电子锁' },
+        onClose: () => {},
+      })
+      must(hasText(tree, '新增电子锁'), '应显示任务标题')
+      must(hasText(tree, '锁核心'), '应显示系统')
+      must(hasText(tree, '模板'), '应显示模板')
+      must(hasText(tree, 'net.minecraft.world.item.Item'), '应显示 API')
     },
   },
   {
