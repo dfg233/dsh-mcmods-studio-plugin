@@ -5,6 +5,8 @@
 import { join } from 'node:path'
 
 import { equal, makePngBase64, must, runSuite, writeNeoForgeProject } from './helpers.mjs'
+import { apiCacheDir } from '../lib/api-index.js'
+import { writeJson } from '../lib/registry.js'
 
 async function newProject(ws, modid = 'toolmod') {
   const dir = ws.path(modid)
@@ -174,14 +176,49 @@ const cases = [
     },
   },
   {
+    name: 'api 工具：状态与读取签名',
+    async run(ws) {
+      const dir = await newProject(ws, 'apitoolmod')
+      const status = await call(ws, 'api', { project: dir, action: 'status' })
+      equal(status.available, false, '未建索引时应不可用')
+
+      const root = apiCacheDir(dir)
+      const hash = 'toolfixture'
+      const indexDir = join(root, hash)
+      await writeJson(join(root, 'current.json'), { classpathHash: hash })
+      await writeJson(join(indexDir, 'meta.json'), {
+        classpathHash: hash, jars: [], stats: { jars: 0, classes: 1 },
+      })
+      await writeJson(join(indexDir, 'index.json'), {
+        schemaVersion: 1,
+        classes: { 'net.minecraft.world.item.Item': { kind: 'class', shard: 'net.minecraft.world.item' } },
+      })
+      await writeJson(join(indexDir, 'classes', 'net.minecraft.world.item.json'), [{
+        name: 'net.minecraft.world.item.Item',
+        kind: 'class',
+        methods: [{ name: 'stacksTo', params: ['int'], returns: 'Item$Properties' }],
+        fields: [],
+      }])
+
+      const refreshed = await call(ws, 'api', { project: dir, action: 'status' })
+      equal(refreshed.available, true, '写入索引后应可用')
+
+      const got = await call(ws, 'api', {
+        project: dir, action: 'get', className: 'net.minecraft.world.item.Item',
+      })
+      equal(got.found, true, '应读到类签名')
+      equal(got.class.methods[0].name, 'stacksTo', '应返回方法')
+    },
+  },
+  {
     name: '工具清单包含新增工具',
     async run(ws) {
       const result = await ws.call('agent.tools', {})
       const names = result.tools.map((tool) => tool.name)
-      for (const expected of ['content', 'lang', 'asset', 'project_admin']) {
+      for (const expected of ['api', 'content', 'lang', 'asset', 'project_admin']) {
         must(names.includes(expected), `应包含工具 ${expected}`)
       }
-      equal(names.length, 27, '工具数应为 27')
+      equal(names.length, 28, '工具数应为 28')
     },
   },
 ]
