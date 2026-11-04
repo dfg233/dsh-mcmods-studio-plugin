@@ -215,10 +215,10 @@ const cases = [
     async run(ws) {
       const result = await ws.call('agent.tools', {})
       const names = result.tools.map((tool) => tool.name)
-      for (const expected of ['api', 'content', 'lang', 'asset', 'project_admin']) {
+      for (const expected of ['api', 'template', 'content', 'lang', 'asset', 'project_admin']) {
         must(names.includes(expected), `应包含工具 ${expected}`)
       }
-      equal(names.length, 28, '工具数应为 28')
+      equal(names.length, 29, '工具数应为 29')
     },
   },
 ]

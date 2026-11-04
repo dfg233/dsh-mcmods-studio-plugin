@@ -1,0 +1,3 @@
+{
+  "block.{{modid}}.{{id}}": "{{displayName}}"
+}

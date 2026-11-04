@@ -1,0 +1,76 @@
+{
+  "id": "tool-set",
+  "name": "工具（剑）",
+  "version": 1,
+  "description": "生成手持模型、剑类骨架与中英文语言键。",
+  "loaders": [
+    "forge",
+    "neoforge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "item",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "tier",
+      "type": "string",
+      "default": "IRON"
+    },
+    {
+      "key": "attackDamage",
+      "type": "number",
+      "default": 3
+    },
+    {
+      "key": "attackSpeed",
+      "type": "number",
+      "default": -2.4
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.world.item.SwordItem",
+    "net.minecraft.world.item.Tiers"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{package}}/item/{{ClassName}}.java",
+      "template": "files/item.java.tpl",
+      "when": "always"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/models/item/{{id}}.json",
+      "template": "files/model.json.tpl",
+      "when": "always"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/lang/zh_cn.json",
+      "template": "files/lang-zh.json.tpl",
+      "when": "always",
+      "merge": "json"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/lang/en_us.json",
+      "template": "files/lang-en.json.tpl",
+      "when": "always",
+      "merge": "json"
+    }
+  ],
+  "checks": [
+    "resource-exists",
+    "lang-key"
+  ]
+}

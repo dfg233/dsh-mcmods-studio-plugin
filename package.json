@@ -23,6 +23,7 @@
     "test/**",
     "scripts/**",
     "data/**",
+    "templates/**",
     "locale/*.json",
     "icon.svg",
     "cordis.patch.yml",

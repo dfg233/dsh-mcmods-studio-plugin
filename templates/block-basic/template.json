@@ -1,0 +1,82 @@
+{
+  "id": "block-basic",
+  "name": "基础方块",
+  "version": 1,
+  "description": "生成方块类、blockstate、方块模型、方块物品模型与语言。",
+  "loaders": [
+    "forge",
+    "neoforge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "block",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "hardness",
+      "type": "number",
+      "default": 1.5
+    },
+    {
+      "key": "resistance",
+      "type": "number",
+      "default": 6
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.world.level.block.Block",
+    "net.minecraft.world.level.block.SoundType"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{package}}/block/{{ClassName}}.java",
+      "template": "files/block.java.tpl",
+      "when": "always"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/blockstates/{{id}}.json",
+      "template": "files/blockstate.json.tpl",
+      "when": "always"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/models/block/{{id}}.json",
+      "template": "files/block-model.json.tpl",
+      "when": "always"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/models/item/{{id}}.json",
+      "template": "files/item-model.json.tpl",
+      "when": "always"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/lang/zh_cn.json",
+      "template": "files/lang-zh.json.tpl",
+      "when": "always",
+      "merge": "json"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/lang/en_us.json",
+      "template": "files/lang-en.json.tpl",
+      "when": "always",
+      "merge": "json"
+    }
+  ],
+  "checks": [
+    "resource-exists",
+    "registration-pair",
+    "lang-key"
+  ]
+}

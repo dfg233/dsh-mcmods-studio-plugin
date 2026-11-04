@@ -26,8 +26,8 @@ const cases = [
       }
 
       const disposers = registerTools(fakeCtx)
-      equal(registered.length, 28, '应注册 28 个工具')
-      equal(disposers.length, 28, '应返回 28 个 disposer')
+      equal(registered.length, 29, '应注册 29 个工具')
+      equal(disposers.length, 29, '应返回 29 个 disposer')
 
       const names = toolNames()
       equal(new Set(names).size, names.length, '工具名不应重复')

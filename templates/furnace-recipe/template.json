@@ -1,0 +1,44 @@
+{
+  "id": "furnace-recipe",
+  "name": "熔炉配方",
+  "version": 1,
+  "description": "生成熔炉（烧炼）配方 JSON。",
+  "loaders": [
+    "forge",
+    "neoforge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "recipe",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "ingredient",
+      "type": "string",
+      "default": "minecraft:stone"
+    },
+    {
+      "key": "experience",
+      "type": "number",
+      "default": 0.1
+    },
+    {
+      "key": "cookingTime",
+      "type": "number",
+      "default": 200
+    }
+  ],
+  "files": [
+    {
+      "path": "src/main/resources/data/{{modid}}/recipes/{{id}}_from_smelting.json",
+      "template": "files/recipe.json.tpl",
+      "when": "always"
+    }
+  ],
+  "checks": [
+    "resource-exists"
+  ]
+}

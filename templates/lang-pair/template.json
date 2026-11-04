@@ -1,0 +1,43 @@
+{
+  "id": "lang-pair",
+  "name": "中英文语言键",
+  "version": 1,
+  "description": "只补语言键，不改模型或代码。",
+  "loaders": [
+    "forge",
+    "neoforge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "lang",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "enName",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "files": [
+    {
+      "path": "src/main/resources/assets/{{modid}}/lang/zh_cn.json",
+      "template": "files/lang-zh.json.tpl",
+      "when": "always",
+      "merge": "json"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/lang/en_us.json",
+      "template": "files/lang-en.json.tpl",
+      "when": "always",
+      "merge": "json"
+    }
+  ]
+}

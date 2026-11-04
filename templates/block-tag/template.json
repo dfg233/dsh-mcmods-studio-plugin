@@ -1,0 +1,31 @@
+{
+  "id": "block-tag",
+  "name": "方块标签",
+  "version": 1,
+  "description": "把方块加入方块标签。",
+  "loaders": [
+    "forge",
+    "neoforge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "tag",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "tag",
+      "type": "string",
+      "default": "misc"
+    }
+  ],
+  "files": [
+    {
+      "path": "src/main/resources/data/{{modid}}/tags/blocks/{{tag}}.json",
+      "template": "files/tag.json.tpl",
+      "when": "always"
+    }
+  ]
+}

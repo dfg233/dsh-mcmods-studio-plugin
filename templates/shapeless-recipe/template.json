@@ -1,0 +1,39 @@
+{
+  "id": "shapeless-recipe",
+  "name": "无序配方",
+  "version": 1,
+  "description": "生成单材料无序配方 JSON。",
+  "loaders": [
+    "forge",
+    "neoforge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "recipe",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "ingredient",
+      "type": "string",
+      "default": "minecraft:stone"
+    },
+    {
+      "key": "count",
+      "type": "number",
+      "default": 1
+    }
+  ],
+  "files": [
+    {
+      "path": "src/main/resources/data/{{modid}}/recipes/{{id}}.json",
+      "template": "files/recipe.json.tpl",
+      "when": "always"
+    }
+  ],
+  "checks": [
+    "resource-exists"
+  ]
+}
