@@ -153,7 +153,7 @@
 | `v0.2.4` | 注册表清理工具（已发版） | 新增 `project_remove`；见 [fix/V0.2.4-PLAN.md](fix/V0.2.4-PLAN.md) |
 | `v0.2.5` | Agent 工具能力补齐（已发版） | content / lang / asset / project_admin；workbench 删除；见 [fix/V0.2.5-PLAN.md](fix/V0.2.5-PLAN.md) |
 | `v0.2.x` | 内容工作台维护（后续 PATCH） | 修复、优化、里程碑内小功能与文档校准；不新增阶段能力 |
-| `v0.3.0` | API 索引、模板、上下文与检查 | 从 Gradle classpath 提取 API 签名（含 protected/继承）；模板清单/参数/渲染；任务上下文包；允许路径、structure-diff、资源引用、注册配对检查 |
+| `v0.3.0` | API 索引、模板、上下文与检查 | 从 Gradle classpath 提取 API 签名（含 protected/继承）；模板清单/参数/渲染；任务上下文包；允许路径、structure-diff、资源引用、注册配对检查；见 [major/V0.3.0-PLAN.md](major/V0.3.0-PLAN.md) |
 | `v0.4.0` | 代码生成与 Lock 试点 | 标记区块代码生成；方块实体/菜单、钥匙、网络同步模板；Lock 电子锁端到端 |
 | `v0.5.0` | 进阶内容与稳定 | 战利品表、创造标签、多加载器模板、性能基线 |
 | `v1.0.0` | 正式稳定版 | 发布第一批稳定契约：数据格式与接口冻结；同时完成第二个 MC 版本（1.21.1）、`.jar` 导入与数据迁移回归 |

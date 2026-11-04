@@ -491,6 +491,8 @@ AI 负责把自然语言解析为想法卡，但必须：
 
 ### M2 · v0.3.0 API 索引 + 模板 + 上下文包 + 检查（2–3 周）
 
+> 实现方案、接口与验收记录见 [major/V0.3.0-PLAN.md](major/V0.3.0-PLAN.md)。
+
 - API 索引：从 Gradle classpath 提取签名，支持静态扫描与精确导出；
 - 模板清单、参数、渲染；
 - `simple-item`、`tool-set`、`block-basic`、配方/标签/语言模板；
