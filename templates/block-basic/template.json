@@ -42,7 +42,7 @@
   ],
   "files": [
     {
-      "path": "src/main/java/{{package}}/block/{{ClassName}}.java",
+      "path": "src/main/java/{{packagePath}}/block/{{ClassName}}.java",
       "template": "files/block.java.tpl",
       "when": "always"
     },

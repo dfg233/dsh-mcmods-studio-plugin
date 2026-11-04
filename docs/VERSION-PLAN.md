@@ -1,6 +1,6 @@
 # 插件版本规划
 
-> 适用版本：v0.3.0
+> 适用版本：v0.3.1
 > 更新日期：2026-11-01
 > 本文规定**插件自身**的版本号规则、发版流程与版本历史，与 Minecraft 适配版本无关。
 > 版本路线见 [PLAN.md](PLAN.md)，变更明细见 [CHANGELOG.md](CHANGELOG.md)，当前状态见 [STATUS.md](STATUS.md)。
@@ -136,7 +136,8 @@
 | `v0.2.3` | 2026-11-01 | PATCH | 物品编辑器分页（5 页签）；语言页与语言键生命周期；历史 `scope`；动作 54、测试 19 文件 / 210 项 | `5c0a022` |
 | `v0.2.4` | 2026-11-01 | PATCH | 新增 agent 工具 `project_remove`（清理注册表登记，不删目录）；工具 23、测试 19 文件 / 212 项 | `33e89a1` |
 | `v0.2.5` | 2026-11-01 | PATCH | 补齐 agent 工具：`content` / `lang` / `asset` / `project_admin`，`workbench` 支持删除；工具 27、测试 20 文件 / 220 项 | `d8cac34` |
-| `v0.3.0` | 2026-11-04 | MINOR | M2：API 索引（javap/缓存/查询）、9 个模板、上下文包、任务级检查与执行；动作 68、工具 31、测试 25 文件 / 261 项 | 本次提交 |
+| `v0.3.0` | 2026-11-04 | MINOR | M2：API 索引（javap/缓存/查询）、9 个模板、上下文包、任务级检查与执行；动作 68、工具 31、测试 25 文件 / 261 项 | `74c4812` |
+| `v0.3.1` | 2026-11-05 | PATCH | 验收修复：模板清单序列化、模板包路径、task.save 保留 result、guard 优先、context 预算、API 索引纳入 MC 本体（mojmap）与 partial 提示、content rollback；测试 25 文件 / 265 项 | 本次提交 |
 
 > v0.1.0 的提交范围以 `9a2ca08` 为界；v0.1.1 记录本次发版提交。
 > 详细变更以 [CHANGELOG.md](CHANGELOG.md) 为准，本表只做索引。
@@ -155,6 +156,7 @@
 | `v0.2.5` | Agent 工具能力补齐（已发版） | content / lang / asset / project_admin；workbench 删除；见 [fix/V0.2.5-PLAN.md](fix/V0.2.5-PLAN.md) |
 | `v0.2.x` | 内容工作台维护（后续 PATCH） | 修复、优化、里程碑内小功能与文档校准；不新增阶段能力 |
 | `v0.3.0` | API 索引、模板、上下文与检查（已发版） | 从 Gradle classpath 提取 API 签名（含 protected/继承）；模板清单/参数/渲染；任务上下文包；允许路径、structure-diff、资源引用、注册配对检查；见 [major/V0.3.0-PLAN.md](major/V0.3.0-PLAN.md) |
+| `v0.3.1` | M2 验收修复（已发版） | 模板清单序列化、包路径、task.save 保留 result、guard 优先、context 预算、API 索引纳入 mojmap MC 类与 partial 提示、content rollback |
 | `v0.4.0` | 代码生成与 Lock 试点 | 标记区块代码生成；方块实体/菜单、钥匙、网络同步模板；Lock 电子锁端到端 |
 | `v0.5.0` | 进阶内容与稳定 | 战利品表、创造标签、多加载器模板、性能基线 |
 | `v1.0.0` | 正式稳定版 | 发布第一批稳定契约：数据格式与接口冻结；同时完成第二个 MC 版本（1.21.1）、`.jar` 导入与数据迁移回归 |

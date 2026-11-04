@@ -48,6 +48,8 @@ const cases = [
       const java = result.files.find((file) => file.path.endsWith('.java'))
       equal(java.action, 'create', 'Java 应新建')
       must(java.path.includes('RubySword.java'), '类名应转 PascalCase')
+      must(java.path.includes('com/example/tplmod/item/RubySword.java'), '包名应转目录路径')
+      must(!java.path.includes('com.example'), '路径不应包含点号包名')
       must(java.content.includes('class RubySword extends Item'), '应生成类声明')
       must(java.content.includes('stacksTo(1)'), '应使用 stackSize')
       const model = result.files.find((file) => file.path.includes('/models/item/'))

@@ -145,6 +145,76 @@ const cases = [
     },
   },
   {
+    name: 'task.start 遇到缺失 codeRefs 时标记 blocked',
+    async run(ws) {
+      const dir = await newProject(ws, 'taskblocked')
+      await ws.call('tasks.save', {
+        path: dir,
+        task: {
+          id: 't1', title: '新增 Ruby', systemId: 's1', goal: '测试缺失引用',
+          allowedPaths: [JAVA, MODEL], acceptance: ['可编译'],
+          verify: ['allowed-paths'], status: 'todo', codeRefs: ['NotExists'],
+        },
+      })
+      const result = await ws.call('task.start', { path: dir, id: 't1' })
+      equal(result.blocked, true, '应在结果中标记 blocked')
+      equal(result.task.status, 'blocked', '任务状态应为 blocked')
+      must(result.missingRefs.includes('NotExists'), '应返回缺失引用')
+    },
+  },
+  {
+    name: 'task.verify 未声明检查时不假装通过',
+    async run(ws) {
+      const dir = await newProject(ws, 'tasknospec')
+      await ws.call('tasks.save', {
+        path: dir,
+        task: {
+          id: 't1', title: '新增 Ruby', systemId: 's1', goal: '无检查',
+          allowedPaths: [JAVA], acceptance: ['可编译'], verify: [], status: 'doing',
+        },
+      })
+      const result = await ws.call('task.verify', { path: dir, id: 't1' })
+      equal(result.task.status, 'doing', '无检查时应保持 doing')
+      must(result.warning.includes('未声明检查'), '应给出未声明检查的警告')
+    },
+  },
+  {
+    name: 'task.apply 记录新建与修改的 action',
+    async run(ws) {
+      const dir = await newProject(ws, 'taskaction')
+      await ws.call('task.start', { path: dir, id: 't1' })
+      const first = await ws.call('task.apply', { path: dir, id: 't1', files: [changes[0]], requestId: 'a1' })
+      equal(first.files[0].action, 'create', '首次写入应为 create')
+      const second = await ws.call('task.apply', { path: dir, id: 't1', files: [changes[0]], requestId: 'a2' })
+      equal(second.files[0].action, 'modify', '再次写入应为 modify')
+    },
+  },
+  {
+    name: 'guardPaths 优先于 allowedPaths 报错',
+    async run(ws) {
+      const dir = await newProject(ws, 'taskguardorder')
+      await ws.call('tasks.save', {
+        path: dir,
+        task: {
+          id: 't1', title: '新增 Ruby', systemId: 's1', goal: '保护路径优先',
+          allowedPaths: [JAVA, MODEL],
+          guardPaths: ['src/main/java/com/example/taskguardorder/lock/**'],
+          acceptance: ['可编译'], verify: ['allowed-paths'], status: 'todo',
+        },
+      })
+      let message = ''
+      try {
+        await ws.call('task.apply', {
+          path: dir, id: 't1',
+          files: [{ path: 'src/main/java/com/example/taskguardorder/lock/Locked.java', content: 'x' }],
+        })
+      } catch (error) {
+        message = error.message
+      }
+      must(message.includes('修改保护路径'), `guard 应优先报保护路径，实际「${message}」`)
+    },
+  },
+  {
     name: 'task 工具调用',
     async run(ws) {
       const dir = await newProject(ws, 'tasktool')

@@ -2,6 +2,27 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.3.1] - 2026-11-05
+
+### 修复
+
+- 模板清单：`listTemplates` 不再输出 `undefined` 默认值，修复 DSH「非无损 JSON」拒绝，`template.list` 恢复可用。
+- 模板路径：Java 输出路径把包名转目录（`{{packagePath}}`），与结构扫描 / `allowedPaths` 的 `com/example/...` 约定一致。
+- 任务保存：`saveTask` 局部更新时保留 `result` 与 `baseStructureHash`，避免改配置后无法回滚、幂等失效、检查退化为 skip。
+- 任务 apply：`guardPaths` 优先于 `allowedPaths` 报错；新建文件记 `create`，覆盖记 `modify`。
+- 任务验证：未声明检查时保持状态并给出警告，不再静默「通过」；`start` 遇到缺失 `codeRefs` 标记 `blocked` 而非抛错。
+- 上下文包：模板文件不再重复计入 `resources`，修复文件预算 off-by-one（10 → 9）。
+- API 索引：静态扫描优先使用 ForgeGradle 的 `mapped_parchment` jar（mojmap），纳入 MC 本体类；过滤损坏/未完成的 jar；`status` 返回 `partial` / `reason`；javap 改用 `CLASSPATH` 环境变量 + 分批，避免 Windows 命令行超限。
+- `content` 工具新增 `rollback`（按 `backupDir` 回滚），供模板 apply 后恢复。
+
+### 变更
+
+- `package.json` 版本由 `0.3.0` 升至 `0.3.1`；测试新增 4 项，总计 25 文件 / 265 项。
+
+### 文档
+
+- 更新 VERSION-PLAN、STATUS、INDEX、DATA-FORMAT、[major/V0.3.0-PLAN.md](major/V0.3.0-PLAN.md) 验收记录。
+
 ## [0.3.0] - 2026-11-04
 
 ### 新增

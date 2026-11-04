@@ -4,7 +4,7 @@
 > 更新日期：2026-11-04
 > 本文档回答三个问题：**现在能做什么**、**还不能做什么**、**必须遵守什么**。
 > 历史变更见 [CHANGELOG.md](CHANGELOG.md)，版本规则与发版流程见 [VERSION-PLAN.md](VERSION-PLAN.md)，开发方式见 [DEVELOPMENT.md](DEVELOPMENT.md)，当前主线见 [PLAN.md](PLAN.md)，代码索引见 [INDEX.md](INDEX.md)。
-> 本文区分 **as-built（v0.3.0 已实现）** 与 **目标能力（v0.4 起）**；旧路线已归档到 [archive/PLAN-v0.1.md](archive/PLAN-v0.1.md)。
+> 本文区分 **as-built（v0.3.1 已实现）** 与 **目标能力（v0.4 起）**；旧路线已归档到 [archive/PLAN-v0.1.md](archive/PLAN-v0.1.md)。
 
 ## 0. 设计目的
 
@@ -363,6 +363,20 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | 接口 | `lib/api.js`、`lib/tools.js` | 动作 54 → 68；工具 27 → 31（api / template / context / task） |
 | 测试 | `test/21-25` | 39 项；总计 25 文件 / 261 项 |
 
+### 3.0.16 v0.3.1 验收修复（已完成）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| 模板清单 | `lib/templates.js` | 不再输出 `undefined` 默认值，修复 DSH「非无损 JSON」拒绝 |
+| 模板包路径 | `lib/templates.js`、`templates/` | 新增 `{{packagePath}}`；Java 输出路径改为 `com/example/...` |
+| 任务保存 | `lib/workbench.js` | 局部更新合并 `result` / `baseStructureHash`，保留回滚与幂等前提 |
+| 任务 apply | `lib/tasks.js` | `guardPaths` 优先；新建记 `create`、覆盖记 `modify` |
+| 任务 verify/start | `lib/tasks.js` | 未声明检查给警告并保持状态；缺失 `codeRefs` 标 `blocked` |
+| 上下文包 | `lib/context.js` | 模板文件不重复计入 `resources`；文件预算 off-by-one 修复 |
+| API 索引 | `lib/api-index.js` | 优先 `mapped_parchment`（mojmap）jar；过滤损坏 jar；`partial`/`reason`；javap 走 `CLASSPATH` 分批 |
+| 内容回滚 | `lib/tools.js` | `content` 工具新增 `rollback`（按 `backupDir`） |
+| 测试 | `test/25`、`test/22` | 新增 4 项；总计 25 文件 / 265 项 |
+
 ### 3.1 目标能力（v0.3 起）
 
 | 里程碑 | 能力 | 说明 |
@@ -374,7 +388,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | M1 / v0.2.4 | 注册表清理工具 | 新增 `project_remove`，支持目录已删除时清理登记 |
 | M1 / v0.2.5 | Agent 工具能力补齐 | content / lang / asset / project_admin；workbench 支持删除 |
 | M2 / v0.3.0 | API 索引、模板、上下文与检查（已完成） | 签名索引、9 个模板、上下文预算、任务级检查与执行 |
-| M2 / v0.3.0 | API 索引 + 模板 + 上下文包 + 检查 | 从 Gradle classpath 提取签名（含 protected/继承/嵌套类）；模板清单/参数/渲染；`context.pack`；允许路径、structure-diff、资源引用、注册配对检查 |
+| M2 / v0.3.1 | M2 验收修复 | 模板清单/包路径、任务保存与 apply、上下文预算、API 索引 mojmap 与 partial 提示 |
 | M3 / v0.4.0 | 代码生成 + Lock 试点 | 标记区块生成；方块实体/菜单、钥匙、网络同步模板；Lock「电子锁」端到端 |
 | M4 / v0.5.0 | 进阶内容与稳定 | 战利品表、创造标签、多加载器模板、性能基线 |
 | M5 / v1.0 | 稳定与 1.21.1 | 数据迁移、完整回归、发版验收 |
@@ -429,11 +443,11 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**25 个文件、261 项全部通过**）：
+已通过自动化验证（`npm test`，**25 个文件、265 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
-| Host 业务 | 185 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| Host 业务 | 189 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
 | 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |

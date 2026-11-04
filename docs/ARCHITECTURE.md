@@ -1,6 +1,6 @@
 # 架构说明
 
-> 适用版本：v0.3.0
+> 适用版本：v0.3.1
 > 状态：as-built（v0.2.1 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
 > 更新日期：2026-11-01
 > 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)，实现状态见 [STATUS.md](STATUS.md)。

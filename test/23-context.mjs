@@ -57,7 +57,8 @@ const cases = [
       const context = await ws.call('context.pack', { path: dir, taskId: 't1' })
       equal(context.templates.length, 1, '应包含模板摘要')
       equal(context.templates[0].id, 'simple-item', '模板 id 正确')
-      must(context.resources.some((item) => item.path.includes('/models/item/')), '应包含模板资源')
+      must(context.templates[0].files.some((item) => item.includes('/models/item/')), '模板摘要应含模型路径')
+      equal(context.resources.length, 0, '模板文件不再重复计入 resources')
     },
   },
   {

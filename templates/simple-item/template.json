@@ -37,7 +37,7 @@
   ],
   "files": [
     {
-      "path": "src/main/java/{{package}}/item/{{ClassName}}.java",
+      "path": "src/main/java/{{packagePath}}/item/{{ClassName}}.java",
       "template": "files/item.java.tpl",
       "when": "always"
     },
