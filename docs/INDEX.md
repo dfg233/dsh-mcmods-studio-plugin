@@ -1,7 +1,7 @@
 # 代码索引
 
-> 适用版本：v0.3.1
-> 状态：as-built（v0.3.1 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)，小版本修复计划见 [fix/](fix/README.md)。
+> 适用版本：v0.3.2
+> 状态：as-built（v0.3.2 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)，小版本修复计划见 [fix/](fix/README.md)。
 > 更新日期：2026-11-01
 > 用途：修改插件代码前先查这里，按「文件 → 函数 → 参数 → 返回」定位，不必通读源码。
 > 说明：行号为编写时的位置，改动后会偏移，**优先按名称搜索**。发版与升版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
@@ -34,7 +34,7 @@
 | `lib/meta.js` | `project.json` 与 `studio.json` 读写、项目创建 | 217 |
 | `lib/entries.js` | 构想与物品 CRUD、字段纠偏、`readProject` | 227 |
 | `lib/import.js` | 工程识别、资源扫描、身份解析、差异、快照、导入 proof、标签分类 | 838 |
-| `lib/workbench.js` | 系统卡与任务包读写、字段归一与引用校验 | 207 |
+| `lib/workbench.js` | 系统卡与任务包读写、字段归一与引用校验 | 223 |
 | `lib/content.js` | 语言/配方/模型/标签资源预览、写入、历史记录与回滚 | 558 |
 | `lib/history.js` | 内容历史的存储、归档、上限、按项目写锁与查询 | 305 |
 | `lib/lang.js` | 语言文件读写、总览、保存事务与语言键生命周期 | 320 |
@@ -56,7 +56,7 @@
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
 | `data/schema.json` | 字段定义的对外副本（生成物） | 7.3 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：25 个文件、265 项 | 5964 |
+| `test/*.mjs` | 回归测试：25 个文件、268 项 | 6008 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 
 > `lib/project.js` 是 2026-10-24 拆分后保留的转发层，`api.js`、`assets.js`、`docs.js`、
@@ -911,7 +911,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（25 个文件、265 项）
+# 全部测试（25 个文件、268 项）
 npm test
 
 # 只跑某一组

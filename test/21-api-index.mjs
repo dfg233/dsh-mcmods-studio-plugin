@@ -282,6 +282,17 @@ const cases = [
       equal(small.classes.length, 1, '预算内应返回 1 类')
     },
   },
+  {
+    name: '搜索按相关度排序',
+    async run(ws) {
+      const dir = ws.path('api-rank')
+      await ws.call('project.create', { path: dir, name: '排序', modid: 'rankmod', loader: 'forge' })
+      await writeFixtureIndex(dir)
+      const result = await apiSearch(dir, { query: 'Item', limit: 5 })
+      equal(result.results[0].name, 'net.minecraft.world.item.Item', '类名结尾匹配应优先于包含匹配')
+      must(result.results.length <= 5, '结果数不应超过 limit')
+    },
+  },
 ]
 
 process.exitCode = await runSuite('21 · API 索引', cases)

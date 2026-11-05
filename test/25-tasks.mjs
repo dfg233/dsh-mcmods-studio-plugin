@@ -230,6 +230,23 @@ const cases = [
       must(Array.isArray(verified.checks), '工具应返回检查结果')
     },
   },
+  {
+    name: 'task.save 局部更新与状态不降级',
+    async run(ws) {
+      const dir = await newProject(ws, 'taskpartial')
+      await ws.call('task.start', { path: dir, id: 't1' })
+      const saved = (await ws.call('tasks.save', {
+        path: dir,
+        task: { id: 't1', goal: '只改目标' },
+      })).task
+      equal(saved.systemId, 's1', '应保留 systemId')
+      equal(saved.goal, '只改目标', '应更新 goal')
+      equal(saved.status, 'doing', '不应回退到 todo')
+
+      const started = await ws.call('task.start', { path: dir, id: 't1' })
+      equal(started.context.task.status, 'doing', '上下文中的任务状态应同步')
+    },
+  },
 ]
 
 process.exitCode = await runSuite('25 · 任务执行', cases)

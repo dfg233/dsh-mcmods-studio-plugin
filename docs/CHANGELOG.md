@@ -2,6 +2,24 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.3.2] - 2026-11-05
+
+### 修复
+
+- 模板渲染：`skip` 条目不再输出 `content: undefined`，修复「文件已存在时 render 报非无损 JSON」；apply 后再次 render 可正常返回 skip。
+- API 搜索：结果按相关度排序（完全类名 > 类名结尾 > 包含），`query=Item&limit=5` 优先返回 `net.minecraft.world.item.Item`，不再被 advancements 类挤掉。
+- 任务保存：`task.save` 支持部分更新（只传 `id` + 要改的字段），未提供的字段沿用旧任务；运行态（doing/review/blocked）不会被普通保存降回 `todo`。
+- 任务开始：返回的上下文快照同步为最新状态（`context.task.status` 与任务一致）。
+- 错误文案：缺 `systemId` 时提示「任务缺少所属系统（systemId）」。
+
+### 变更
+
+- `package.json` 版本由 `0.3.1` 升至 `0.3.2`；测试新增 3 项，总计 25 文件 / 268 项。
+
+### 文档
+
+- 更新 VERSION-PLAN、STATUS、INDEX。
+
 ## [0.3.1] - 2026-11-05
 
 ### 修复

@@ -162,6 +162,22 @@ const cases = [
       equal(applied.files.length, 2, '工具应写入两个文件')
     },
   },
+  {
+    name: 'apply 后再次渲染返回 skip 且可序列化',
+    async run(ws) {
+      const dir = await newProject(ws, 'tplskip')
+      await ws.call('template.apply', {
+        path: dir, id: 'simple-item', params: { id: 'ruby', displayName: 'Ruby' },
+      })
+      const result = await ws.call('template.render', {
+        path: dir, id: 'simple-item', params: { id: 'ruby', displayName: 'Ruby' },
+      })
+      equal(result.files.length, 4, '应返回 4 个文件')
+      must(result.files.every((file) => file.action === 'skip' || file.action === 'modify'), '不应再 create')
+      must(result.files.filter((file) => file.action === 'skip').every((file) => !('content' in file)), 'skip 条目不应包含 content 字段')
+      must(typeof JSON.stringify(result) === 'string', '结果应可序列化')
+    },
+  },
 ]
 
 async function mustReject(fn, needle) {

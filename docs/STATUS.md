@@ -4,7 +4,7 @@
 > 更新日期：2026-11-04
 > 本文档回答三个问题：**现在能做什么**、**还不能做什么**、**必须遵守什么**。
 > 历史变更见 [CHANGELOG.md](CHANGELOG.md)，版本规则与发版流程见 [VERSION-PLAN.md](VERSION-PLAN.md)，开发方式见 [DEVELOPMENT.md](DEVELOPMENT.md)，当前主线见 [PLAN.md](PLAN.md)，代码索引见 [INDEX.md](INDEX.md)。
-> 本文区分 **as-built（v0.3.1 已实现）** 与 **目标能力（v0.4 起）**；旧路线已归档到 [archive/PLAN-v0.1.md](archive/PLAN-v0.1.md)。
+> 本文区分 **as-built（v0.3.2 已实现）** 与 **目标能力（v0.4 起）**；旧路线已归档到 [archive/PLAN-v0.1.md](archive/PLAN-v0.1.md)。
 
 ## 0. 设计目的
 
@@ -377,6 +377,16 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | 内容回滚 | `lib/tools.js` | `content` 工具新增 `rollback`（按 `backupDir`） |
 | 测试 | `test/25`、`test/22` | 新增 4 项；总计 25 文件 / 265 项 |
 
+### 3.0.17 v0.3.2 复验修复（已完成）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| 模板渲染 | `lib/templates.js` | skip 条目不再输出 `content: undefined`，apply 后 render 可正常返回 |
+| 搜索排序 | `lib/api-index.js` | 完全类名 > 类名结尾 > 包含，`Item` 优先返回 |
+| 任务保存 | `lib/workbench.js` | 支持部分更新；运行态不被普通保存降回 `todo`；缺 systemId 文案改进 |
+| 上下文状态 | `lib/tasks.js` | `start` 返回的 `context.task.status` 与任务同步 |
+| 测试 | `test/21`、`test/22`、`test/25` | 新增 3 项；总计 25 文件 / 268 项 |
+
 ### 3.1 目标能力（v0.3 起）
 
 | 里程碑 | 能力 | 说明 |
@@ -443,11 +453,11 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**25 个文件、265 项全部通过**）：
+已通过自动化验证（`npm test`，**25 个文件、268 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
-| Host 业务 | 189 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| Host 业务 | 192 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
 | 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |
