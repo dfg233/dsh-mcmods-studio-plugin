@@ -512,6 +512,7 @@ AI 负责把自然语言解析为想法卡，但必须：
 
 > 实现方案见 [major/V0.4.0-PLAN.md](major/V0.4.0-PLAN.md)。
 
+- 新建项目时由 AI 配置 Gradle 构建，生成完整可编译工程（脚手架）；
 - 物品/方块注册代码的标记区块生成；
 - `block-entity-menu`、`uuid-key-item`、`s2c-sync-packet` 等模板；
 - 生成前 diff、生成后检查；
