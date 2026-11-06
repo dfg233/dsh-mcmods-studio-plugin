@@ -6,10 +6,10 @@ package {{package}}.lock;
  * 任务：按项目中的 AbstractLock / 锁类型基类补齐构造与抽象方法，
  * 并在注册表里登记新的锁类型 id。
  */
-public class {{ClassName}}Lock {
+public class {{ClassName}} {
     public static final String TYPE_ID = "{{id}}";
 
-    public {{ClassName}}Lock() {
+    public {{ClassName}}() {
         // TODO: 调用父类构造并绑定 TYPE_ID
     }
 }

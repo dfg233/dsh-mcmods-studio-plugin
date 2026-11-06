@@ -30,7 +30,7 @@
   ],
   "files": [
     {
-      "path": "src/main/java/{{packagePath}}/lock/{{ClassName}}Lock.java",
+      "path": "src/main/java/{{packagePath}}/lock/{{ClassName}}.java",
       "template": "files/lock.java.tpl"
     }
   ]

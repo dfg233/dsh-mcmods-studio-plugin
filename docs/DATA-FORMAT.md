@@ -1,7 +1,7 @@
 # 数据格式
 
-> 适用版本：v0.3.2
-> 状态：as-built（v0.3.2 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
+> 适用版本：v0.4.0
+> 状态：as-built（v0.4.0 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
 > 更新日期：2026-11-01
 > 数据文件内的 `schemaVersion` 与插件版本号相互独立；插件升级不自动改写数据格式。
 > 版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
@@ -676,7 +676,39 @@ $DSH_HOME/mcmods-studio/cache/structure/<hash>.json   # structure.json 的副本
 
 超预算时按 resources → class excerpt → api 的顺序裁剪，`truncated` 记录被裁剪项与原因。
 
-## 9. notices（导入判定提示）
+## 9. v0.4.0 新增数据
+
+### 9.1 Gradle 脚手架（`templates/scaffold/`）
+
+```text
+templates/scaffold/shared/                 # gradlew / gradlew.bat / wrapper jar
+templates/scaffold/<loader>/<mcVersion>/   # settings/build/properties、主类、mods.toml / fabric.mod.json、pack.mcmeta、.gitignore
+```
+
+- 脚手架只写缺失文件，已存在文件跳过；失败删除本次新增；
+- `scaffold` 结果记录 `params`、`files`、`created`、`buildVerified`。
+
+### 9.2 标记区块
+
+```java
+// <mcstudio:generated items>
+...生成内容...
+// </mcstudio:generated>
+```
+
+- 同一 id 一块；重复、嵌套、未闭合、孤立 close 均为错误；
+- 只替换标记之间，标记行与外部代码保留；文件不存在时可由模板 `scaffold` 建骨架。
+
+### 9.3 代码生成记录
+
+`task.codegen.apply` 的结果写入任务 `result.files`（`{path, action, marker?}`）与 `result.backupDir`，
+与 `task.apply` 共用备份与 `task.rollback`。
+
+### 9.4 模板扩展字段
+
+`template.json` 的 `files[]` 支持 `marker`、`mode: "marker"`、`scaffold`；参数派生变量新增 `packagePath` 与 `constName`。
+
+## 10. notices（导入判定提示）
 
 `project.import`、`project.reimport` 的 `imported.notices` 与 `project.analyzeImport` 的
 `notices` 字段，记录导入过程中系统做的判断。

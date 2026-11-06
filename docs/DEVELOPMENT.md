@@ -1,6 +1,6 @@
 # 开发文档
 
-> 适用版本：v0.3.2
+> 适用版本：v0.4.0
 > 状态：as-built（v0.2.0 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
 > 更新日期：2026-11-01
 > 发版与版本号规则见 [VERSION-PLAN.md](VERSION-PLAN.md)，函数级索引见 [INDEX.md](INDEX.md)。
@@ -47,7 +47,7 @@ dsh-mcmods-studio-plugin/
 ├── index.js              # Host 入口：HTTP 路由、原生工具注册、卸载清理
 ├── client.js             # Client 入口：单文件 UI 模块
 ├── lib/
-│   ├── api.js            # 68 个动作的声明式路由表与 dispatch
+│   ├── api.js            # 74 个动作的声明式路由表与 dispatch
 │   ├── registry.js       # 注册表、路径工具、原子写文件
 │   ├── paths.js          # .mcstudio/ 路径、id 校验、路径归属
 │   ├── schema.js         # 加载器、状态、类型、19 个字段
@@ -70,7 +70,7 @@ dsh-mcmods-studio-plugin/
 │   ├── summary.js        # summary.json（agent 摘要）
 │   ├── structure.js      # Java 结构解析、按哈希增量、语义注解
 │   ├── validate.js       # 9 类校验
-│   ├── tools.js          # 31 个 agent 工具的定义与调用
+│   ├── tools.js          # 33 个 agent 工具的定义与调用
 │   ├── tool-bridge.js    # 把工具注册为 DSH 原生工具
 │   └── project.js        # 转发层：export * 五个数据模块（不能删）
 ├── data/schema.json      # 字段定义对外副本（由脚本生成）

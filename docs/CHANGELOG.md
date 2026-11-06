@@ -2,6 +2,28 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.4.0] - 2026-11-06
+
+### 新增
+
+- **Gradle 脚手架**：新建项目时由 AI 推断 loader / MC 版本 / 映射，生成完整可编译的 Forge / NeoForge / Fabric 1.20.1 工程（settings / build / properties、wrapper、主类、mods.toml 或 fabric.mod.json）；支持预览、冲突跳过、失败回滚与可选 `compileJava`。
+- **标记区块**：新增 `lib/markers.js`（解析、替换、追加、幂等、重复/嵌套/未闭合检测），生成物只改标记区间，不覆盖手写代码。
+- **代码生成器**：`lib/codegen.js` 的 `preview` / `apply`，支持整文件模板与标记模板（含 `scaffold` 骨架），输出 create/update/skip 与行数变化，写入前备份、失败回滚。
+- **第二批模板**：`block-entity-menu`、`uuid-key-item`、`s2c-sync-packet`、`saved-data-store`、`lockable-interaction`、`lock-type`、`config`、`creative-tab`（模板总数 9 → 18）。
+- **任务生成集成**：`task.codegen.preview` / `task.codegen.apply` 使用任务 `templateRefs`，写入受 `allowedPaths` / `guardPaths` 约束，结果记入任务 `result`。
+- **计划页**：任务卡新增「生成」按钮，[CodegenModal] 展示 diff、越界/保护路径，可一键应用。
+- **新建项目弹窗**：新增「同时生成 Gradle 工程」开关（默认勾选）。
+
+### 变更
+
+- 版本 `0.3.2` → `0.4.0`；动作 68 → 74，工具 31 → 33，模板 9 → 18。
+- 任务 `templateRefs.parameters` 与 `result.files` 复用；`_mapped_parchment` 索引继续作为 API 来源。
+- 测试新增 `test/26-scaffold`、`27-markers`、`28-codegen`、`29-codegen-templates`；总计 29 文件 / 305 项。
+
+### 文档
+
+- 更新 V0.4.0-PLAN（含 Lock 试点验收记录）、STATUS、INDEX、DATA-FORMAT、VERSION-PLAN、README、ARCHITECTURE、DEVELOPMENT、AGENT-PLAN、SETTINGS-PLAN。
+
 ## [0.3.2] - 2026-11-05
 
 ### 修复

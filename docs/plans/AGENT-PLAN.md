@@ -11,7 +11,7 @@
 
 | 建议 | 内容 | 状态 | 落地 |
 | --- | --- | --- | --- |
-| 1 | 注册为 agent 工具 | **已完成** | 31 个工具，DSH 原生 `mcmods_*`，见 `lib/tools.js`、`lib/tool-bridge.js` |
+| 1 | 注册为 agent 工具 | **已完成** | 33 个工具，DSH 原生 `mcmods_*`，见 `lib/tools.js`、`lib/tool-bridge.js` |
 | 2 | `summary.json` 聚合 | **已完成** | `lib/summary.js`，写操作后自动刷新 |
 | 3 | 紧凑 / 详细双表示 | **已完成** | `item_list`（约 300 字节 / 12 物品）与 `item_get`（19 字段带标签） |
 | 4 | 字段知识外置 | **已完成** | `data/schema.json` + `scripts/gen-schema.mjs` + 一致性测试 |
