@@ -1,0 +1,6 @@
+# Gradle wrapper 脚本必须保持 LF，否则在 Git Bash / Linux 下无法执行
+templates/scaffold/shared/gradlew text eol=lf
+templates/scaffold/shared/gradlew.bat text eol=crlf
+
+# 脚手架模板按原样渲染，不做换行转换
+templates/scaffold/**/*.tpl -text
