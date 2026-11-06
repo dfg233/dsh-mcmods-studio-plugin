@@ -62,6 +62,7 @@
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
 | `test/*.mjs` | 回归测试：29 个文件、305 项 | 6674 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
+| `docs/fix/` | 问题报告与修复方向（v0.4.0 起） | — |
 
 > `lib/project.js` 是 2026-10-24 拆分后保留的转发层，`api.js`、`assets.js`、`docs.js`、
 > `tools.js` 仍从它导入，因此不能删除。详见 [refactor/01-split-project.md](refactor/01-split-project.md)。
