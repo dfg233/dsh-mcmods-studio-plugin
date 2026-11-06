@@ -114,6 +114,20 @@ const cases = [
     },
   },
   {
+    name: 'project.create 同时生成 Gradle 工程',
+    async run(ws) {
+      const dir = ws.path('scaffoldcreate')
+      const project = await ws.call('project.create', {
+        path: dir, name: '脚手架创建', modid: 'scaffoldcreate', loader: 'forge', scaffold: true,
+      })
+      must(project.scaffold, '应返回脚手架结果')
+      must(project.scaffold.created.length > 0, '应写入文件')
+      must(!project.scaffoldError, '不应有错误')
+      const build = await readFile(join(dir, 'build.gradle'), 'utf8')
+      must(build.includes('net.minecraftforge.gradle'), 'build.gradle 应写入')
+    },
+  },
+  {
     name: 'scaffold 工具预览',
     async run(ws) {
       const dir = await newProject(ws, 'toolmod')

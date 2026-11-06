@@ -2942,6 +2942,7 @@ window.__ModuleLoader__.load({
       const [draft, setDraft] = useState({
         path: props.defaultRoot ? `${props.defaultRoot}\\my-mod` : '',
         name: '我的模组', modid: 'mymod', version: '0.1.0', loader: 'neoforge', description: '',
+        scaffold: true,
       })
       const [submitting, setSubmitting] = useState(false)
       const set = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }))
@@ -2949,6 +2950,9 @@ window.__ModuleLoader__.load({
         setSubmitting(true)
         try {
           const project = await call('project.create', draft)
+          if (project.scaffoldError) {
+            props.setError(`项目已创建，但生成 Gradle 工程失败：${project.scaffoldError}`)
+          }
           props.onCreated(project.path)
         } catch (err) {
           props.setError(err.message)
@@ -2984,7 +2988,15 @@ window.__ModuleLoader__.load({
           })),
         ),
         h(Field, { label: '描述' }, h(Textarea, { value: draft.description, onChange: (v) => set('description', v) })),
-        h('div', { style: S.hint }, '目标版本固定为 Minecraft 1.20.1。插件只创建设计与文档目录，不生成 gradle 工程。'),
+        h('label', { style: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, fontSize: 13, cursor: 'pointer' } },
+          h('input', {
+            type: 'checkbox',
+            checked: draft.scaffold,
+            onChange: (event) => set('scaffold', event.target.checked),
+          }),
+          '同时生成 Gradle 工程',
+        ),
+        h('div', { style: S.hint }, '勾选后自动生成 build.gradle、wrapper、主类与 mods.toml / fabric.mod.json；已存在文件不会覆盖。取消则只创建设计与文档目录。'),
       )
     }
 
@@ -3400,7 +3412,7 @@ window.__ModuleLoader__.load({
             ProjectTab, FeaturesTab, ItemsTab, AssetsTab, GuideTab,
             StudioPage, StudioRoot, SidebarStudioPanel, ItemEditor, FeatureEditor, PlanTab, SystemEditor, TaskEditor,
             ProjectDetailModal, ImportConfirmModal, Icon, InfoRow, PathField,
-            HistoryModal, LangTab, ContextModal,
+            HistoryModal, LangTab, ContextModal, CreateProjectModal,
           },
           helpers: {
             call, pickFolder, getStudioState, setStudioState, defaultSlot,

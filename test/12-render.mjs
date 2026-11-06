@@ -427,6 +427,20 @@ const cases = [
     },
   },
   {
+    name: '新建项目弹窗提供 Gradle 工程开关',
+    async run() {
+      const client = await loadClient()
+      const tree = await client.renderSettled(client.components.CreateProjectModal, {
+        defaultRoot: 'D:/demo',
+        onClose: () => {},
+        onCreated: () => {},
+        setError: () => {},
+      })
+      must(hasText(tree, '同时生成 Gradle 工程'), '应有脚手架开关')
+      must(hasText(tree, 'build.gradle'), '应说明生成内容')
+    },
+  },
+  {
     name: '上下文弹窗展示打包结果',
     async run() {
       const client = await loadClient({
