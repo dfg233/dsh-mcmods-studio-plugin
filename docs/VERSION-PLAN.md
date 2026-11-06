@@ -138,8 +138,9 @@
 | `v0.2.5` | 2026-11-01 | PATCH | 补齐 agent 工具：`content` / `lang` / `asset` / `project_admin`，`workbench` 支持删除；工具 27、测试 20 文件 / 220 项 | `d8cac34` |
 | `v0.3.0` | 2026-11-04 | MINOR | M2：API 索引（javap/缓存/查询）、18 个模板、上下文包、任务级检查与执行；动作 68、工具 31、测试 25 文件 / 261 项 | `74c4812` |
 | `v0.3.1` | 2026-11-05 | PATCH | 验收修复：模板清单序列化、模板包路径、task.save 保留 result、guard 优先、context 预算、API 索引纳入 MC 本体（mojmap）与 partial 提示、content rollback；测试 25 文件 / 265 项 | `af77813` |
-| `v0.3.2` | 2026-11-05 | PATCH | 复验修复：render skip 非无损 JSON、搜索相关度排序、task.save 部分更新与状态不降级、上下文状态同步；测试 29 文件 / 305 项 | `648db34` |
-| `v0.4.0` | 2026-11-06 | MINOR | M3：Gradle 脚手架、标记区块、代码生成器、第二批模板、任务生成集成与 Lock 试点；动作 74、工具 33、模板 18、测试 29 文件 / 305 项 | 本次提交 |
+| `v0.3.2` | 2026-11-05 | PATCH | 复验修复：render skip 非无损 JSON、搜索相关度排序、task.save 部分更新与状态不降级、上下文状态同步；测试 25 文件 / 268 项 | `648db34` |
+| `v0.4.0` | 2026-11-06 | MINOR | M3：Gradle 脚手架、标记区块、代码生成器、第二批模板、任务生成集成与 Lock 试点；动作 74、工具 33、模板 18、测试 29 文件 / 305 项 | `283d193` |
+| `v0.4.1` | 2026-11-07 | PATCH | 脚手架字段修复：`mod_license` 空值回退、Gradle 字段 ASCII 化与 `gradleName` 派生、新建弹窗英文默认名；测试 29 文件 / 307 项 | 本次提交 |
 
 > v0.1.0 的提交范围以 `9a2ca08` 为界；v0.1.1 记录本次发版提交。
 > 详细变更以 [CHANGELOG.md](CHANGELOG.md) 为准，本表只做索引。
@@ -160,8 +161,8 @@
 | `v0.3.0` | API 索引、模板、上下文与检查（已发版） | 从 Gradle classpath 提取 API 签名（含 protected/继承）；模板清单/参数/渲染；任务上下文包；允许路径、structure-diff、资源引用、注册配对检查；见 [major/V0.3.0-PLAN.md](major/V0.3.0-PLAN.md) |
 | `v0.3.1` | M2 验收修复（已发版） | 模板清单序列化、包路径、task.save 保留 result、guard 优先、context 预算、API 索引纳入 mojmap MC 类与 partial 提示、content rollback |
 | `v0.3.2` | M2 复验修复（已发版） | render skip 序列化、搜索相关度、task.save 部分更新与状态不降级、上下文状态同步 |
-| `v0.4.0` | 代码生成与 Lock 试点 | 标记区块代码生成；方块实体/菜单、钥匙、网络同步模板；Lock 电子锁端到端 |
 | `v0.4.0` | 代码生成与 Gradle 脚手架（已发版） | 脚手架、标记区块、codegen、第二批模板、任务生成与 Lock 试点；见 [major/V0.4.0-PLAN.md](major/V0.4.0-PLAN.md) |
+| `v0.4.1` | 脚手架字段修复（已发版） | `mod_license` 兜底、Gradle 字段 ASCII 化、`gradleName` 派生、新建弹窗英文默认名；见 [fix/V0.4.0-ISSUES-REPORT.md](fix/V0.4.0-ISSUES-REPORT.md) |
 | `v0.5.0` | 进阶内容与稳定 | 战利品表、创造标签、多加载器模板、性能基线 |
 | `v1.0.0` | 正式稳定版 | 发布第一批稳定契约：数据格式与接口冻结；同时完成第二个 MC 版本（1.21.1）、`.jar` 导入与数据迁移回归 |
 | `v2.0.0` 及以后 | 底层架构变化 | 仅在底层架构变化（通常伴随不兼容的数据/接口变更）时采用，需提供迁移说明 |

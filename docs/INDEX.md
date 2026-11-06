@@ -60,7 +60,7 @@
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
 | `data/schema.json` | 字段定义的对外副本（生成物） | 7.3 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：29 个文件、305 项 | 6674 |
+| `test/*.mjs` | 回归测试：29 个文件、307 项 | 6674 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 | `docs/fix/` | 问题报告与修复方向（v0.4.0 起） | — |
 
@@ -924,7 +924,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（29 个文件、305 项）
+# 全部测试（29 个文件、307 项）
 npm test
 
 # 只跑某一组
@@ -989,7 +989,7 @@ client.js
 | `23-context.mjs` | 上下文组成、codeRefs、预算裁剪、工具 | 7 |
 | `24-checks.mjs` | allowed/guard/structure-diff/resource/registration/lang | 8 |
 | `25-tasks.mjs` | start / apply / 幂等 / verify / rollback / 工具 / codegen | 15 |
-| `26-scaffold.mjs` | 版本矩阵、参数推断、预览、写入、幂等、project.create 脚手架 | 9 |
+| `26-scaffold.mjs` | 版本矩阵、参数推断、预览、写入、幂等、project.create 脚手架、中文名派生 | 11 |
 | `27-markers.mjs` | 标记解析、替换、追加、幂等、重复/嵌套/未闭合 | 8 |
 | `28-codegen.mjs` | 整文件/标记生成、diff、幂等、非法标记、工具 | 8 |
 | `29-codegen-templates.mjs` | 第二批模板渲染与标记写入 | 8 |

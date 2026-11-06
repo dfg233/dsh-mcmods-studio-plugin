@@ -400,6 +400,16 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | 接口 | `lib/api.js`、`lib/tools.js` | 动作 68 → 74；工具 31 → 33 |
 | 测试 | `test/26-29` | 新增 33 项；总计 29 文件 / 305 项 |
 
+### 3.0.19 v0.4.1 脚手架字段修复（已完成）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| license 兜底 | `lib/scaffold.js` | `meta.license` 空串回退 `All Rights Reserved`；Gradle 字段统一 ASCII |
+| 英文名派生 | `lib/scaffold.js` | 中文显示名保留在 `name`；`gradleName` 由 `asciiName` / `humanName(modid)` 派生 |
+| 模板 | `templates/scaffold/*` | `gradle.properties` / `fabric.mod.json` / `pack.mcmeta` 改用 `gradleName` / `gradleLicense` / `gradleDescription` / `gradleAuthors` |
+| 新建弹窗 | `client.js` | 默认英文名 `My Mod`；名称含非 ASCII 时提示将使用的英文名 |
+| 测试 | `test/26` | 新增 2 项；总计 29 文件 / 307 项 |
+
 ### 3.1 目标能力（v0.3 起）
 
 | 里程碑 | 能力 | 说明 |
@@ -466,11 +476,11 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**29 个文件、305 项全部通过**）：
+已通过自动化验证（`npm test`，**29 个文件、307 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
-| Host 业务 | 228 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| Host 业务 | 230 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
 | 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |

@@ -2,6 +2,18 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.4.1] - 2026-11-07
+
+### 修复
+
+- 新建 Gradle 工程时 `mod_license` 为空：`meta.license` 为空串时回退 `All Rights Reserved`，`mods.toml` 的 `license` 不再为空；
+- `mod_name` / `mod_description` / `mod_authors` / `license` 含中文导致乱码：Gradle 字段统一只保留可见 ASCII，`gradleName` 由显示名或 `modid` 派生（`humanName`：`my_mod` → `My Mod`）；
+- 新建项目弹窗默认名改为英文 `My Mod`；名称含非 ASCII 时提示实际使用的英文名，显示名仍保留中文。
+
+### 变更
+
+- 版本 `0.4.0` → `0.4.1`；测试 29 文件 / 307 项。
+
 ## [0.4.0] - 2026-11-06
 
 ### 新增

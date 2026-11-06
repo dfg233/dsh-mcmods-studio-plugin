@@ -139,6 +139,44 @@ const cases = [
       must(result.files.some((file) => file.path === 'src/main/resources/fabric.mod.json'), 'fabric 应包含 fabric.mod.json')
     },
   },
+  {
+    name: '中文项目名派生英文 Gradle 字段',
+    async run(ws) {
+      const dir = await newProject(ws, 'zhmod')
+      const result = await ws.call('scaffold.preview', { path: dir, loader: 'forge', name: '我的模组', modid: 'zhmod', license: '' })
+      equal(result.params.name, '我的模组', '显示名保留中文')
+      equal(result.params.gradleName, 'Zhmod', '英文名由 modid 派生')
+      equal(result.params.gradleLicense, 'All Rights Reserved', '空 license 回退')
+      const props = result.files.find((f) => f.path === 'gradle.properties')
+      must(props.content.includes('mod_name=Zhmod'), 'gradle.properties 用英文名')
+      must(props.content.includes('mod_license=All Rights Reserved'), 'license 非空')
+
+      const zh = await ws.call('scaffold.preview', { path: dir, loader: 'forge', name: '中文名', modid: 'zhmod', license: '保留所有权利' })
+      equal(zh.params.gradleLicense, 'All Rights Reserved', '中文 license 回退')
+    },
+  },
+  {
+    name: '三个加载器的 Gradle 字段均为 ASCII',
+    async run(ws) {
+      for (const [loader, modid] of [['forge', 'asciiforge'], ['neoforge', 'ascineo'], ['fabric', 'ascifabric']]) {
+        const dir = await newProject(ws, modid)
+        const result = await ws.call('scaffold.preview', { path: dir, loader, name: '中文项目', description: '中文描述' })
+        const files = result.files.filter((f) => f.path === 'gradle.properties' || f.path.endsWith('fabric.mod.json'))
+        must(files.length > 0, `${loader} 应有配置文件`)
+        for (const file of files) {
+          const bad = [...file.content].filter((ch) => {
+            const code = ch.charCodeAt(0)
+            return code > 0x7e || (code < 0x20 && ch !== '\n' && ch !== '\r' && ch !== '\t')
+          })
+          must(bad.length === 0, `${loader} 的 ${file.path} 应为 ASCII，含：${JSON.stringify(bad.slice(0, 5))}`)
+        }
+        if (loader === 'fabric') {
+          const mod = JSON.parse(result.files.find((f) => f.path.endsWith('fabric.mod.json')).content)
+          must(mod.name && mod.license === 'All Rights Reserved', 'fabric.mod.json name/license 非空')
+        }
+      }
+    },
+  },
 ]
 
 process.exitCode = await runSuite('26 · Gradle 脚手架', cases)

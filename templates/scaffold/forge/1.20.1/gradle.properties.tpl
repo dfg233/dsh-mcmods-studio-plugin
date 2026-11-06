@@ -10,9 +10,9 @@ mapping_channel=parchment
 mapping_version=2023.09.03-1.20.1
 
 mod_id={{modid}}
-mod_name={{name}}
-mod_license={{license}}
+mod_name={{gradleName}}
+mod_license={{gradleLicense}}
 mod_version={{version}}
 mod_group_id={{package}}
-mod_authors={{authors}}
-mod_description={{modDescription}}
+mod_authors={{gradleAuthors}}
+mod_description={{gradleDescription}}

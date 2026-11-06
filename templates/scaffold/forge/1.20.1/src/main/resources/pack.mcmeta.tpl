@@ -1,6 +1,6 @@
 {
   "pack": {
-    "description": "{{name}} resources",
+    "description": "{{gradleName}} resources",
     "pack_format": 15
   }
 }

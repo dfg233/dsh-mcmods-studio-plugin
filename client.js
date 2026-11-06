@@ -3013,10 +3013,28 @@ window.__ModuleLoader__.load({
         ))
     }
 
+    /** Gradle 的 .properties 按 ISO-8859-1 读取，只保留可见 ASCII。 */
+    function asciiName(text) {
+      return String(text ?? '').replace(/[^\x20-\x7E]/g, ' ').replace(/\s+/g, ' ').trim()
+    }
+
+    /** 从 modid 生成可读英文名：my_mod → My Mod。 */
+    function humanName(modid) {
+      return String(modid ?? '')
+        .split(/[^a-zA-Z0-9]+/)
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join(' ')
+    }
+
+    function gradleNameOf(name, modid) {
+      return asciiName(name) || humanName(modid) || 'Examplemod'
+    }
+
     function CreateProjectModal(props) {
       const [draft, setDraft] = useState({
         path: props.defaultRoot ? `${props.defaultRoot}\\my-mod` : '',
-        name: '我的模组', modid: 'mymod', version: '0.1.0', loader: 'neoforge', description: '',
+        name: 'My Mod', modid: 'mymod', version: '0.1.0', loader: 'neoforge', description: '',
         scaffold: true,
       })
       const [submitting, setSubmitting] = useState(false)
@@ -3063,6 +3081,10 @@ window.__ModuleLoader__.load({
           })),
         ),
         h(Field, { label: '描述' }, h(Textarea, { value: draft.description, onChange: (v) => set('description', v) })),
+        /[^\x20-\x7E]/.test(draft.name)
+          ? h('div', { style: { ...S.hint, color: C.warning } },
+              `Gradle 工程名需要英文，将使用「${gradleNameOf(draft.name, draft.modid)}」；显示名仍保留中文。`)
+          : null,
         h('label', { style: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, fontSize: 13, cursor: 'pointer' } },
           h('input', {
             type: 'checkbox',

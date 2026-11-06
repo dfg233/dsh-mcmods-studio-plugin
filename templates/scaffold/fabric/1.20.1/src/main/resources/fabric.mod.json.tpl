@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "{{modid}}",
   "version": "{{version}}",
-  "name": "{{name}}",
-  "description": "{{modDescription}}",
-  "authors": ["{{authors}}"],
-  "license": "{{license}}",
+  "name": "{{gradleName}}",
+  "description": "{{gradleDescription}}",
+  "authors": ["{{gradleAuthors}}"],
+  "license": "{{gradleLicense}}",
   "environment": "*",
   "entrypoints": {
     "main": ["{{package}}.{{ClassName}}"]
