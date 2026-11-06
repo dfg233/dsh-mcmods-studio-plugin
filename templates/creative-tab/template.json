@@ -1,0 +1,40 @@
+{
+  "id": "creative-tab",
+  "name": "创造模式标签",
+  "version": 1,
+  "description": "生成创造模式标签注册骨架，并写入标记区块。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "tab",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.world.item.CreativeModeTab"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/registry/ModCreativeTabs.java",
+      "template": "files/tab-fragment.java.tpl",
+      "scaffold": "files/mod-creative-tabs.java.tpl",
+      "marker": "creative_tabs",
+      "mode": "marker"
+    }
+  ]
+}

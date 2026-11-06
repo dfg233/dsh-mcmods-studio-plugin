@@ -1,0 +1,37 @@
+{
+  "id": "lock-type",
+  "name": "锁类型（项目专用）",
+  "version": 1,
+  "description": "生成一个锁类型骨架；需按项目中的 AbstractLock 补齐构造与抽象方法（Lock 试点用）。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "lock",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.nbt.CompoundTag"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/lock/{{ClassName}}Lock.java",
+      "template": "files/lock.java.tpl"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "id": "block-entity-menu",
+  "name": "方块实体（基础）",
+  "version": 1,
+  "description": "生成方块实体、方块、方块实体注册与方块注册骨架；菜单/屏幕由任务补充。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "block",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.world.level.block.entity.BlockEntity",
+    "net.minecraft.world.level.block.EntityBlock",
+    "net.minecraft.world.level.block.Block"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/block/{{ClassName}}BlockEntity.java",
+      "template": "files/block-entity.java.tpl"
+    },
+    {
+      "path": "src/main/java/{{packagePath}}/block/{{ClassName}}Block.java",
+      "template": "files/block.java.tpl"
+    },
+    {
+      "path": "src/main/java/{{packagePath}}/registry/ModBlockEntities.java",
+      "template": "files/mod-block-entities-fragment.java.tpl",
+      "scaffold": "files/mod-block-entities.java.tpl",
+      "marker": "block_entities",
+      "mode": "marker"
+    },
+    {
+      "path": "src/main/java/{{packagePath}}/registry/ModBlocks.java",
+      "template": "files/mod-blocks-fragment.java.tpl",
+      "scaffold": "files/mod-blocks.java.tpl",
+      "marker": "blocks",
+      "mode": "marker"
+    }
+  ]
+}

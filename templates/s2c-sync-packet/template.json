@@ -1,0 +1,46 @@
+{
+  "id": "s2c-sync-packet",
+  "name": "服务端到客户端同步包",
+  "version": 1,
+  "description": "生成 SimpleChannel 包类、注册与客户端处理骨架。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "network",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraftforge.network.SimpleChannel",
+    "net.minecraft.network.FriendlyByteBuf"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/network/{{ClassName}}Packet.java",
+      "template": "files/packet.java.tpl"
+    },
+    {
+      "path": "src/main/java/{{packagePath}}/network/{{ClassName}}Handler.java",
+      "template": "files/handler.java.tpl"
+    },
+    {
+      "path": "src/main/java/{{packagePath}}/network/ModNetwork.java",
+      "template": "files/network.java.tpl"
+    }
+  ]
+}

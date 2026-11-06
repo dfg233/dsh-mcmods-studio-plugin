@@ -1,0 +1,50 @@
+{
+  "id": "uuid-key-item",
+  "name": "UUID 钥匙物品",
+  "version": 1,
+  "description": "生成带 UUID 绑定的钥匙物品与 NBT 读写工具，并写入物品注册标记。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "item",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.world.item.Item",
+    "net.minecraft.nbt.CompoundTag",
+    "java.util.UUID"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/item/{{ClassName}}Item.java",
+      "template": "files/item.java.tpl"
+    },
+    {
+      "path": "src/main/java/{{packagePath}}/item/{{ClassName}}Data.java",
+      "template": "files/data.java.tpl"
+    },
+    {
+      "path": "src/main/java/{{packagePath}}/registry/ModItems.java",
+      "template": "files/mod-items-fragment.java.tpl",
+      "scaffold": "files/mod-items.java.tpl",
+      "marker": "items",
+      "mode": "marker"
+    }
+  ]
+}

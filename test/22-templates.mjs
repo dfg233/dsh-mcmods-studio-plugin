@@ -18,7 +18,7 @@ const cases = [
     name: '列出内置模板',
     async run(ws) {
       const result = await ws.call('template.list', {})
-      equal(result.templates.length, 10, '应有 10 个内置模板')
+      equal(result.templates.length, 18, '应有 18 个内置模板')
       const simple = result.templates.find((item) => item.id === 'simple-item')
       must(simple, '应包含 simple-item')
       equal(simple.loaders.includes('forge'), true, '应支持 forge')

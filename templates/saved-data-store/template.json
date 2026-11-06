@@ -1,0 +1,42 @@
+{
+  "id": "saved-data-store",
+  "name": "世界持久化数据",
+  "version": 1,
+  "description": "生成 SavedData 子类与获取入口，用于跨重启保存数据。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "data",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.world.level.saveddata.SavedData",
+    "net.minecraft.nbt.CompoundTag"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/data/{{ClassName}}SavedData.java",
+      "template": "files/saved-data.java.tpl"
+    },
+    {
+      "path": "src/main/java/{{packagePath}}/data/{{ClassName}}Store.java",
+      "template": "files/store.java.tpl"
+    }
+  ]
+}

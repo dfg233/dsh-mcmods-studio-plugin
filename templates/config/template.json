@@ -1,0 +1,37 @@
+{
+  "id": "config",
+  "name": "Forge 配置",
+  "version": 1,
+  "description": "生成 ForgeConfigSpec 配置声明与注册入口。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "config",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraftforge.common.ForgeConfigSpec"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/Config.java",
+      "template": "files/config.java.tpl"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "id": "lockable-interaction",
+  "name": "可锁交互方块",
+  "version": 1,
+  "description": "生成右键/破坏/放置拦截骨架，业务逻辑由任务填充。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "block",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.world.level.block.Block",
+    "net.minecraft.world.InteractionResult"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/block/{{ClassName}}Block.java",
+      "template": "files/block.java.tpl"
+    }
+  ]
+}
