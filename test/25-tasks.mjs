@@ -247,6 +247,50 @@ const cases = [
       equal(started.context.task.status, 'doing', '上下文中的任务状态应同步')
     },
   },
+  {
+    name: 'task.codegen 预览与应用',
+    async run(ws) {
+      const dir = await newProject(ws, 'taskcodegen')
+      await ws.call('tasks.save', {
+        path: dir,
+        task: {
+          id: 't1', title: '生成注册', systemId: 's1', goal: '生成物品注册',
+          templateRefs: [{ id: 'registry-items', version: 1, parameters: { id: 'ruby', displayName: 'Ruby' } }],
+          allowedPaths: ['src/main/java/com/example/taskcodegen/registry/**'],
+          acceptance: ['生成'], verify: ['allowed-paths'], status: 'todo',
+        },
+      })
+      const preview = await ws.call('task.codegen.preview', { path: dir, id: 't1' })
+      must(preview.files.some((file) => file.path.endsWith('ModItems.java')), '应预览到 ModItems.java')
+
+      const applied = await ws.call('task.codegen.apply', { path: dir, id: 't1' })
+      must(applied.created.some((file) => file.endsWith('ModItems.java')), '应创建文件')
+      const text = await readFile(join(dir, 'src/main/java/com/example/taskcodegen/registry/ModItems.java'), 'utf8')
+      must(text.includes('ITEMS.register("ruby"'), '应写入注册行')
+    },
+  },
+  {
+    name: 'task.codegen 越界拒绝',
+    async run(ws) {
+      const dir = await newProject(ws, 'taskcodegenbad')
+      await ws.call('tasks.save', {
+        path: dir,
+        task: {
+          id: 't1', title: '越界', systemId: 's1', goal: '越界',
+          templateRefs: [{ id: 'registry-items', version: 1, parameters: { id: 'ruby', displayName: 'Ruby' } }],
+          allowedPaths: ['src/main/java/com/example/other/**'],
+          acceptance: ['x'], verify: ['allowed-paths'], status: 'todo',
+        },
+      })
+      const preview = await ws.call('task.codegen.preview', { path: dir, id: 't1' })
+      must(preview.violations.length > 0, '应报告越界文件')
+      let message = ''
+      try {
+        await ws.call('task.codegen.apply', { path: dir, id: 't1' })
+      } catch (error) { message = error.message }
+      must(message.includes('越界修改'), `应用应拒绝越界，实际「${message}」`)
+    },
+  },
 ]
 
 process.exitCode = await runSuite('25 · 任务执行', cases)

@@ -970,6 +970,7 @@ window.__ModuleLoader__.load({
       const [systemEditing, setSystemEditing] = useState(null)
       const [taskEditing, setTaskEditing] = useState(null)
       const [contextTask, setContextTask] = useState(null)
+      const [codegenTask, setCodegenTask] = useState(null)
 
       const load = useCallback(async () => {
         if (!project) return
@@ -1127,6 +1128,9 @@ window.__ModuleLoader__.load({
                 ),
                 h('div', { style: { display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' } },
                   h('button', { style: S.btn('ghost'), onClick: () => setContextTask(task) }, '上下文'),
+                  task.templateRefs?.length
+                    ? h('button', { style: S.btn('ghost'), onClick: () => setCodegenTask(task) }, '生成')
+                    : null,
                   h('button', { style: S.btn('ghost'), onClick: () => runTaskAction(task, 'verify') }, '验证'),
                   task.result?.backupDir
                     ? h('button', { style: { ...S.btn('ghost'), color: C.danger }, onClick: () => runTaskAction(task, 'rollback') }, '回滚')
@@ -1154,6 +1158,13 @@ window.__ModuleLoader__.load({
           project,
           task: contextTask,
           onClose: () => setContextTask(null),
+        }) : null,
+
+        codegenTask ? h(CodegenModal, {
+          project,
+          task: codegenTask,
+          onClose: () => setCodegenTask(null),
+          onApplied: () => { setCodegenTask(null); load() },
         }) : null,
       )
     }
@@ -1197,6 +1208,70 @@ window.__ModuleLoader__.load({
         title: `上下文：${task.title}`,
         onClose,
         footer: [h('button', { key: 'close', style: S.btn(), onClick: onClose }, '关闭')],
+      }, body)
+    }
+
+    function CodegenModal(props) {
+      const { project, task, onClose, onApplied } = props
+      const [data, setData] = useState(null)
+      const [error, setError] = useState('')
+      const [busy, setBusy] = useState(false)
+
+      useEffect(() => {
+        let cancelled = false
+        call('task.codegen.preview', { path: project.path, id: task.id })
+          .then((result) => { if (!cancelled) setData(result) })
+          .catch((err) => { if (!cancelled) setError(err.message) })
+        return () => { cancelled = true }
+      }, [project.path, task.id])
+
+      const apply = async () => {
+        setBusy(true)
+        try {
+          const result = await call('task.codegen.apply', { path: project.path, id: task.id })
+          onApplied?.(result)
+        } catch (err) {
+          setError(err.message)
+        } finally {
+          setBusy(false)
+        }
+      }
+
+      const changes = (data?.files ?? []).filter((file) => file.action !== 'skip')
+      const body = error
+        ? h('div', { style: { color: C.danger } }, error)
+        : !data
+          ? h('div', { style: S.hint }, '生成预览中…')
+          : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 } },
+              h('div', { style: S.hint }, `将改动 ${changes.length} 个文件`),
+              ...data.files.map((file) => h('div', {
+                key: file.path,
+                style: { display: 'flex', gap: 8, alignItems: 'flex-start' },
+              },
+                h('span', { style: S.badge(file.action === 'create' ? 'success' : file.action === 'skip' ? 'idle' : 'danger') }, file.action),
+                h('span', { style: { flex: 1, wordBreak: 'break-all' } }, file.path),
+                file.additions ? h('span', { style: { color: C.muted, whiteSpace: 'nowrap' } }, `+${file.additions} −${file.removals || 0}`) : null,
+              )),
+              data.violations?.length
+                ? h('div', { style: { color: C.danger } }, `越界：${data.violations.join('、')}`)
+                : null,
+              data.guarded?.length
+                ? h('div', { style: { color: C.danger } }, `保护路径：${data.guarded.join('、')}`)
+                : null,
+            )
+
+      return h(Modal, {
+        title: `生成预览：${task.title}`,
+        onClose,
+        footer: [
+          h('button', { key: 'cancel', style: S.btn('ghost'), onClick: onClose }, '取消'),
+          h('button', {
+            key: 'apply',
+            style: S.btn(),
+            disabled: busy || !data || changes.length === 0 || (data.violations?.length ?? 0) > 0,
+            onClick: apply,
+          }, busy ? '应用中…' : '应用生成'),
+        ],
       }, body)
     }
 
@@ -3412,7 +3487,7 @@ window.__ModuleLoader__.load({
             ProjectTab, FeaturesTab, ItemsTab, AssetsTab, GuideTab,
             StudioPage, StudioRoot, SidebarStudioPanel, ItemEditor, FeatureEditor, PlanTab, SystemEditor, TaskEditor,
             ProjectDetailModal, ImportConfirmModal, Icon, InfoRow, PathField,
-            HistoryModal, LangTab, ContextModal, CreateProjectModal,
+            HistoryModal, LangTab, ContextModal, CreateProjectModal, CodegenModal,
           },
           helpers: {
             call, pickFolder, getStudioState, setStudioState, defaultSlot,

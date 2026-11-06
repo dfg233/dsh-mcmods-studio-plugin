@@ -441,6 +441,34 @@ const cases = [
     },
   },
   {
+    name: '生成预览弹窗展示 diff',
+    async run() {
+      const client = await loadClient({
+        handler: async (action) => {
+          if (action === 'task.codegen.preview') {
+            return {
+              files: [
+                { path: 'src/main/java/com/example/demo/registry/ModItems.java', action: 'update', marker: 'items', additions: 2, removals: 0 },
+                { path: 'src/main/resources/assets/demo/models/item/ruby.json', action: 'create', additions: 5, removals: 0 },
+              ],
+              conflicts: [], violations: [], guarded: [], taskId: 't1',
+            }
+          }
+          return {}
+        },
+      })
+      const tree = await client.renderSettled(client.components.CodegenModal, {
+        project: makeProject(),
+        task: { id: 't1', title: '生成注册' },
+        onClose: () => {},
+        onApplied: () => {},
+      })
+      must(hasText(tree, '将改动 2 个文件'), '应显示改动统计')
+      must(hasText(tree, 'ModItems.java'), '应列出文件')
+      must(hasText(tree, 'ruby.json'), '应列出资源文件')
+    },
+  },
+  {
     name: '上下文弹窗展示打包结果',
     async run() {
       const client = await loadClient({
