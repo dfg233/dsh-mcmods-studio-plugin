@@ -1,0 +1,24 @@
+{
+  "id": "registry-items",
+  "name": "物品注册条目",
+  "version": 1,
+  "description": "把物品注册行写入 ModItems.java 的标记区块；文件不存在时用 scaffold 创建骨架。",
+  "loaders": ["forge"],
+  "mcVersion": "1.20.1",
+  "category": "registry",
+  "parameters": [
+    { "key": "id", "type": "string", "required": true },
+    { "key": "displayName", "type": "string", "required": true },
+    { "key": "stackSize", "type": "number", "default": 64 },
+    { "key": "package", "type": "string", "default": "" }
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/registry/ModItems.java",
+      "template": "files/mod-items-fragment.java.tpl",
+      "scaffold": "files/mod-items.java.tpl",
+      "marker": "items",
+      "mode": "marker"
+    }
+  ]
+}

@@ -21,7 +21,7 @@ const cases = [
       must(result.tools.length >= 15, `工具数应不少于 15，实际 ${result.tools.length}`)
 
       const names = result.tools.map((tool) => tool.name)
-      for (const expected of ['project_summary', 'project_remove', 'item_list', 'item_save', 'content', 'lang', 'asset', 'project_admin', 'scaffold', 'api', 'template', 'context', 'task', 'project_validate', 'schema_get']) {
+      for (const expected of ['project_summary', 'project_remove', 'item_list', 'item_save', 'content', 'lang', 'asset', 'project_admin', 'scaffold', 'codegen', 'api', 'template', 'context', 'task', 'project_validate', 'schema_get']) {
         must(names.includes(expected), `应包含工具 ${expected}`)
       }
 
@@ -29,7 +29,7 @@ const cases = [
       must(sample.description, '工具应有说明')
       must(sample.input, '工具应有输入结构')
 
-      equal(result.actions.length, 70, '动作数应为 70')
+      equal(result.actions.length, 72, '动作数应为 72')
     },
   },
   {
