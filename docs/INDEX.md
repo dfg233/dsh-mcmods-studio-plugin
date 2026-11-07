@@ -55,12 +55,13 @@
 | `lib/version-matrix.js` | 1.20.1 × loader 的版本能力表 | 63 |
 | `lib/markers.js` | 标记区块解析、替换、追加与错误检测 | 159 |
 | `lib/codegen.js` | 代码生成：模板渲染 + 标记替换 + diff + 回滚 | 152 |
+| `lib/mdk.js` | MDK 模式：识别、安全解压、受控替换、校验与下载 | 511 |
 | `lib/structure.js` | Java 源码结构解析、按哈希增量、注解读写 | 794 |
 | `lib/tool-bridge.js` | 把工具注册为 DSH 原生工具 | 87 |
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
 | `data/schema.json` | 字段定义的对外副本（生成物） | 7.3 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：29 个文件、307 项 | 6674 |
+| `test/*.mjs` | 回归测试：30 个文件、316 项 | 6976 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 | `docs/fix/` | 问题报告与修复方向（v0.4.0 起） | — |
 
@@ -532,6 +533,8 @@ export * from './import.js'
 | `codegen.apply` | `{path, templateRefs?, fragments?}` | `{files[], conflicts[], created[], backupDir}` | studio |
 | `task.codegen.preview` | `{path, id, templateRefs?, fragments?}` | `{files[], conflicts[], violations[], guarded[]}` | studio |
 | `task.codegen.apply` | `{path, id, templateRefs?, fragments?, requestId?}` | `{task, files[], created[], backupDir}` | studio |
+| `scaffold.inspect` | `{path? | archive? | dir?}` | `{kind,minecraft,loaderVersion,files,warnings,errors}` | none |
+| `scaffold.download` | `{loader, minecraft, into}` | `{path,url,bytes,sha256}` | none |
 
 #### 素材与文档
 
@@ -924,7 +927,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（29 个文件、307 项）
+# 全部测试（30 个文件、316 项）
 npm test
 
 # 只跑某一组
@@ -993,6 +996,7 @@ client.js
 | `27-markers.mjs` | 标记解析、替换、追加、幂等、重复/嵌套/未闭合 | 8 |
 | `28-codegen.mjs` | 整文件/标记生成、diff、幂等、非法标记、工具 | 8 |
 | `29-codegen-templates.mjs` | 第二批模板渲染与标记写入 | 8 |
+| `30-mdk.mjs` | MDK 识别、zip 解压、路径穿越/符号链接、替换、预览、下载 URL | 9 |
 | `13-block-assets.mjs` | 方块面贴图解析 | 7 |
 | `14-persist.mjs` | 项目切换持久化 | 10 |
 | `15-structure.mjs` | 代码结构文档 | 15 |

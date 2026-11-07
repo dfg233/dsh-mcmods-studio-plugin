@@ -708,7 +708,26 @@ templates/scaffold/<loader>/<mcVersion>/   # settings/build/properties、主类�
 
 `template.json` 的 `files[]` 支持 `marker`、`mode: "marker"`、`scaffold`；参数派生变量新增 `packagePath` 与 `constName`。
 
-## 10. notices（导入判定提示）
+## 10. v0.4.2 MDK 模式
+
+`scaffold.inspect` / `scaffold.apply {source:'mdk'}` 的结果：
+
+```json
+{
+  "kind": "forge",
+  "minecraft": "1.20.1",
+  "loaderVersion": "47.4.16",
+  "files": ["gradle.properties", "build.gradle", "..."],
+  "warnings": [],
+  "errors": []
+}
+```
+
+- 下载记录：`{path, url, bytes, sha256}`（`scaffold.download`）；
+- 生成记录：`{params, files, changes, warnings}`（`scaffold.apply` MDK 模式）；
+- 不写入额外元数据；工程保持 MDK 原样，仅替换受控字段（`gradle.properties`、`mods.toml`、`fabric.mod.json`、`settings.gradle`、主类包名与类名）。
+
+## 11. notices（导入判定提示）
 
 `project.import`、`project.reimport` 的 `imported.notices` 与 `project.analyzeImport` 的
 `notices` 字段，记录导入过程中系统做的判断。

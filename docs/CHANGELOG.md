@@ -2,6 +2,24 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.4.2] - 2026-11-07
+
+### 新增
+
+- **MDK 模式**：新建项目默认「下载官方 MDK」（矩阵固定推荐版本，仅白名单主机），次选「本地 MDK」（zip / 已解压目录），内置模板降为离线兜底；
+- `scaffold.inspect`：识别 MDK 的 loader / MC / loader 版本，并与版本矩阵比对；
+- `scaffold.download`：下载官方 MDK，限制主机白名单、大小上限，记录 URL 与 sha256。
+
+### 修复 / 安全
+
+- zip 解压前校验路径穿越、绝对路径、符号链接、条目数与大小上限；失败清理本次产物；
+- 只做受控替换（`gradle.properties` / `mods.toml` / `fabric.mod.json` / `settings.gradle` / 主类包名与类名），不解析或改写 Gradle 脚本逻辑；
+- 生成后校验必需文件与关键字段，失败拒绝并清理。
+
+### 变更
+
+- 版本 `0.4.1` → `0.4.2`；动作 74 → 76；测试 30 文件 / 316 项。
+
 ## [0.4.1] - 2026-11-07
 
 ### 修复

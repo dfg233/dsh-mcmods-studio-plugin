@@ -410,6 +410,18 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | 新建弹窗 | `client.js` | 默认英文名 `My Mod`；名称含非 ASCII 时提示将使用的英文名 |
 | 测试 | `test/26` | 新增 2 项；总计 29 文件 / 307 项 |
 
+### 3.0.20 v0.4.2 MDK 模式（已完成）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| MDK 识别 | `lib/mdk.js` | 从 zip / 已解压目录识别 loader、MC、loader 版本，与矩阵比对 |
+| 安全解压 | `lib/mdk.js` | 路径穿越、符号链接、条目/大小上限校验；失败清理 |
+| 受控替换 | `lib/mdk.js` | 只改 gradle.properties / mods.toml / fabric.mod.json / settings.gradle / 主类 |
+| 下载 | `lib/mdk.js` | 白名单（Forge / NeoForge Maven、GitHub FabricMC）、矩阵固定版本、sha256 |
+| 新建弹窗 | `client.js` | 来源选择：下载 MDK（默认）/ 本地 MDK / 内置兜底 |
+| 接口 | `lib/api.js`、`lib/tools.js` | 动作 74 → 76（scaffold.inspect / scaffold.download） |
+| 测试 | `test/30` | 新增 9 项；总计 30 文件 / 316 项 |
+
 ### 3.1 目标能力（v0.3 起）
 
 | 里程碑 | 能力 | 说明 |
@@ -476,11 +488,11 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**29 个文件、307 项全部通过**）：
+已通过自动化验证（`npm test`，**30 个文件、316 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
-| Host 业务 | 230 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| Host 业务 | 239 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
 | 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |
