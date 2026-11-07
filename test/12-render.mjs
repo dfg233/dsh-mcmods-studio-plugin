@@ -427,7 +427,7 @@ const cases = [
     },
   },
   {
-    name: '新建项目弹窗提供 Gradle 工程开关',
+    name: '新建项目弹窗提供工程来源选择',
     async run() {
       const client = await loadClient()
       const tree = await client.renderSettled(client.components.CreateProjectModal, {
@@ -436,8 +436,12 @@ const cases = [
         onCreated: () => {},
         setError: () => {},
       })
-      must(hasText(tree, '同时生成 Gradle 工程'), '应有脚手架开关')
-      must(hasText(tree, 'build.gradle'), '应说明生成内容')
+      const source = findComponent(tree, (node) => node.props?.options?.some((option) => option.value === 'download'))
+      must(source, '应有工程来源选择')
+      const labels = source.props.options.map((option) => option.label)
+      must(labels.includes('下载官方 MDK（推荐）'), '应有下载 MDK 选项')
+      must(labels.includes('使用本地 MDK'), '应有本地 MDK 选项')
+      must(labels.includes('使用内置模板（不推荐）'), '应有内置模板兜底选项')
     },
   },
   {

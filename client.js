@@ -3035,17 +3035,42 @@ window.__ModuleLoader__.load({
       const [draft, setDraft] = useState({
         path: props.defaultRoot ? `${props.defaultRoot}\\my-mod` : '',
         name: 'My Mod', modid: 'mymod', version: '0.1.0', loader: 'neoforge', description: '',
-        scaffold: true,
+        source: 'download', archive: '', dir: '',
       })
       const [submitting, setSubmitting] = useState(false)
       const set = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }))
       const submit = async () => {
         setSubmitting(true)
         try {
-          const project = await call('project.create', draft)
-          if (project.scaffoldError) {
-            props.setError(`项目已创建，但生成 Gradle 工程失败：${project.scaffoldError}`)
+          if (draft.source === 'builtin') {
+            const project = await call('project.create', { ...draft, scaffold: true })
+            if (project.scaffoldError) {
+              props.setError(`项目已创建，但生成 Gradle 工程失败：${project.scaffoldError}`)
+            }
+            props.onCreated(project.path)
+            return
           }
+
+          const project = await call('project.create', { ...draft, scaffold: false })
+          let archive = draft.archive
+          if (draft.source === 'download') {
+            const downloaded = await call('scaffold.download', {
+              loader: draft.loader,
+              minecraft: '1.20.1',
+              into: draft.path.replace(/[\\/][^\\/]+$/, '') || '.',
+            })
+            archive = downloaded.path
+          }
+          await call('scaffold.apply', {
+            path: project.path,
+            source: 'mdk',
+            ...(archive ? { archive } : {}),
+            ...(draft.dir ? { dir: draft.dir } : {}),
+            modid: draft.modid,
+            name: draft.name,
+            version: draft.version,
+            description: draft.description,
+          })
           props.onCreated(project.path)
         } catch (err) {
           props.setError(err.message)
@@ -3085,15 +3110,33 @@ window.__ModuleLoader__.load({
           ? h('div', { style: { ...S.hint, color: C.warning } },
               `Gradle 工程名需要英文，将使用「${gradleNameOf(draft.name, draft.modid)}」；显示名仍保留中文。`)
           : null,
-        h('label', { style: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, fontSize: 13, cursor: 'pointer' } },
-          h('input', {
-            type: 'checkbox',
-            checked: draft.scaffold,
-            onChange: (event) => set('scaffold', event.target.checked),
-          }),
-          '同时生成 Gradle 工程',
-        ),
-        h('div', { style: S.hint }, '勾选后自动生成 build.gradle、wrapper、主类与 mods.toml / fabric.mod.json；已存在文件不会覆盖。取消则只创建设计与文档目录。'),
+        h(Field, { label: '工程来源' }, h(Select, {
+          value: draft.source, onChange: (v) => set('source', v),
+          options: [
+            { value: 'download', label: '下载官方 MDK（推荐）' },
+            { value: 'local', label: '使用本地 MDK' },
+            { value: 'builtin', label: '使用内置模板（不推荐）' },
+          ],
+        })),
+        draft.source === 'download'
+          ? h('div', { style: S.hint }, '按版本矩阵下载官方推荐 MDK（Forge 47.4.16 / NeoForge 47.1.106 / Fabric loader 0.15.11），仅访问官方 Maven 与 GitHub FabricMC。')
+          : null,
+        draft.source === 'local'
+          ? h('div', null,
+              h(Field, { label: 'MDK zip' }, h(TextInput, {
+                value: draft.archive, onChange: (v) => set('archive', v),
+                placeholder: '例如 D:/downloads/forge-1.20.1-47.4.16-mdk.zip',
+              })),
+              h(PathField, {
+                label: '或已解压目录',
+                hint: '选择已解压的 MDK 目录（与 zip 二选一）',
+                value: draft.dir, onChange: (v) => set('dir', v),
+              }),
+            )
+          : null,
+        draft.source === 'builtin'
+          ? h('div', { style: S.hint }, '内置模板为离线兜底，可能与官方 MDK 有滞后；仅在无法下载或你明确选择时使用。')
+          : null,
       )
     }
 
