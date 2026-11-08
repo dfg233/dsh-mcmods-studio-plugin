@@ -2,6 +2,22 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.4.3] - 2026-11-08
+
+### 修复
+
+- **MDK 迁移完整性**：官方示例包（`com/example/examplemod`）整包迁移到新包，同步替换 `package`、主类名引用、`examplemod` 命名空间与 `assets/data/examplemod` 资源目录；迁移后仍有残留时直接报错；
+- 校验 `mod_group_id` 与包名一致、旧示例包目录已删除。
+
+### 新增
+
+- 新建项目新增「作者」字段，写入 `meta.authors`、`gradle.properties` 的 `mod_authors` 与 MDK 的 `mods.toml`；
+- **Parchment 映射**：MDK 模式自动设置 `mapping_channel=parchment` / `mapping_version=2023.09.03-1.20.1`，安装 `org.parchmentmc.librarian.forgegradle` 插件并在 `settings.gradle` 添加 Parchment Maven；支持 `mapping: 'official'` 回退。
+
+### 变更
+
+- 版本 `0.4.2` → `0.4.3`；测试 30 文件 / 321 项。
+
 ## [0.4.2] - 2026-11-07
 
 ### 新增

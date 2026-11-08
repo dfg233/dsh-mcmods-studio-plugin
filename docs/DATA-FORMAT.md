@@ -725,6 +725,8 @@ templates/scaffold/<loader>/<mcVersion>/   # settings/build/properties、主类�
 
 - 下载记录：`{path, url, bytes, sha256}`（`scaffold.download`）；
 - 生成记录：`{params, files, changes, warnings}`（`scaffold.apply` MDK 模式）；
+- 作者：`meta.authors` → `gradleAuthors` → `mod_authors`（ASCII）；
+- Parchment：`mapping_channel=parchment`、`mapping_version=<矩阵 parchmentVersion>`，并在 `build.gradle` 安装 `org.parchmentmc.librarian.forgegradle`、`settings.gradle` 添加 Parchment Maven；
 - 不写入额外元数据；工程保持 MDK 原样，仅替换受控字段（`gradle.properties`、`mods.toml`、`fabric.mod.json`、`settings.gradle`、主类包名与类名）。
 
 ## 11. notices（导入判定提示）

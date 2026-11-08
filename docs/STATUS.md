@@ -422,6 +422,16 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | 接口 | `lib/api.js`、`lib/tools.js` | 动作 74 → 76（scaffold.inspect / scaffold.download） |
 | 测试 | `test/30` | 新增 9 项；总计 30 文件 / 316 项 |
 
+### 3.0.21 v0.4.3 MDK 迁移与 Parchment（已完成）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| 整包迁移 | `lib/mdk.js` | 示例包整体迁移 + 引用/字符串/资源目录替换 + 残留报错 |
+| 作者字段 | `meta.js`、`api.js`、`client.js`、`mdk.js` | 表单 → `project.create` → `meta.authors` → `mod_authors` |
+| Parchment | `lib/mdk.js`、`version-matrix.js` | 默认 parchment（1.20.1：`2023.09.03-1.20.1`），可回退 official |
+| 校验 | `lib/mdk.js` | `mod_group_id` 一致性、旧包删除、残留为空、librarian / Maven / mapping |
+| 测试 | `test/26`、`test/30` | 新增 5 项；总计 30 文件 / 321 项 |
+
 ### 3.1 目标能力（v0.3 起）
 
 | 里程碑 | 能力 | 说明 |
@@ -488,11 +498,11 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**30 个文件、316 项全部通过**）：
+已通过自动化验证（`npm test`，**30 个文件、321 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
-| Host 业务 | 239 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| Host 业务 | 244 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
 | 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |

@@ -177,6 +177,18 @@ const cases = [
       }
     },
   },
+  {
+    name: '作者写入 gradle.properties',
+    async run(ws) {
+      const dir = ws.path('authormod')
+      const project = await ws.call('project.create', {
+        path: dir, name: 'Author Mod', modid: 'authormod', loader: 'forge', authors: 'Besson', scaffold: true,
+      })
+      equal(project.meta.authors, 'Besson', 'meta 记录作者')
+      const props = await readFile(join(dir, 'gradle.properties'), 'utf8')
+      must(props.includes('mod_authors=Besson'), 'gradle.properties 写入作者')
+    },
+  },
 ]
 
 process.exitCode = await runSuite('26 · Gradle 脚手架', cases)

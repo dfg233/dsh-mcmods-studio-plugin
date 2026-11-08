@@ -20,8 +20,8 @@ function makeMdkEntries({ minecraft = '1.20.1', loader = '47.4.16', modid = 'exa
       'org.gradle.jvmargs=-Xmx3G',
       `minecraft_version=${minecraft}`,
       `forge_version=${loader}`,
-      'mapping_channel=parchment',
-      'mapping_version=2023.09.03-1.20.1',
+      'mapping_channel=official',
+      'mapping_version=1.20.1',
       `mod_id=${modid}`,
       'mod_name=Example Mod',
       'mod_license=All Rights Reserved',
@@ -50,6 +50,21 @@ function makeMdkEntries({ minecraft = '1.20.1', loader = '47.4.16', modid = 'exa
       '    public ExamplemodMod() {}',
       '}',
     ].join('\n') + '\n',
+    'src/main/java/com/example/examplemod/Config.java': [
+      'package com.example.examplemod;',
+      '',
+      'public class Config {',
+      '    public Config() { ExamplemodMod.LOGGER.info("config"); }',
+      '}',
+    ].join('\n') + '\n',
+    'src/main/java/com/example/examplemod/client/ClientSetup.java': [
+      'package com.example.examplemod.client;',
+      '',
+      'public class ClientSetup {',
+      '    public static final String MODID = "examplemod";',
+      '}',
+    ].join('\n') + '\n',
+    'src/main/resources/assets/examplemod/lang/en_us.json': '{"item.examplemod.ruby": "Ruby"}\n',
   }
 }
 
@@ -133,7 +148,7 @@ const cases = [
       const dir = await newProject(ws, 'mdkdir')
       const result = await ws.call('scaffold.apply', {
         path: dir, source: 'mdk', dir: mdk,
-        modid: 'mymod', name: 'My Mod', package: 'com.example.mymod',
+        modid: 'mymod', name: 'My Mod', package: 'com.example.mymod', authors: 'Besson',
       })
       equal(result.params.modid, 'mymod', '参数回显')
       must(result.files.length > 0, '应复制文件')
@@ -255,6 +270,68 @@ const cases = [
       let message = ''
       try { mdkUrl('minecraft', '1.20.1') } catch (error) { message = error.message }
       must(message.includes('不支持'), `未知加载器应拒绝，实际「${message}」`)
+    },
+  },
+  {
+    name: '整包迁移示例类与资源',
+    async run(ws) {
+      const mdk = await makeMdkDir(join(ws.path('migrate'), 'forge'))
+      const dir = await newProject(ws, 'migratemod')
+      await ws.call('scaffold.apply', {
+        path: dir, source: 'mdk', dir: mdk,
+        modid: 'migratemod', name: 'Migrate Mod', package: 'com.example.migratemod',
+      })
+      const config = await fsp.readFile(join(dir, 'src/main/java/com/example/migratemod/Config.java'), 'utf8').catch(() => '')
+      must(config.includes('package com.example.migratemod;'), 'Config 包名已迁移')
+      must(config.includes('MigratemodMod.LOGGER'), 'Config 引用新主类')
+      const client = await fsp.readFile(join(dir, 'src/main/java/com/example/migratemod/client/ClientSetup.java'), 'utf8').catch(() => '')
+      must(client.includes('"migratemod"'), 'ClientSetup 的 modid 已替换')
+      const oldDir = await fsp.stat(join(dir, 'src/main/java/com/example/examplemod')).then(() => true).catch(() => false)
+      equal(oldDir, false, '旧示例包目录已删除')
+      const lang = await fsp.readFile(join(dir, 'src/main/resources/assets/migratemod/lang/en_us.json'), 'utf8').catch(() => '')
+      must(lang.includes('item.migratemod.ruby'), '资源目录与内容已迁移')
+    },
+  },
+  {
+    name: '迁移后残留示例被拒绝',
+    async run(ws) {
+      const mdk = await makeMdkDir(join(ws.path('residual'), 'forge'))
+      await writeFile(mdk, 'src/main/resources/residual.json', '{"id": "examplemod"}\n')
+      const dir = await newProject(ws, 'residualmod')
+      let message = ''
+      try {
+        await ws.call('scaffold.apply', { path: dir, source: 'mdk', dir: mdk, modid: 'residualmod', name: 'Residual' })
+      } catch (error) { message = error.message }
+      must(message.includes('仍有示例残留'), `应拒绝残留，实际「${message}」`)
+    },
+  },
+  {
+    name: '安装 Parchment 映射',
+    async run(ws) {
+      const mdk = await makeMdkDir(join(ws.path('parchment'), 'forge'))
+      const dir = await newProject(ws, 'parchmod')
+      await ws.call('scaffold.apply', { path: dir, source: 'mdk', dir: mdk, modid: 'parchmod', name: 'Parch Mod' })
+      const build = await fsp.readFile(join(dir, 'build.gradle'), 'utf8')
+      must(build.includes('org.parchmentmc.librarian.forgegradle'), 'build.gradle 含 librarian')
+      const settings = await fsp.readFile(join(dir, 'settings.gradle'), 'utf8')
+      must(settings.includes('maven.parchmentmc.org'), 'settings.gradle 含 Parchment Maven')
+      const props = await fsp.readFile(join(dir, 'gradle.properties'), 'utf8')
+      must(props.includes('mapping_channel=parchment'), 'mapping 切换为 parchment')
+      must(props.includes('mapping_version=2023.09.03-1.20.1'), 'mapping 版本正确')
+    },
+  },
+  {
+    name: 'official 映射可回退',
+    async run(ws) {
+      const mdk = await makeMdkDir(join(ws.path('official'), 'forge'))
+      const dir = await newProject(ws, 'officialmod')
+      await ws.call('scaffold.apply', {
+        path: dir, source: 'mdk', dir: mdk, modid: 'officialmod', name: 'Official', mapping: 'official',
+      })
+      const build = await fsp.readFile(join(dir, 'build.gradle'), 'utf8')
+      must(!build.includes('librarian.forgegradle'), 'official 不安装 librarian')
+      const props = await fsp.readFile(join(dir, 'gradle.properties'), 'utf8')
+      must(props.includes('mapping_channel=official'), 'official 保持原映射')
     },
   },
 ]

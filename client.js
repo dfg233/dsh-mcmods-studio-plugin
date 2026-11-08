@@ -3035,6 +3035,7 @@ window.__ModuleLoader__.load({
       const [draft, setDraft] = useState({
         path: props.defaultRoot ? `${props.defaultRoot}\\my-mod` : '',
         name: 'My Mod', modid: 'mymod', version: '0.1.0', loader: 'neoforge', description: '',
+        authors: '',
         source: 'download', archive: '', dir: '',
       })
       const [submitting, setSubmitting] = useState(false)
@@ -3070,6 +3071,7 @@ window.__ModuleLoader__.load({
             name: draft.name,
             version: draft.version,
             description: draft.description,
+            authors: draft.authors,
           })
           props.onCreated(project.path)
         } catch (err) {
@@ -3105,6 +3107,7 @@ window.__ModuleLoader__.load({
             ],
           })),
         ),
+        h(Field, { label: '作者' }, h(TextInput, { value: draft.authors, onChange: (v) => set('authors', v) })),
         h(Field, { label: '描述' }, h(Textarea, { value: draft.description, onChange: (v) => set('description', v) })),
         /[^\x20-\x7E]/.test(draft.name)
           ? h('div', { style: { ...S.hint, color: C.warning } },
