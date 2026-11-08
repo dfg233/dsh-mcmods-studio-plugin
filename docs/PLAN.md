@@ -347,7 +347,7 @@ src/main/java/...
 ### 6.2 HTTP 动作（示意）
 
 ```text
-idea.list / idea.save / idea.prompt
+idea.list / idea.save
 module.list / module.save
 stage.list / stage.save
 task.list / task.save / task.start / task.verify / task.confirm
@@ -589,7 +589,7 @@ AI 负责把自然语言解析为想法卡，但必须：
 
 - 系统卡升级为「模块」（界面称模块，数据兼容 `systems.json`）；
 - 新增「阶段」（层级：模块 → 阶段 → 任务）；
-- 构想页「交给 agent 整理」与任务 `ideaId` 打通；
+- 构想由 agent 在 DSH 对话中创建，任务 `ideaId` 与构想打通；
 - 任务级变更预览与「确认」状态（默认每次任务确认一次）；
 - 计划导出（Markdown 简报）与 handoff 增强。
 
