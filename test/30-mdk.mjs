@@ -161,6 +161,8 @@ const cases = [
       const main = await fsp.readFile(join(dir, 'src/main/java/com/besson/mymod/MymodMod.java'), 'utf8')
       must(main.includes('package com.besson.mymod;'), 'Java 目录与包名一致')
       must(main.includes('class MymodMod'), '主类类名已替换')
+      const exampleDir = await fsp.stat(join(dir, 'src/main/java/com/example')).then(() => true).catch(() => false)
+      equal(exampleDir, false, '旧 example 目录已清理')
       const toml = await fsp.readFile(join(dir, 'src/main/resources/META-INF/mods.toml'), 'utf8')
       must(toml.includes('${mod_id}'), 'mods.toml 保留 Gradle 占位符')
     },
