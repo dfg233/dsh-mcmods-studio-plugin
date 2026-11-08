@@ -148,16 +148,18 @@ const cases = [
       const dir = await newProject(ws, 'mdkdir')
       const result = await ws.call('scaffold.apply', {
         path: dir, source: 'mdk', dir: mdk,
-        modid: 'mymod', name: 'My Mod', package: 'com.example.mymod', authors: 'Besson',
+        modid: 'mymod', name: 'My Mod', authors: 'Besson',
       })
       equal(result.params.modid, 'mymod', '参数回显')
+      must(result.params.package === 'com.besson.mymod', '作者段生成包名')
       must(result.files.length > 0, '应复制文件')
       const props = await fsp.readFile(join(dir, 'gradle.properties'), 'utf8')
       must(props.includes('mod_id=mymod'), 'gradle.properties 已替换 mod_id')
+      must(props.includes('mod_group_id=com.besson.mymod'), 'mod_group_id 含作者段')
       const settings = await fsp.readFile(join(dir, 'settings.gradle'), 'utf8')
       must(settings.includes("rootProject.name = 'mymod'"), 'settings.gradle 已替换')
-      const main = await fsp.readFile(join(dir, 'src/main/java/com/example/mymod/MymodMod.java'), 'utf8')
-      must(main.includes('package com.example.mymod;'), '主类包名已替换')
+      const main = await fsp.readFile(join(dir, 'src/main/java/com/besson/mymod/MymodMod.java'), 'utf8')
+      must(main.includes('package com.besson.mymod;'), 'Java 目录与包名一致')
       must(main.includes('class MymodMod'), '主类类名已替换')
       const toml = await fsp.readFile(join(dir, 'src/main/resources/META-INF/mods.toml'), 'utf8')
       must(toml.includes('${mod_id}'), 'mods.toml 保留 Gradle 占位符')

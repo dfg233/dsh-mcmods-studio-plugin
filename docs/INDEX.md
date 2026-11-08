@@ -55,13 +55,13 @@
 | `lib/version-matrix.js` | 1.20.1 × loader 的版本能力表 | 63 |
 | `lib/markers.js` | 标记区块解析、替换、追加与错误检测 | 159 |
 | `lib/codegen.js` | 代码生成：模板渲染 + 标记替换 + diff + 回滚 | 152 |
-| `lib/mdk.js` | MDK 模式：识别、安全解压、整包迁移、Parchment、校验与下载 | 672 |
+| `lib/mdk.js` | MDK 模式：识别、安全解压、整包迁移、Parchment、校验与下载 | 677 |
 | `lib/structure.js` | Java 源码结构解析、按哈希增量、注解读写 | 794 |
 | `lib/tool-bridge.js` | 把工具注册为 DSH 原生工具 | 87 |
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
 | `data/schema.json` | 字段定义的对外副本（生成物） | 7.3 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：30 个文件、321 项 | 7065 |
+| `test/*.mjs` | 回归测试：30 个文件、321 项 | 7072 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 | `docs/fix/` | 问题报告与修复方向（v0.4.0 起） | — |
 

@@ -187,6 +187,9 @@ const cases = [
       equal(project.meta.authors, 'Besson', 'meta 记录作者')
       const props = await readFile(join(dir, 'gradle.properties'), 'utf8')
       must(props.includes('mod_authors=Besson'), 'gradle.properties 写入作者')
+      must(props.includes('mod_group_id=com.besson.authormod'), 'mod_group_id 含作者段')
+      const main = await readFile(join(dir, 'src/main/java/com/besson/authormod/AuthormodMod.java'), 'utf8').catch(() => '')
+      must(main.includes('package com.besson.authormod;'), 'Java 目录与包名一致')
     },
   },
 ]

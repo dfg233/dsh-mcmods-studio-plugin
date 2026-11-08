@@ -3036,11 +3036,16 @@ window.__ModuleLoader__.load({
         path: props.defaultRoot ? `${props.defaultRoot}\\my-mod` : '',
         name: 'My Mod', modid: 'mymod', version: '0.1.0', loader: 'neoforge', description: '',
         authors: '',
+        package: '',
         source: 'download', archive: '', dir: '',
       })
       const [submitting, setSubmitting] = useState(false)
       const set = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }))
       const submit = async () => {
+        if (!String(draft.authors ?? '').trim()) {
+          props.setError('请填写作者（用于包名与 mod_authors）')
+          return
+        }
         setSubmitting(true)
         try {
           if (draft.source === 'builtin') {
@@ -3072,6 +3077,7 @@ window.__ModuleLoader__.load({
             version: draft.version,
             description: draft.description,
             authors: draft.authors,
+            ...(draft.package ? { package: draft.package } : {}),
           })
           props.onCreated(project.path)
         } catch (err) {
@@ -3107,7 +3113,11 @@ window.__ModuleLoader__.load({
             ],
           })),
         ),
-        h(Field, { label: '作者' }, h(TextInput, { value: draft.authors, onChange: (v) => set('authors', v) })),
+        h(Field, { label: '作者', required: true }, h(TextInput, { value: draft.authors, onChange: (v) => set('authors', v) })),
+        h(Field, { label: '包名（可选）' }, h(TextInput, {
+          value: draft.package, onChange: (v) => set('package', v),
+          placeholder: '留空则自动使用 com.<作者>.<modid>',
+        })),
         h(Field, { label: '描述' }, h(Textarea, { value: draft.description, onChange: (v) => set('description', v) })),
         /[^\x20-\x7E]/.test(draft.name)
           ? h('div', { style: { ...S.hint, color: C.warning } },

@@ -432,6 +432,16 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | 校验 | `lib/mdk.js` | `mod_group_id` 一致性、旧包删除、残留为空、librarian / Maven / mapping |
 | 测试 | `test/26`、`test/30` | 新增 5 项；总计 30 文件 / 321 项 |
 
+### 3.0.22 v0.4.4 包名作者段与作者必填（已完成）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| 包名规则 | `lib/scaffold.js` | 作者已填 → `com.<authorSlug>.<modid>`；未填 → `com.example.<modid>` |
+| 作者必填 | `client.js` | 表单必填；作者名仅 ASCII 字母/数字/下划线，中文报错 |
+| 可选手填包名 | `client.js`、`scaffold.js` | 留空按作者段生成，显式值优先 |
+| 一致性校验 | `lib/mdk.js` | 主类目录 ↔ `package` ↔ `mod_group_id` 三者一致 |
+| 测试 | `test/26`、`test/30`、`test/12` | 断言作者段、目录、必填字段；总计 30 文件 / 321 项 |
+
 ### 3.1 目标能力（v0.3 起）
 
 | 里程碑 | 能力 | 说明 |

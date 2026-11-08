@@ -442,6 +442,8 @@ const cases = [
       must(labels.includes('下载官方 MDK（推荐）'), '应有下载 MDK 选项')
       must(labels.includes('使用本地 MDK'), '应有本地 MDK 选项')
       must(labels.includes('使用内置模板（不推荐）'), '应有内置模板兜底选项')
+      must(hasText(tree, '作者'), '应有作者字段')
+      must(hasText(tree, '包名（可选）'), '应有包名字段')
     },
   },
   {
