@@ -442,6 +442,17 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | 一致性校验 | `lib/mdk.js` | 主类目录 ↔ `package` ↔ `mod_group_id` 三者一致 |
 | 测试 | `test/26`、`test/30`、`test/12` | 断言作者段、目录、必填字段；总计 30 文件 / 321 项 |
 
+### 3.0.23 v0.4.5 模块、阶段与任务（已完成）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| 模块/阶段 | `lib/workbench.js`、`lib/paths.js` | `modules.json`（回退 systems）、`stages.json`，模块 → 阶段 → 任务 |
+| 任务确认 | `lib/workbench.js` | `moduleId/stageId/confirmed`；confirm → review，unconfirm → doing |
+| 计划导出 | `lib/workbench.js` | `plan.export` 写 `docs/plan/PLAN.md`；`plan.handoff` 计划摘要 |
+| 只读 UI | `client.js` | 计划页模块 → 阶段 → 任务 + 确认；构想页只读 + 关联任务数 |
+| 接口 | `lib/api.js`、`lib/tools.js` | 动作 76 → 86（modules/stages/confirm/plan.export/handoff） |
+| 测试 | `test/31` | 12 项；总计 31 文件 / 333 项 |
+
 ### 3.1 目标能力（v0.3 起）
 
 | 里程碑 | 能力 | 说明 |
@@ -508,11 +519,11 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**30 个文件、321 项全部通过**）：
+已通过自动化验证（`npm test`，**31 个文件、333 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
-| Host 业务 | 244 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| Host 业务 | 256 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
 | 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |

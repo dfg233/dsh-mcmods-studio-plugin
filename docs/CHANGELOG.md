@@ -2,6 +2,23 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.4.5] - 2026-11-09
+
+### 新增
+
+- **模块与阶段**：系统卡升级为「模块」（数据 `modules.json`，兼容旧 `systems.json`）；新增「阶段」（`stages.json`），层级为模块 → 阶段 → 任务；
+- 任务新增 `moduleId` / `stageId` / `confirmed`，阶段必须属于模块；`systemId` 保留兼容；
+- `tasks.confirm` / `tasks.unconfirm`：任务级确认（确认后 → `review`，取消 → `doing`）；
+- `plan.export`：导出 Markdown 计划简报到 `docs/plan/PLAN.md`；
+- `plan.handoff`：项目接手指南（项目信息 + 计划摘要 + 待确认任务）；
+- **计划页**改为只读：模块 → 阶段 → 任务，任务卡「预览变更 / 确认 / 回滚」；
+- **构想页**只读：去掉新增/编辑/删除，显示「关联任务 N」。
+
+### 变更
+
+- 动作 76 → 86；测试 31 文件 / 333 项；
+- UI 按「agent 主操作」原则精简：新增/编辑由 agent 工具完成。
+
 ## [0.4.4] - 2026-11-08
 
 ### 新增

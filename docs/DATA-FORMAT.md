@@ -753,3 +753,16 @@ templates/scaffold/<loader>/<mcVersion>/   # settings/build/properties、主类�
 此时结论尚无意义，直接抛错说明缺什么。
 
 notices 只是提示，不写入 `.mcstudio/`，不影响后续操作。
+
+## 12. v0.4.5 计划数据
+
+```text
+<项目>/.mcstudio/
+├── modules.json   # 模块（读不到时回退 systems.json）
+├── stages.json    # 阶段（moduleId 必须存在）
+└── tasks.json     # 任务（moduleId / stageId / confirmed）
+```
+
+- 任务 `moduleId` 与旧 `systemId` 同步；`stageId` 必须属于该模块；
+- `confirmed` 表示用户已确认变更；确认后状态 → `review`；
+- `plan.export` 输出 `docs/plan/PLAN.md`（Markdown），不写入 `.mcstudio`。
