@@ -57,7 +57,7 @@ const cases = [
       const dir = await makeProject(ws, 'invalid')
       await rejects(
         () => ws.call('tasks.save', { path: dir, task: { id: 't_a', title: '无系统', systemId: 'missing', allowedPaths: ['a.java'] } }),
-        '所属系统不存在',
+        '所属模块不存在',
         '不存在的系统应拒绝',
       )
       await ws.call('systems.save', { path: dir, system: { id: 'lock-core', name: '锁核心' } })
