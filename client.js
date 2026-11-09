@@ -989,9 +989,16 @@ window.__ModuleLoader__.load({
 
       if (!project) return h('div', { style: S.empty }, '请先在「项目」中打开一个项目。')
 
-      const systems = plan.systems || []
-      const tasks = plan.tasks || []
-      const ideas = plan.ideas || []
+      const modules = plan.modules ?? plan.systems ?? []
+      const stages = plan.stages ?? []
+      const tasks = plan.tasks ?? []
+      const ideas = plan.ideas ?? []
+      const STAGE_LABELS = { planned: '规划中', doing: '进行中', done: '完成' }
+      const moduleTasks = (moduleId, stageId) => tasks.filter((task) => {
+        const taskModule = task.moduleId ?? task.systemId
+        if (taskModule !== moduleId) return false
+        return stageId ? task.stageId === stageId : !task.stageId
+      })
 
       const saveSystem = async (system) => {
         try {
@@ -1041,105 +1048,117 @@ window.__ModuleLoader__.load({
         } catch (err) { setError(err.message) }
       }
 
+      const confirmTask = async (task) => {
+        try {
+          await call('tasks.confirm', { path: project.path, id: task.id })
+          await load()
+        } catch (err) { setError(err.message) }
+      }
+
       const newSystem = () => setSystemEditing({
         id: '', name: '', responsibility: '', invariants: [], dependsOn: [],
         checks: [], status: 'planned', notes: '',
       })
 
       const newTask = () => {
-        if (!systems.length) {
-          window.alert('请先创建至少一个系统，任务需要归属系统。')
+        if (!modules.length) {
+          window.alert('请先创建至少一个模块，任务需要归属模块。')
           return
         }
         setTaskEditing({
-          id: `t_${Date.now()}`, title: '', systemId: systems[0].id, goal: '',
+          id: `t_${Date.now()}`, title: '', moduleId: modules[0].id, goal: '',
           nonGoals: [], allowedPaths: [], guardPaths: [], acceptance: [], verify: [],
           status: 'todo',
         })
       }
 
+      const taskCard = (task) => h('div', {
+        key: task.id,
+        style: { ...S.card, display: 'flex', gap: 12, alignItems: 'flex-start', marginTop: 6 },
+      },
+        h('div', { style: { flex: 1, minWidth: 0 } },
+          h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+            h('span', { style: { fontSize: 13.5, fontWeight: 650 } }, task.title),
+            h('code', { style: { fontSize: 11, color: C.muted } }, task.id),
+            h('span', { style: S.badge(task.status === 'done' ? 'success' : task.status === 'blocked' ? 'danger' : 'idle') },
+              TASK_STATUS_OPTIONS.find((item) => item.value === task.status)?.label || task.status),
+            task.confirmed
+              ? h('span', { style: S.badge('success') }, '已确认')
+              : h('span', { style: S.badge('idle') }, '待确认'),
+          ),
+          task.goal ? h('div', { style: { ...S.hint, marginTop: 6 } }, task.goal) : null,
+          task.templateRefs?.length
+            ? h('div', { style: { ...S.hint, marginTop: 4 } }, `模板：${task.templateRefs.map((ref) => ref.id).join('、')}`)
+            : null,
+          task.result?.checks?.length
+            ? h('div', { style: { ...S.hint, marginTop: 2 } },
+                `检查：通过 ${task.result.checks.filter((check) => check.status === 'pass').length} · 失败 ${task.result.checks.filter((check) => check.status === 'fail').length} · 跳过 ${task.result.checks.filter((check) => check.status === 'skip').length}`)
+            : null,
+          h('div', { style: { ...S.hint, marginTop: 4 } },
+            `允许修改 ${task.allowedPaths?.length || 0} 个路径 · 验收 ${task.acceptance?.length || 0} 条 · 检查 ${task.verify?.length || 0} 项`),
+        ),
+        h('div', { style: { display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' } },
+          h('button', { style: S.btn('ghost'), onClick: () => setContextTask(task) }, '上下文'),
+          h('button', { style: S.btn('ghost'), onClick: () => setCodegenTask(task) }, '预览变更'),
+          h('button', {
+            style: S.btn(),
+            disabled: task.confirmed === true,
+            onClick: () => confirmTask(task),
+          }, '确认'),
+          task.result?.backupDir
+            ? h('button', { style: { ...S.btn('ghost'), color: C.danger }, onClick: () => runTaskAction(task, 'rollback') }, '回滚')
+            : null,
+        ),
+      )
+
+      const stageBlock = (stage) => h('div', {
+        key: stage.id,
+        style: { marginTop: 10, paddingLeft: 12, borderLeft: `2px solid ${C.border}` },
+      },
+        h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+          h('span', { style: { fontSize: 13, fontWeight: 600 } }, `阶段 ${stage.order + 1} · ${stage.name}`),
+          h('span', { style: S.badge(stage.status === 'done' ? 'success' : 'idle') },
+            STAGE_LABELS[stage.status] || stage.status),
+        ),
+        stage.goal ? h('div', { style: { ...S.hint, marginTop: 2 } }, stage.goal) : null,
+        moduleTasks(stage.moduleId, stage.id).map(taskCard),
+      )
+
       return h('div', { style: { display: 'flex', flexDirection: 'column', gap: 12 } },
         h('div', { style: S.row },
           h('div', { style: { ...S.sectionTitle, flex: 1 } },
-            `计划（想法 ${ideas.length} · 系统 ${systems.length} · 任务 ${tasks.length}）`),
-          h('button', { style: S.btn(), onClick: newSystem }, '新增系统'),
-          h('button', { style: S.btn(), onClick: newTask }, '新增任务'),
-          h('button', { style: S.btn('ghost'), onClick: load }, loading ? '刷新中…' : '刷新'),
+            `计划（模块 ${modules.length} · 阶段 ${stages.length} · 任务 ${tasks.length}）`),
+          h('button', { style: S.btn(), onClick: load }, loading ? '刷新中…' : '刷新'),
         ),
-        h('div', { style: S.hint },
-          '系统卡描述职责与不变量；任务包描述这次只改什么。详细字段见 docs/design/。'),
+        h('div', { style: S.hint }, '计划由 agent 创建与更新；这里只读，任务可「预览变更 / 确认 / 回滚」。'),
 
-        systems.length === 0
-          ? h('div', { style: S.empty }, '还没有系统卡。先为一个职责边界建卡，例如「锁核心」。')
-          : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } },
-              h('div', { style: S.sectionTitle }, '系统'),
-              systems.map((system) => h('div', {
-                key: system.id,
-                style: { ...S.card, display: 'flex', gap: 12, alignItems: 'flex-start' },
-              },
-                h('div', { style: { flex: 1, minWidth: 0 } },
-                  h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
-                    h('span', { style: { fontSize: 13.5, fontWeight: 650 } }, system.name),
-                    h('code', { style: { fontSize: 11, color: C.muted } }, system.id),
-                    h('span', { style: S.badge(system.status === 'stable' ? 'success' : 'idle') },
-                      SYSTEM_STATUS_OPTIONS.find((item) => item.value === system.status)?.label || system.status),
-                  ),
-                  system.responsibility ? h('div', { style: { ...S.hint, marginTop: 6 } }, system.responsibility) : null,
-                  system.invariants?.length
-                    ? h('div', { style: { ...S.hint, marginTop: 4 } }, `不变量：${system.invariants.slice(0, 3).join('；')}${system.invariants.length > 3 ? ' …' : ''}`)
-                    : null,
-                  system.dependsOn?.length
-                    ? h('div', { style: { ...S.hint, marginTop: 2 } }, `依赖：${system.dependsOn.join('、')}`)
-                    : null,
+        modules.length === 0
+          ? h('div', { style: S.empty }, '还没有模块。让 agent 根据构想创建模块与阶段。')
+          : modules.map((module) => {
+              const moduleStages = stages.filter((stage) => stage.moduleId === module.id).sort((a, b) => a.order - b.order)
+              const ungrouped = moduleTasks(module.id, null)
+              return h('div', { key: module.id, style: S.card },
+                h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+                  h('span', { style: { fontSize: 14, fontWeight: 650 } }, module.name),
+                  h('code', { style: { fontSize: 11, color: C.muted } }, module.id),
+                  h('span', { style: S.badge(module.status === 'stable' ? 'success' : 'idle') },
+                    SYSTEM_STATUS_OPTIONS.find((item) => item.value === module.status)?.label || module.status),
                 ),
-                h('div', { style: { display: 'flex', gap: 6, flexShrink: 0 } },
-                  h('button', { style: S.btn('ghost'), onClick: () => setSystemEditing(system) }, '编辑'),
-                  h('button', { style: { ...S.btn('ghost'), color: C.danger }, onClick: () => removeSystem(system) }, '删除'),
-                ),
-              )),
-            ),
-
-        tasks.length === 0
-          ? h('div', { style: S.empty }, '还没有任务。系统建好后，创建第一个任务包。')
-          : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } },
-              h('div', { style: S.sectionTitle }, '任务'),
-              tasks.map((task) => h('div', {
-                key: task.id,
-                style: { ...S.card, display: 'flex', gap: 12, alignItems: 'flex-start' },
-              },
-                h('div', { style: { flex: 1, minWidth: 0 } },
-                  h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
-                    h('span', { style: { fontSize: 13.5, fontWeight: 650 } }, task.title),
-                    h('code', { style: { fontSize: 11, color: C.muted } }, task.id),
-                    h('span', { style: S.badge(task.status === 'done' ? 'success' : task.status === 'blocked' ? 'danger' : 'idle') },
-                      TASK_STATUS_OPTIONS.find((item) => item.value === task.status)?.label || task.status),
-                    h('span', { style: S.badge('idle') }, task.systemId),
-                  ),
-                  task.goal ? h('div', { style: { ...S.hint, marginTop: 6 } }, task.goal) : null,
-                  task.templateRefs?.length
-                    ? h('div', { style: { ...S.hint, marginTop: 4 } }, `模板：${task.templateRefs.map((ref) => ref.id).join('、')}`)
-                    : null,
-                  task.result?.checks?.length
-                    ? h('div', { style: { ...S.hint, marginTop: 2 } },
-                        `检查：通过 ${task.result.checks.filter((check) => check.status === 'pass').length} · 失败 ${task.result.checks.filter((check) => check.status === 'fail').length} · 跳过 ${task.result.checks.filter((check) => check.status === 'skip').length}`)
-                    : null,
-                  h('div', { style: { ...S.hint, marginTop: 4 } },
-                    `允许修改 ${task.allowedPaths?.length || 0} 个路径 · 验收 ${task.acceptance?.length || 0} 条 · 检查 ${task.verify?.length || 0} 项`),
-                ),
-                h('div', { style: { display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' } },
-                  h('button', { style: S.btn('ghost'), onClick: () => setContextTask(task) }, '上下文'),
-                  task.templateRefs?.length
-                    ? h('button', { style: S.btn('ghost'), onClick: () => setCodegenTask(task) }, '生成')
-                    : null,
-                  h('button', { style: S.btn('ghost'), onClick: () => runTaskAction(task, 'verify') }, '验证'),
-                  task.result?.backupDir
-                    ? h('button', { style: { ...S.btn('ghost'), color: C.danger }, onClick: () => runTaskAction(task, 'rollback') }, '回滚')
-                    : null,
-                  h('button', { style: S.btn('ghost'), onClick: () => setTaskEditing(task) }, '编辑'),
-                  h('button', { style: { ...S.btn('ghost'), color: C.danger }, onClick: () => removeTask(task) }, '删除'),
-                ),
-              )),
-            ),
+                module.responsibility ? h('div', { style: { ...S.hint, marginTop: 6 } }, module.responsibility) : null,
+                module.invariants?.length
+                  ? h('div', { style: { ...S.hint, marginTop: 4 } }, `不变量：${module.invariants.slice(0, 3).join('；')}${module.invariants.length > 3 ? ' …' : ''}`)
+                  : null,
+                module.dependsOn?.length
+                  ? h('div', { style: { ...S.hint, marginTop: 2 } }, `依赖：${module.dependsOn.join('、')}`)
+                  : null,
+                moduleStages.map(stageBlock),
+                ungrouped.length
+                  ? h('div', { style: { marginTop: 10, paddingLeft: 12, borderLeft: `2px solid ${C.border}` } },
+                      h('div', { style: { ...S.hint, marginTop: 0, fontWeight: 600 } }, '未分组任务'),
+                      ungrouped.map(taskCard))
+                  : null,
+              )
+            }),
 
         systemEditing ? h(SystemEditor, {
           system: systemEditing,

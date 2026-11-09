@@ -389,19 +389,21 @@ const cases = [
     },
   },
   {
-    name: '计划页渲染系统与任务',
+    name: '计划页渲染模块、阶段与任务',
     async run() {
       const client = await loadClient({
         handler: async (action) => {
           if (action === 'workbench.plan') {
             return {
               ideas: [{ id: 'f_1', name: '锁想法' }],
-              systems: [{
+              modules: [{
                 id: 'lock-core', name: '锁核心', responsibility: '维护锁状态',
                 invariants: ['服务端权威'], dependsOn: [], status: 'stable',
               }],
+              stages: [{ id: 'stage-1', moduleId: 'lock-core', name: '绑定', order: 0, status: 'doing' }],
               tasks: [{
-                id: 't_1', title: '新增电子锁', systemId: 'lock-core', status: 'todo',
+                id: 't_1', title: '新增电子锁', moduleId: 'lock-core', stageId: 'stage-1', status: 'todo',
+                confirmed: false,
                 goal: '新增类型', allowedPaths: [{ path: 'a.java', mode: 'modify' }],
                 acceptance: ['编译通过'], verify: [{ id: 'compile-java' }],
                 templateRefs: [{ id: 'simple-item', version: 1 }],
@@ -416,14 +418,16 @@ const cases = [
         project: makeProject(), setError: () => {},
       })
 
-      must(hasText(tree, '锁核心'), '应显示系统卡')
+      must(hasText(tree, '锁核心'), '应显示模块卡')
       must(hasText(tree, '新增电子锁'), '应显示任务卡')
-      must(hasText(tree, '系统'), '应有系统分组')
-      must(hasText(tree, '任务'), '应有任务分组')
+      must(hasText(tree, '阶段 1 · 绑定'), '应显示阶段分组')
+      must(hasText(tree, '模块 1'), '标题应显示模块计数')
       must(hasText(tree, '模板：simple-item'), '应显示任务模板')
       must(hasText(tree, '检查：通过 1'), '应显示检查统计')
       must(hasText(tree, '上下文'), '应有上下文按钮')
-      must(hasText(tree, '验证'), '应有验证按钮')
+      must(hasText(tree, '预览变更'), '应有预览变更按钮')
+      must(hasText(tree, '确认'), '应有确认按钮')
+      must(hasText(tree, '待确认'), '未确认任务应有徽标')
     },
   },
   {
