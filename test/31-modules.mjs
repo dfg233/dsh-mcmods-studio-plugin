@@ -172,6 +172,41 @@ const cases = [
       must(message.includes('任务不存在'), `应拒绝，实际「${message}」`)
     },
   },
+  {
+    name: '导出计划简报与接手摘要',
+    async run(ws) {
+      const dir = await newProject(ws, 'planexport')
+      await saveModule(ws, dir)
+      await ws.call('stages.save', { path: dir, stage: { id: 'stage-1', moduleId: 'lock-core', name: '绑定', order: 0 } })
+      await ws.call('tasks.save', {
+        path: dir,
+        task: { id: 'task-1', title: 'UUID 绑定', moduleId: 'lock-core', stageId: 'stage-1', allowedPaths: ['a.java'] },
+      })
+      const exported = await ws.call('plan.export', { path: dir })
+      must(exported.path.includes('PLAN.md'), '写入 PLAN.md')
+      must(exported.markdown.includes('## 模块：锁核心'), '含模块标题')
+      must(exported.markdown.includes('### 阶段 1：绑定'), '含阶段标题')
+      must(exported.markdown.includes('- [ ] UUID 绑定'), '含未确认任务')
+      const handoff = await ws.call('plan.handoff', { path: dir })
+      equal(handoff.plan.modules, 1, 'handoff 模块数')
+      equal(handoff.plan.stages, 1, 'handoff 阶段数')
+      equal(handoff.plan.tasks, 1, 'handoff 任务数')
+      equal(handoff.plan.pending, 1, 'handoff 待确认数')
+    },
+  },
+  {
+    name: '确认后导出任务打勾',
+    async run(ws) {
+      const dir = await newProject(ws, 'plancheck')
+      await saveModule(ws, dir)
+      await ws.call('tasks.save', { path: dir, task: { id: 'task-x', title: '任务', moduleId: 'lock-core', allowedPaths: ['a.java'] } })
+      await ws.call('tasks.confirm', { path: dir, id: 'task-x' })
+      const exported = await ws.call('plan.export', { path: dir })
+      must(exported.markdown.includes('- [x] 任务'), '已确认任务打勾')
+      const handoff = await ws.call('plan.handoff', { path: dir })
+      equal(handoff.plan.pending, 0, '确认后无待确认')
+    },
+  },
 ]
 
 process.exitCode = await runSuite('31 · 模块与阶段', cases)

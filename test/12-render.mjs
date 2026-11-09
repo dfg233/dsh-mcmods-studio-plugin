@@ -173,7 +173,7 @@ const cases = [
       })
 
       must(hasText(tree, '还没有构想'), '应显示空态')
-      must(hasText(tree, '新增构想'), '应有新增按钮')
+      must(hasText(tree, '在 DSH 对话里告诉 agent'), '应提示由 agent 创建')
       must(hasText(tree, '构想（0）'), '标题应带计数')
     },
   },
@@ -191,6 +191,7 @@ const cases = [
       must(hasText(tree, '宝石挖掘'), '应显示构想名')
       must(hasText(tree, '已完成'), '应显示状态标签')
       must(hasText(tree, '构想（1）'), '计数应为 1')
+      must(hasText(tree, '关联任务 0'), '应显示关联任务数')
     },
   },
   {

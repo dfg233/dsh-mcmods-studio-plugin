@@ -780,6 +780,23 @@ window.__ModuleLoader__.load({
     function FeaturesTab(props) {
       const { project, setProject, schema, setError } = props
       const [editing, setEditing] = useState(null)
+      const [taskCounts, setTaskCounts] = useState({})
+
+      useEffect(() => {
+        if (!project?.path) return undefined
+        let cancelled = false
+        call('tasks.list', { path: project.path })
+          .then(({ tasks }) => {
+            if (cancelled) return
+            const counts = {}
+            for (const task of tasks) {
+              if (task.ideaId) counts[task.ideaId] = (counts[task.ideaId] || 0) + 1
+            }
+            setTaskCounts(counts)
+          })
+          .catch(() => {})
+        return () => { cancelled = true }
+      }, [project?.path])
 
       if (!project) return h('div', { style: S.empty }, '请先在「项目」中打开一个项目。')
 
@@ -812,10 +829,9 @@ window.__ModuleLoader__.load({
       return h('div', { style: { display: 'flex', flexDirection: 'column', gap: 12 } },
         h('div', { style: S.row },
           h('div', { style: { ...S.sectionTitle, flex: 1 } }, `构想（${features.length}）`),
-          h('button', { style: S.btn(), onClick: () => setEditing({ name: '', description: '', status: 'idea', priority: 'medium', version: '', notes: '' }) }, '新增构想'),
         ),
         features.length === 0
-          ? h('div', { style: S.empty }, '还没有构想。先为模组列出想做的内容，它们会参与文档导出。')
+          ? h('div', { style: S.empty }, '还没有构想。在 DSH 对话里告诉 agent 你的想法，它会创建构想。')
           : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } },
               features.map((feature) => h('div', {
                 key: feature.id,
@@ -828,13 +844,10 @@ window.__ModuleLoader__.load({
                       statuses.find((s) => s.id === feature.status)?.label || feature.status),
                     h('span', { style: S.badge('idle') }, `优先级 ${priorities.find((p) => p.id === feature.priority)?.label || feature.priority}`),
                     feature.version ? h('span', { style: S.badge('idle') }, feature.version) : null,
+                    h('span', { style: S.badge('idle') }, `关联任务 ${taskCounts[feature.id] || 0}`),
                   ),
                   feature.description ? h('div', { style: { ...S.hint, marginTop: 6, fontSize: 12 } }, feature.description) : null,
                   feature.notes ? h('div', { style: { ...S.hint, marginTop: 4, fontSize: 11.5 } }, `备注：${feature.notes}`) : null,
-                ),
-                h('div', { style: { display: 'flex', gap: 6, flexShrink: 0 } },
-                  h('button', { style: S.btn('ghost'), onClick: () => setEditing(feature) }, '编辑'),
-                  h('button', { style: { ...S.btn('ghost'), color: C.danger }, onClick: () => remove(feature.id) }, '删除'),
                 ),
               )),
             ),
