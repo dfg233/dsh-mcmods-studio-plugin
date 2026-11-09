@@ -146,6 +146,32 @@ const cases = [
       equal(stage.stage.moduleId, 'tool-core', '工具保存阶段')
     },
   },
+  {
+    name: '任务确认与取消确认',
+    async run(ws) {
+      const dir = await newProject(ws, 'taskconfirmflow')
+      await saveModule(ws, dir)
+      await ws.call('tasks.save', {
+        path: dir,
+        task: { id: 'task-c', title: '确认', moduleId: 'lock-core', allowedPaths: ['a.java'] },
+      })
+      const confirmed = await ws.call('tasks.confirm', { path: dir, id: 'task-c' })
+      equal(confirmed.task.confirmed, true, '确认标记')
+      equal(confirmed.task.status, 'review', '确认后进入 review')
+      const unconfirmed = await ws.call('tasks.unconfirm', { path: dir, id: 'task-c' })
+      equal(unconfirmed.task.confirmed, false, '取消确认')
+      equal(unconfirmed.task.status, 'doing', '取消后回到 doing')
+    },
+  },
+  {
+    name: '确认不存在的任务被拒绝',
+    async run(ws) {
+      const dir = await newProject(ws, 'taskconfirmbad')
+      let message = ''
+      try { await ws.call('tasks.confirm', { path: dir, id: 'missing' }) } catch (error) { message = error.message }
+      must(message.includes('任务不存在'), `应拒绝，实际「${message}」`)
+    },
+  },
 ]
 
 process.exitCode = await runSuite('31 · 模块与阶段', cases)
