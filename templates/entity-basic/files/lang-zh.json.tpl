@@ -1,0 +1,3 @@
+{
+  "entity.{{modid}}.{{id}}": "{{displayName}}"
+}

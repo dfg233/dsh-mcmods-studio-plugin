@@ -1,0 +1,50 @@
+{
+  "id": "entity-attributes",
+  "name": "生物属性",
+  "version": 1,
+  "description": "生成实体属性构建器（生命/攻击/移动速度）。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "entity",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    },
+    {
+      "key": "health",
+      "type": "number",
+      "default": 20
+    },
+    {
+      "key": "attack",
+      "type": "number",
+      "default": 2
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.world.entity.ai.attributes.AttributeSupplier",
+    "net.minecraft.world.entity.ai.attributes.Attributes"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/entity/{{ClassName}}Attributes.java",
+      "template": "files/attributes.java.tpl",
+      "when": "always"
+    }
+  ],
+  "checks": []
+}

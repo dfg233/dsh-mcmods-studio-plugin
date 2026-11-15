@@ -1,0 +1,49 @@
+{
+  "id": "spawn-egg",
+  "name": "刷怪蛋",
+  "version": 1,
+  "description": "生成刷怪蛋构造骨架；注册行由注册表或任务补。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "entity",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    },
+    {
+      "key": "primaryColor",
+      "type": "string",
+      "default": "5e3a1e"
+    },
+    {
+      "key": "secondaryColor",
+      "type": "string",
+      "default": "c8a06a"
+    }
+  ],
+  "apiRefs": [
+    "net.minecraftforge.common.ForgeSpawnEggItem"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/item/{{ClassName}}SpawnEgg.java",
+      "template": "files/spawn-egg.java.tpl",
+      "when": "always"
+    }
+  ],
+  "checks": []
+}

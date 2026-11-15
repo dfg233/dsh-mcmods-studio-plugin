@@ -1459,6 +1459,8 @@ window.__ModuleLoader__.load({
       const [category, setCategory] = useState(props.initialCategory || 'item-block')
       const [source, setSource] = useState('vanilla')
       const [catalog, setCatalog] = useState(null)
+      const [entities, setEntities] = useState([])
+      const [biomes, setBiomes] = useState([])
 
       useEffect(() => {
         if (!project?.path) return undefined
@@ -1469,12 +1471,46 @@ window.__ModuleLoader__.load({
         return () => { alive = false }
       }, [project?.path])
 
+      useEffect(() => {
+        if (!project?.path) return undefined
+        let alive = true
+        Promise.all([
+          call('content.entity.list', { path: project.path }).catch(() => ({ entities: [] })),
+          call('content.biome.list', { path: project.path }).catch(() => ({ biomes: [] })),
+        ]).then(([entityResult, biomeResult]) => {
+          if (!alive) return
+          setEntities(entityResult.entities || [])
+          setBiomes(biomeResult.biomes || [])
+        })
+        return () => { alive = false }
+      }, [project?.path])
+
       if (!project) return h('div', { style: S.empty }, '请先在「项目」中打开一个项目。')
 
       const counts = {}
       for (const item of catalog?.categories || []) counts[item.id] = item.count
       if (counts['item-block'] === undefined) counts['item-block'] = (project.items || []).length
       const current = MOD_CATEGORIES.find((item) => item.id === category) || MOD_CATEGORIES[0]
+      const emptyFor = (label) => h('div', { style: S.empty }, `「${label}」分类还没有资料。在 DSH 对话里让 agent 创建。`)
+      const entityCard = (entity) => h('div', { key: entity.id, style: { ...S.card, marginTop: 6 } },
+        h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+          h('span', { style: { fontSize: 13.5, fontWeight: 650 } }, entity.name),
+          h('code', { style: { fontSize: 11, color: C.muted } }, entity.id),
+          h('span', { style: S.badge('idle') }, entity.category),
+          h('span', { style: S.badge(entity.status === 'stable' ? 'success' : 'idle') }, entity.status),
+        ),
+        h('div', { style: { ...S.hint, marginTop: 4 } },
+          `生命 ${entity.health} · 攻击 ${entity.attack} · 尺寸 ${entity.width}×${entity.height}${entity.biomes.length ? ` · 生成群系：${entity.biomes.join('、')}` : ''}`),
+      )
+      const biomeCard = (biome) => h('div', { key: biome.id, style: { ...S.card, marginTop: 6 } },
+        h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+          h('span', { style: { fontSize: 13.5, fontWeight: 650 } }, biome.name),
+          h('code', { style: { fontSize: 11, color: C.muted } }, biome.id),
+          h('span', { style: S.badge(biome.status === 'stable' ? 'success' : 'idle') }, biome.status),
+        ),
+        h('div', { style: { ...S.hint, marginTop: 4 } },
+          `温度 ${biome.temperature} · 降水 ${biome.downfall} · 特征 ${biome.features.length} · 生成 ${biome.spawns.length}`),
+      )
 
       return h('div', { style: { display: 'flex', gap: 12, alignItems: 'flex-start', minHeight: 320 } },
         h('div', { style: { width: 190, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4 } },
@@ -1508,7 +1544,15 @@ window.__ModuleLoader__.load({
           h('div', { style: { ...S.hint, marginTop: 0, marginBottom: 8 } }, current.hint),
           category === 'item-block'
             ? h(ItemsTab, props)
-            : h('div', { style: S.empty }, `「${current.label}」分类还没有资料。在 DSH 对话里让 agent 创建。`),
+            : category === 'entity'
+              ? (entities.length
+                  ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, entities.map(entityCard))
+                  : emptyFor('生物/实体'))
+              : category === 'biome'
+                ? (biomes.length
+                    ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, biomes.map(biomeCard))
+                    : emptyFor('群系/群落'))
+                : emptyFor(current.label),
         ),
       )
     }

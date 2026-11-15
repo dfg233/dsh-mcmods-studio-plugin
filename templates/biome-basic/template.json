@@ -1,0 +1,46 @@
+{
+  "id": "biome-basic",
+  "name": "群系骨架",
+  "version": 1,
+  "description": "生成 1.20.1 数据驱动 biome JSON。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "biome",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "temperature",
+      "type": "number",
+      "default": 0.5
+    },
+    {
+      "key": "downfall",
+      "type": "number",
+      "default": 0.5
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.world.level.biome.Biome"
+  ],
+  "files": [
+    {
+      "path": "src/main/resources/data/{{modid}}/worldgen/biome/{{id}}.json",
+      "template": "files/biome.json.tpl",
+      "when": "always"
+    }
+  ],
+  "checks": [
+    "resource-exists"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "id": "entity-spawn",
+  "name": "生物生成",
+  "version": 1,
+  "description": "生成生成规则骨架与 biome modifier（add_spawns）。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "entity",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    },
+    {
+      "key": "biome",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.world.entity.SpawnPlacements"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/entity/{{ClassName}}Spawn.java",
+      "template": "files/spawn.java.tpl",
+      "when": "always"
+    },
+    {
+      "path": "src/main/resources/data/{{modid}}/forge/biome_modifier/{{id}}_spawn.json",
+      "template": "files/entity-spawn.json.tpl",
+      "when": "always"
+    }
+  ],
+  "checks": [
+    "resource-exists"
+  ]
+}

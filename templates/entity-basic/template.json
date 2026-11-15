@@ -1,0 +1,54 @@
+{
+  "id": "entity-basic",
+  "name": "生物骨架",
+  "version": 1,
+  "description": "生成实体类骨架与语言键；属性、刷怪蛋与生成由配套模板补。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "entity",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.world.entity.Mob",
+    "net.minecraft.world.entity.EntityType"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/entity/{{ClassName}}.java",
+      "template": "files/entity.java.tpl",
+      "when": "always"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/lang/zh_cn.json",
+      "template": "files/lang-zh.json.tpl",
+      "when": "always",
+      "merge": "json"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/lang/en_us.json",
+      "template": "files/lang-en.json.tpl",
+      "when": "always",
+      "merge": "json"
+    }
+  ],
+  "checks": [
+    "lang-key"
+  ]
+}
