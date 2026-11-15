@@ -195,6 +195,34 @@ const cases = [
     },
   },
   {
+    name: 'mod 资料页分类框架',
+    async run() {
+      const client = await loadClient()
+      const tree = client.render(client.components.ModDataTab, {
+        project: makeProject(), setProject: () => {}, assets: null, schema, setError: () => {}, reloadAssets: () => {},
+      })
+      must(hasText(tree, 'mod 资料'), '应显示页面标题')
+      for (const label of ['物品/方块', '生物/实体', '多方块结构', '游戏设定', '群系/群落', '附魔/魔咒', '自然生成', '世界/维度', 'BUFF/DEBUFF', '绑定热键']) {
+        must(hasText(tree, label), `应显示分类：${label}`)
+      }
+      must(hasText(tree, '添加新资料'), '应有添加新资料入口')
+      must(hasText(tree, '原版资料'), '应有原版资料标签')
+      must(hasText(tree, '原版协议'), '应有原版协议标签')
+    },
+  },
+  {
+    name: 'mod 资料页非物品分类空态',
+    async run() {
+      const client = await loadClient()
+      const tree = client.render(client.components.ModDataTab, {
+        project: makeProject(), setProject: () => {}, assets: null, schema, setError: () => {}, reloadAssets: () => {},
+        initialCategory: 'entity',
+      })
+      must(hasText(tree, '「生物/实体」分类还没有资料'), '应显示空态')
+      must(hasText(tree, '让 agent 创建'), '应提示 agent')
+    },
+  },
+  {
     name: '项目页列出项目与路径',
     async run() {
       const client = await loadClient()

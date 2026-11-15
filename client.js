@@ -1436,6 +1436,70 @@ window.__ModuleLoader__.load({
       }
     }
 
+    /** mod 资料分类（按 MC百科 资料类型）。 */
+    const MOD_CATEGORIES = [
+      { id: 'item-block', label: '物品/方块', hint: '新加入或进行了重写的物品（Item）与方块（Block）。' },
+      { id: 'entity', label: '生物/实体', hint: '新加入或进行了重写的实体（Entity）。' },
+      { id: 'multiblock', label: '多方块结构', hint: '由玩家搭建方块时触发的事件。' },
+      { id: 'setting', label: '游戏设定', hint: '新加入的名词术语、命令、世界观与背景故事。' },
+      { id: 'biome', label: '群系/群落', hint: '新加入或进行了重写的生物群系（Biome）。' },
+      { id: 'enchantment', label: '附魔/魔咒', hint: '新加入或进行了重写的魔咒（Enchantment）。' },
+      { id: 'worldgen', label: '自然生成', hint: '新加入或进行了重写的结构（Structure）、地物（Feature）、拼图（Jigsaw）。' },
+      { id: 'dimension', label: '世界/维度', hint: '新加入或进行了重写的维度（Dimension）。' },
+      { id: 'effect', label: 'BUFF/DEBUFF', hint: '新加入或进行了重写的状态效果（Effect）。' },
+      { id: 'keybind', label: '绑定热键', hint: '在设置中新出现的绑定按键。' },
+    ]
+
+    /**
+     * mod 资料页：左侧分类导航 + 右侧内容。
+     * P0 只有「物品/方块」接入真实数据（复用 ItemsTab），其余分类显示空态。
+     */
+    function ModDataTab(props) {
+      const { project } = props
+      const [category, setCategory] = useState(props.initialCategory || 'item-block')
+      const [source, setSource] = useState('vanilla')
+      if (!project) return h('div', { style: S.empty }, '请先在「项目」中打开一个项目。')
+
+      const counts = { 'item-block': (project.items || []).length }
+      const current = MOD_CATEGORIES.find((item) => item.id === category) || MOD_CATEGORIES[0]
+
+      return h('div', { style: { display: 'flex', gap: 12, alignItems: 'flex-start', minHeight: 320 } },
+        h('div', { style: { width: 190, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4 } },
+          h('div', { style: { ...S.sectionTitle, marginBottom: 4 } }, 'mod 资料'),
+          MOD_CATEGORIES.map((item) => h('button', {
+            key: item.id,
+            style: {
+              ...S.btn(category === item.id ? 'primary' : 'ghost'),
+              display: 'flex',
+              justifyContent: 'space-between',
+              textAlign: 'left',
+            },
+            onClick: () => setCategory(item.id),
+          },
+            h('span', null, item.label),
+            h('span', { style: { opacity: 0.7 } }, String(counts[item.id] || 0)),
+          )),
+          h('button', {
+            style: { ...S.btn('ghost'), marginTop: 8 },
+            onClick: () => window.alert('请在 DSH 对话里让 agent 创建资料；这里只做查看。'),
+          }, '添加新资料'),
+        ),
+        h('div', { style: { flex: 1, minWidth: 0 } },
+          h('div', { style: { display: 'flex', gap: 8, marginBottom: 8 } },
+            ['vanilla', 'protocol'].map((id) => h('button', {
+              key: id,
+              style: S.btn(source === id ? 'primary' : 'ghost'),
+              onClick: () => setSource(id),
+            }, id === 'vanilla' ? '原版资料' : '原版协议')),
+          ),
+          h('div', { style: { ...S.hint, marginTop: 0, marginBottom: 8 } }, current.hint),
+          category === 'item-block'
+            ? h(ItemsTab, props)
+            : h('div', { style: S.empty }, `「${current.label}」分类还没有资料。在 DSH 对话里让 agent 创建。`),
+        ),
+      )
+    }
+
     function ItemsTab(props) {
       const { project, setProject, assets, schema, setError, reloadAssets } = props
       const [view, setView] = useState('list')
@@ -2873,7 +2937,7 @@ window.__ModuleLoader__.load({
         { id: 'project', label: '项目' },
         { id: 'features', label: '构想' },
         { id: 'plan', label: '计划' },
-        { id: 'items', label: '物品' },
+        { id: 'mod-data', label: 'mod 资料' },
         { id: 'lang', label: '语言' },
         { id: 'assets', label: '贴图与模型' },
         { id: 'guide', label: '构建教程' },
@@ -2935,8 +2999,8 @@ window.__ModuleLoader__.load({
                 ? h(FeaturesTab, { project, setProject, schema: boot.schema, setError })
                 : tab === 'plan'
                   ? h(PlanTab, { project, setError })
-                  : tab === 'items'
-                  ? h(ItemsTab, { project, setProject, assets, schema: boot.schema, setError, reloadAssets })
+                  : tab === 'mod-data'
+                  ? h(ModDataTab, { project, setProject, assets, schema: boot.schema, setError, reloadAssets })
                   : tab === 'lang'
                     ? h(LangTab, { project, setError })
                     : tab === 'assets'
@@ -3594,7 +3658,7 @@ window.__ModuleLoader__.load({
     const testHook = (typeof window !== 'undefined' && window.__MCMODS_TEST__)
       ? {
           components: {
-            ProjectTab, FeaturesTab, ItemsTab, AssetsTab, GuideTab,
+            ProjectTab, FeaturesTab, ItemsTab, AssetsTab, GuideTab, ModDataTab,
             StudioPage, StudioRoot, SidebarStudioPanel, ItemEditor, FeatureEditor, PlanTab, SystemEditor, TaskEditor,
             ProjectDetailModal, ImportConfirmModal, Icon, InfoRow, PathField,
             HistoryModal, LangTab, ContextModal, CreateProjectModal, CodegenModal,
