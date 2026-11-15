@@ -50,6 +50,7 @@ const cases = [
       const dir = await newProject(ws, 'previewmod')
       const result = await ws.call('scaffold.preview', { path: dir, loader: 'forge', minecraft: '1.20.1' })
       equal(result.params.loader, 'forge', '参数应回显')
+      equal(result.source, 'builtin', '应回显 source=builtin')
       const paths = result.files.map((file) => file.path)
       for (const expected of ['build.gradle', 'settings.gradle', 'gradle.properties', 'gradlew', 'gradlew.bat']) {
         must(paths.includes(expected), `应包含 ${expected}`)

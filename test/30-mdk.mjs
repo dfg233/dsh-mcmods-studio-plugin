@@ -261,6 +261,7 @@ const cases = [
       const dir = await newProject(ws, 'mdkpreview')
       const result = await ws.call('scaffold.preview', { path: dir, source: 'mdk', dir: mdk, modid: 'previewmod', name: 'Preview' })
       equal(result.kind, 'forge', '预览返回 loader')
+      equal(result.source, 'mdk', '应回显 source=mdk')
       must(result.files.some((file) => file.path === 'gradle.properties' && file.action === 'create'), '应列出待创建文件')
       equal(result.conflicts.length, 0, '空目录无冲突')
     },
