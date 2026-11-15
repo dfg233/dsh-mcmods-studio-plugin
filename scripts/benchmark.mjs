@@ -11,6 +11,7 @@ import { join } from 'node:path'
 import { performance } from 'node:perf_hooks'
 
 import { dispatch } from '../lib/api.js'
+import { forgetProject } from '../lib/registry.js'
 import { readPlan, exportPlan, buildHandoff } from '../lib/workbench.js'
 import { rebuildSummary } from '../lib/summary.js'
 import { refreshStructure } from '../lib/structure.js'
@@ -71,6 +72,8 @@ try {
   results.push(await time('structure.refresh', () => refreshStructure(projectPath, { mode: 'static' })))
   results.push(await time('context.pack', () => packContext(projectPath, 'task_0')))
 } finally {
+  // fixture 只用于计时：先移除注册表登记，再删临时目录，避免污染项目列表。
+  await forgetProject(projectPath).catch(() => {})
   await rm(base, { recursive: true, force: true })
 }
 
