@@ -1,0 +1,69 @@
+{
+  "id": "multiblock-basic",
+  "name": "多方块骨架",
+  "version": 1,
+  "description": "生成多方块检测与触发骨架（Java）+ 语言键。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "multiblock",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    },
+    {
+      "key": "width",
+      "type": "number",
+      "default": 3
+    },
+    {
+      "key": "height",
+      "type": "number",
+      "default": 3
+    },
+    {
+      "key": "depth",
+      "type": "number",
+      "default": 3
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.core.BlockPos",
+    "net.minecraft.world.level.Level"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/multiblock/{{ClassName}}Multiblock.java",
+      "template": "files/multiblock.java.tpl",
+      "when": "always"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/lang/zh_cn.json",
+      "template": "files/lang-zh.json.tpl",
+      "when": "always",
+      "merge": "json"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/lang/en_us.json",
+      "template": "files/lang-en.json.tpl",
+      "when": "always",
+      "merge": "json"
+    }
+  ],
+  "checks": [
+    "lang-key"
+  ]
+}

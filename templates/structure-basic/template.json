@@ -1,0 +1,41 @@
+{
+  "id": "structure-basic",
+  "name": "结构骨架",
+  "version": 1,
+  "description": "生成 jigsaw 结构与起始拼图池 JSON 骨架。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "worldgen",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.world.level.levelgen.structure.Structure"
+  ],
+  "files": [
+    {
+      "path": "src/main/resources/data/{{modid}}/worldgen/structure/{{id}}.json",
+      "template": "files/structure.json.tpl",
+      "when": "always"
+    },
+    {
+      "path": "src/main/resources/data/{{modid}}/worldgen/template_pool/{{id}}_start.json",
+      "template": "files/template_pool.json.tpl",
+      "when": "always"
+    }
+  ],
+  "checks": [
+    "resource-exists"
+  ]
+}

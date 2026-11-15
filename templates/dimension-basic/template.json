@@ -1,0 +1,46 @@
+{
+  "id": "dimension-basic",
+  "name": "维度骨架",
+  "version": 1,
+  "description": "生成 dimension_type 与 dimension JSON 骨架（固定群系）。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "dimension",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "biome",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.world.level.dimension.DimensionType"
+  ],
+  "files": [
+    {
+      "path": "src/main/resources/data/{{modid}}/dimension_type/{{id}}.json",
+      "template": "files/dimension_type.json.tpl",
+      "when": "always"
+    },
+    {
+      "path": "src/main/resources/data/{{modid}}/dimension/{{id}}.json",
+      "template": "files/dimension.json.tpl",
+      "when": "always"
+    }
+  ],
+  "checks": [
+    "resource-exists"
+  ]
+}

@@ -1,0 +1,3 @@
+{
+  "multiblock.{{modid}}.{{id}}": "{{displayName}}"
+}

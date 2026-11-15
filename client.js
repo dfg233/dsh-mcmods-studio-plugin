@@ -1461,6 +1461,9 @@ window.__ModuleLoader__.load({
       const [catalog, setCatalog] = useState(null)
       const [entities, setEntities] = useState([])
       const [biomes, setBiomes] = useState([])
+      const [worldgen, setWorldgen] = useState([])
+      const [dimensions, setDimensions] = useState([])
+      const [multiblocks, setMultiblocks] = useState([])
 
       useEffect(() => {
         if (!project?.path) return undefined
@@ -1477,10 +1480,16 @@ window.__ModuleLoader__.load({
         Promise.all([
           call('content.entity.list', { path: project.path }).catch(() => ({ entities: [] })),
           call('content.biome.list', { path: project.path }).catch(() => ({ biomes: [] })),
-        ]).then(([entityResult, biomeResult]) => {
+          call('content.worldgen.list', { path: project.path }).catch(() => ({ worldgen: [] })),
+          call('content.dimension.list', { path: project.path }).catch(() => ({ dimensions: [] })),
+          call('content.multiblock.list', { path: project.path }).catch(() => ({ multiblocks: [] })),
+        ]).then(([entityResult, biomeResult, worldgenResult, dimensionResult, multiblockResult]) => {
           if (!alive) return
           setEntities(entityResult.entities || [])
           setBiomes(biomeResult.biomes || [])
+          setWorldgen(worldgenResult.worldgen || [])
+          setDimensions(dimensionResult.dimensions || [])
+          setMultiblocks(multiblockResult.multiblocks || [])
         })
         return () => { alive = false }
       }, [project?.path])
@@ -1510,6 +1519,34 @@ window.__ModuleLoader__.load({
         ),
         h('div', { style: { ...S.hint, marginTop: 4 } },
           `温度 ${biome.temperature} · 降水 ${biome.downfall} · 特征 ${biome.features.length} · 生成 ${biome.spawns.length}`),
+      )
+      const worldgenCard = (entry) => h('div', { key: entry.id, style: { ...S.card, marginTop: 6 } },
+        h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+          h('span', { style: { fontSize: 13.5, fontWeight: 650 } }, entry.name),
+          h('code', { style: { fontSize: 11, color: C.muted } }, entry.id),
+          h('span', { style: S.badge('idle') }, entry.kind),
+          h('span', { style: S.badge(entry.status === 'stable' ? 'success' : 'idle') }, entry.status),
+        ),
+        h('div', { style: { ...S.hint, marginTop: 4 } },
+          entry.biomes.length ? `生成群系：${entry.biomes.join('、')}` : '未指定生成群系'),
+      )
+      const dimensionCard = (dimension) => h('div', { key: dimension.id, style: { ...S.card, marginTop: 6 } },
+        h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+          h('span', { style: { fontSize: 13.5, fontWeight: 650 } }, dimension.name),
+          h('code', { style: { fontSize: 11, color: C.muted } }, dimension.id),
+          h('span', { style: S.badge(dimension.status === 'stable' ? 'success' : 'idle') }, dimension.status),
+        ),
+        h('div', { style: { ...S.hint, marginTop: 4 } },
+          `天空 #${dimension.effects.sky.toString(16)} · 传送门 ${dimension.portalBlock || '未指定'}`),
+      )
+      const multiblockCard = (multiblock) => h('div', { key: multiblock.id, style: { ...S.card, marginTop: 6 } },
+        h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+          h('span', { style: { fontSize: 13.5, fontWeight: 650 } }, multiblock.name),
+          h('code', { style: { fontSize: 11, color: C.muted } }, multiblock.id),
+          h('span', { style: S.badge(multiblock.status === 'stable' ? 'success' : 'idle') }, multiblock.status),
+        ),
+        h('div', { style: { ...S.hint, marginTop: 4 } },
+          `尺寸 ${multiblock.size.width}×${multiblock.size.height}×${multiblock.size.depth} · 触发 ${multiblock.trigger || '未指定'}`),
       )
 
       return h('div', { style: { display: 'flex', gap: 12, alignItems: 'flex-start', minHeight: 320 } },
@@ -1552,7 +1589,19 @@ window.__ModuleLoader__.load({
                 ? (biomes.length
                     ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, biomes.map(biomeCard))
                     : emptyFor('群系/群落'))
-                : emptyFor(current.label),
+                : category === 'worldgen'
+                  ? (worldgen.length
+                      ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, worldgen.map(worldgenCard))
+                      : emptyFor('自然生成'))
+                  : category === 'dimension'
+                    ? (dimensions.length
+                        ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, dimensions.map(dimensionCard))
+                        : emptyFor('世界/维度'))
+                    : category === 'multiblock'
+                      ? (multiblocks.length
+                          ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, multiblocks.map(multiblockCard))
+                          : emptyFor('多方块结构'))
+                      : emptyFor(current.label),
         ),
       )
     }
