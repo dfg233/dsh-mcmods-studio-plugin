@@ -1,0 +1,59 @@
+{
+  "id": "command-basic",
+  "name": "命令骨架",
+  "version": 1,
+  "description": "生成 Brigadier 命令注册骨架与语言键。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "setting",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    },
+    {
+      "key": "commandName",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "com.mojang.brigadier.CommandDispatcher",
+    "net.minecraftforge.event.RegisterCommandsEvent"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/command/{{ClassName}}Command.java",
+      "template": "files/command.java.tpl",
+      "when": "always"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/lang/zh_cn.json",
+      "template": "files/lang-zh.json.tpl",
+      "when": "always",
+      "merge": "json"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/lang/en_us.json",
+      "template": "files/lang-en.json.tpl",
+      "when": "always",
+      "merge": "json"
+    }
+  ],
+  "checks": [
+    "lang-key"
+  ]
+}

@@ -1,0 +1,3 @@
+{
+  "enchantment.{{modid}}.{{id}}": "{{displayName}}"
+}

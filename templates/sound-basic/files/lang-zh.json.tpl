@@ -1,0 +1,3 @@
+{
+  "sound.{{modid}}.{{id}}": "{{displayName}}"
+}

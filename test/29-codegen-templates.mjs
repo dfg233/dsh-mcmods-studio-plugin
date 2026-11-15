@@ -29,7 +29,7 @@ const cases = [
     name: '模板清单包含第二批',
     async run(ws) {
       const result = await ws.call('template.list', {})
-      equal(result.templates.length, 29, '应有 29 个模板')
+      equal(result.templates.length, 35, '应有 35 个模板')
       for (const id of NEW_TEMPLATES) {
         must(result.templates.some((item) => item.id === id), `应包含 ${id}`)
       }

@@ -1,0 +1,47 @@
+{
+  "id": "particle-basic",
+  "name": "粒子骨架",
+  "version": 1,
+  "description": "生成 SimpleParticleType 注册骨架与语言键。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "particle",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.core.particles.SimpleParticleType"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/particle/{{ClassName}}Particle.java",
+      "template": "files/particle.java.tpl",
+      "when": "always"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/lang/zh_cn.json",
+      "template": "files/lang-zh.json.tpl",
+      "when": "always",
+      "merge": "json"
+    }
+  ],
+  "checks": [
+    "lang-key"
+  ]
+}

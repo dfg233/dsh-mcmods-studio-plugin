@@ -1464,6 +1464,10 @@ window.__ModuleLoader__.load({
       const [worldgen, setWorldgen] = useState([])
       const [dimensions, setDimensions] = useState([])
       const [multiblocks, setMultiblocks] = useState([])
+      const [settings, setSettings] = useState([])
+      const [keybinds, setKeybinds] = useState([])
+      const [enchantments, setEnchantments] = useState([])
+      const [effects, setEffects] = useState([])
 
       useEffect(() => {
         if (!project?.path) return undefined
@@ -1483,13 +1487,21 @@ window.__ModuleLoader__.load({
           call('content.worldgen.list', { path: project.path }).catch(() => ({ worldgen: [] })),
           call('content.dimension.list', { path: project.path }).catch(() => ({ dimensions: [] })),
           call('content.multiblock.list', { path: project.path }).catch(() => ({ multiblocks: [] })),
-        ]).then(([entityResult, biomeResult, worldgenResult, dimensionResult, multiblockResult]) => {
+          call('content.setting.list', { path: project.path }).catch(() => ({ settings: [] })),
+          call('content.keybind.list', { path: project.path }).catch(() => ({ keybinds: [] })),
+          call('content.enchantment.list', { path: project.path }).catch(() => ({ enchantments: [] })),
+          call('content.effect.list', { path: project.path }).catch(() => ({ effects: [] })),
+        ]).then(([entityResult, biomeResult, worldgenResult, dimensionResult, multiblockResult, settingResult, keybindResult, enchantmentResult, effectResult]) => {
           if (!alive) return
           setEntities(entityResult.entities || [])
           setBiomes(biomeResult.biomes || [])
           setWorldgen(worldgenResult.worldgen || [])
           setDimensions(dimensionResult.dimensions || [])
           setMultiblocks(multiblockResult.multiblocks || [])
+          setSettings(settingResult.settings || [])
+          setKeybinds(keybindResult.keybinds || [])
+          setEnchantments(enchantmentResult.enchantments || [])
+          setEffects(effectResult.effects || [])
         })
         return () => { alive = false }
       }, [project?.path])
@@ -1548,6 +1560,38 @@ window.__ModuleLoader__.load({
         h('div', { style: { ...S.hint, marginTop: 4 } },
           `尺寸 ${multiblock.size.width}×${multiblock.size.height}×${multiblock.size.depth} · 触发 ${multiblock.trigger || '未指定'}`),
       )
+      const settingCard = (setting) => h('div', { key: setting.id, style: { ...S.card, marginTop: 6 } },
+        h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+          h('span', { style: { fontSize: 13.5, fontWeight: 650 } }, setting.name),
+          h('code', { style: { fontSize: 11, color: C.muted } }, setting.id),
+          h('span', { style: S.badge('idle') }, setting.kind),
+        ),
+        h('div', { style: { ...S.hint, marginTop: 4 } }, setting.command ? `命令 ${setting.command}` : setting.description || '——'),
+      )
+      const keybindCard = (keybind) => h('div', { key: keybind.id, style: { ...S.card, marginTop: 6 } },
+        h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+          h('span', { style: { fontSize: 13.5, fontWeight: 650 } }, keybind.name),
+          h('code', { style: { fontSize: 11, color: C.muted } }, keybind.id),
+          h('span', { style: S.badge('idle') }, keybind.key),
+        ),
+        h('div', { style: { ...S.hint, marginTop: 4 } }, keybind.description || '——'),
+      )
+      const enchantmentCard = (enchantment) => h('div', { key: enchantment.id, style: { ...S.card, marginTop: 6 } },
+        h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+          h('span', { style: { fontSize: 13.5, fontWeight: 650 } }, enchantment.name),
+          h('code', { style: { fontSize: 11, color: C.muted } }, enchantment.id),
+          h('span', { style: S.badge('idle') }, enchantment.rarity),
+        ),
+        h('div', { style: { ...S.hint, marginTop: 4 } }, `最大等级 ${enchantment.maxLevel}`),
+      )
+      const effectCard = (effect) => h('div', { key: effect.id, style: { ...S.card, marginTop: 6 } },
+        h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+          h('span', { style: { fontSize: 13.5, fontWeight: 650 } }, effect.name),
+          h('code', { style: { fontSize: 11, color: C.muted } }, effect.id),
+          h('span', { style: S.badge(effect.type === 'debuff' ? 'danger' : 'success') }, effect.type),
+        ),
+        h('div', { style: { ...S.hint, marginTop: 4 } }, `持续 ${effect.duration} tick · 等级 ${effect.amplifier}`),
+      )
 
       return h('div', { style: { display: 'flex', gap: 12, alignItems: 'flex-start', minHeight: 320 } },
         h('div', { style: { width: 190, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4 } },
@@ -1601,7 +1645,23 @@ window.__ModuleLoader__.load({
                       ? (multiblocks.length
                           ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, multiblocks.map(multiblockCard))
                           : emptyFor('多方块结构'))
-                      : emptyFor(current.label),
+                      : category === 'setting'
+                        ? (settings.length
+                            ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, settings.map(settingCard))
+                            : emptyFor('游戏设定'))
+                        : category === 'keybind'
+                          ? (keybinds.length
+                              ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, keybinds.map(keybindCard))
+                              : emptyFor('绑定热键'))
+                          : category === 'enchantment'
+                            ? (enchantments.length
+                                ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, enchantments.map(enchantmentCard))
+                                : emptyFor('附魔/魔咒'))
+                            : category === 'effect'
+                              ? (effects.length
+                                  ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, effects.map(effectCard))
+                                  : emptyFor('BUFF/DEBUFF'))
+                              : emptyFor(current.label),
         ),
       )
     }

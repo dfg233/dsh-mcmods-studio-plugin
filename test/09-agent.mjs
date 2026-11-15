@@ -29,7 +29,7 @@ const cases = [
       must(sample.description, '工具应有说明')
       must(sample.input, '工具应有输入结构')
 
-      equal(result.actions.length, 102, '动作数应为 102')
+      equal(result.actions.length, 120, '动作数应为 120')
     },
   },
   {

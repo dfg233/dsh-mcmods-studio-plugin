@@ -1,0 +1,3 @@
+{
+  "particle.{{modid}}.{{id}}": "{{displayName}}"
+}

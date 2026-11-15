@@ -1,0 +1,3 @@
+{
+  "key.{{modid}}.{{id}}": "{{displayName}}"
+}

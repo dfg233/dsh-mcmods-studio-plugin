@@ -1,0 +1,58 @@
+{
+  "id": "enchantment-basic",
+  "name": "附魔骨架",
+  "version": 1,
+  "description": "生成 Enchantment 子类骨架与语言键。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "enchantment",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "displayName",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    },
+    {
+      "key": "maxLevel",
+      "type": "number",
+      "default": 1
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.world.item.enchantment.Enchantment"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/enchantment/{{ClassName}}Enchantment.java",
+      "template": "files/enchantment.java.tpl",
+      "when": "always"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/lang/zh_cn.json",
+      "template": "files/lang-zh.json.tpl",
+      "when": "always",
+      "merge": "json"
+    },
+    {
+      "path": "src/main/resources/assets/{{modid}}/lang/en_us.json",
+      "template": "files/lang-en.json.tpl",
+      "when": "always",
+      "merge": "json"
+    }
+  ],
+  "checks": [
+    "lang-key"
+  ]
+}

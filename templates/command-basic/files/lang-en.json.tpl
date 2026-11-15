@@ -1,0 +1,3 @@
+{
+  "command.{{modid}}.{{id}}": "{{displayName}}"
+}
