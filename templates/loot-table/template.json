@@ -1,0 +1,41 @@
+{
+  "id": "loot-table",
+  "name": "战利品表",
+  "version": 1,
+  "description": "生成方块常规掉落战利品表 JSON。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "worldgen",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "min",
+      "type": "number",
+      "default": 1
+    },
+    {
+      "key": "max",
+      "type": "number",
+      "default": 1
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.world.level.storage.loot.LootTable"
+  ],
+  "files": [
+    {
+      "path": "src/main/resources/data/{{modid}}/loot_tables/blocks/{{id}}.json",
+      "template": "files/loot.json.tpl",
+      "when": "always"
+    }
+  ],
+  "checks": [
+    "resource-exists"
+  ]
+}

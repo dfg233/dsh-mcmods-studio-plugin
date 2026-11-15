@@ -1,0 +1,51 @@
+{
+  "id": "campfire-recipe",
+  "name": "营火配方",
+  "version": 1,
+  "description": "生成 campfire_cooking 配方 JSON。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "recipe",
+  "parameters": [
+    {
+      "key": "id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "result",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "ingredient",
+      "type": "string",
+      "required": true
+    },
+    {
+      "key": "experience",
+      "type": "number",
+      "default": 0.1
+    },
+    {
+      "key": "cookingTime",
+      "type": "number",
+      "default": 600
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.data.recipes.RecipeProvider"
+  ],
+  "files": [
+    {
+      "path": "src/main/resources/data/{{modid}}/recipes/{{result}}.json",
+      "template": "files/recipe.json.tpl",
+      "when": "always"
+    }
+  ],
+  "checks": [
+    "resource-exists"
+  ]
+}
