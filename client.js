@@ -1458,9 +1458,22 @@ window.__ModuleLoader__.load({
       const { project } = props
       const [category, setCategory] = useState(props.initialCategory || 'item-block')
       const [source, setSource] = useState('vanilla')
+      const [catalog, setCatalog] = useState(null)
+
+      useEffect(() => {
+        if (!project?.path) return undefined
+        let alive = true
+        call('content.catalog', { path: project.path })
+          .then((data) => { if (alive) setCatalog(data) })
+          .catch(() => { if (alive) setCatalog(null) })
+        return () => { alive = false }
+      }, [project?.path])
+
       if (!project) return h('div', { style: S.empty }, '请先在「项目」中打开一个项目。')
 
-      const counts = { 'item-block': (project.items || []).length }
+      const counts = {}
+      for (const item of catalog?.categories || []) counts[item.id] = item.count
+      if (counts['item-block'] === undefined) counts['item-block'] = (project.items || []).length
       const current = MOD_CATEGORIES.find((item) => item.id === category) || MOD_CATEGORIES[0]
 
       return h('div', { style: { display: 'flex', gap: 12, alignItems: 'flex-start', minHeight: 320 } },
