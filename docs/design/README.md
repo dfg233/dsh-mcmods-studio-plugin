@@ -17,6 +17,7 @@
 | [API-INDEX-SPEC.md](API-INDEX-SPEC.md) | API 索引：从 Gradle classpath 提取签名，减少猜测 |
 | [TASK-SPEC.md](TASK-SPEC.md) | 任务包：范围、允许路径、上下文、验收、回滚 |
 | [CONTENT-EDIT.md](CONTENT-EDIT.md) | 图形化数据编辑：三层数据、MVP、应用管线 |
+| [MOD-DATA-PAGE.md](MOD-DATA-PAGE.md) | mod 资料页：按 MC百科 分类的页面框架（物品页升级） |
 
 ## 约定
 
