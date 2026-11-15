@@ -766,3 +766,25 @@ notices 只是提示，不写入 `.mcstudio/`，不影响后续操作。
 - 任务 `moduleId` 与旧 `systemId` 同步；`stageId` 必须属于该模块；
 - `confirmed` 表示用户已确认变更；确认后状态 → `review`；
 - `plan.export` 输出 `docs/plan/PLAN.md`（Markdown），不写入 `.mcstudio`。
+
+## 13. v0.5.0 资料数据
+
+```text
+<项目>/.mcstudio/
+├── entities.json      # 生物/实体
+├── biomes.json        # 群系
+├── worldgen.json      # 自然生成（structure / feature / jigsaw）
+├── dimensions.json    # 世界/维度
+├── multiblocks.json   # 多方块结构
+├── settings.json      # 游戏设定
+├── keybinds.json      # 绑定热键
+├── enchantments.json  # 附魔
+├── effects.json       # 状态效果
+├── sounds.json        # 声音
+├── particles.json     # 粒子
+└── creative_tabs.json # 创造标签成员
+```
+
+- 战利品表写入 `data/<modid>/loot_tables/blocks/<id>.json`；
+- 配方支持 `shaped / shapeless / furnace / stonecutting / smithing / smoking / campfire`；
+- 所有资料缺失按空处理；`content.catalog` 汇总各分类计数。

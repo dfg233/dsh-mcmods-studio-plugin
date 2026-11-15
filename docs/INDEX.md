@@ -27,14 +27,21 @@
 | `package.json` | bundle 清单：版本、包名、`dsh.bundle.patch`、`dsh.client` | 46 |
 | `cordis.patch.yml` | 向 Loader 插入 `id: mc-mod-studio` | 12 |
 | `index.js` | Host 入口：HTTP 路由、原生工具注册、卸载清理 | 121 |
-| `client.js` | 浏览器半：全部 UI（单文件模块） | 3546 |
-| `lib/api.js` | 86 个动作的声明式路由表与分派 | 968 |
+| `client.js` | 浏览器半：全部 UI（单文件模块） | 3890 |
+| `lib/api.js` | 126 个动作的声明式路由表与分派 | 1183 |
 | `lib/paths.js` | `.mcstudio/` 路径、id 校验、路径归属 | 75 |
 | `lib/schema.js` | 加载器、构想状态、物品类型（含创造模式标签）、19 个字段 | 185 |
 | `lib/meta.js` | `project.json` 与 `studio.json` 读写、项目创建 | 217 |
 | `lib/entries.js` | 构想与物品 CRUD、字段纠偏、`readProject` | 227 |
 | `lib/import.js` | 工程识别、资源扫描、身份解析、差异、快照、导入 proof、标签分类 | 838 |
 | `lib/workbench.js` | 模块/阶段/任务读写、字段归一与引用校验 | 393 |
+| `lib/catalog.js` | mod 资料分类与计数 | 49 |
+| `lib/entities.js` | 生物/实体资料 | 89 |
+| `lib/biomes.js` | 群系资料 | 88 |
+| `lib/worldgen.js` | 自然生成/维度/多方块资料 | 156 |
+| `lib/extras.js` | 设定/热键/附魔/效果/声音/粒子 | 205 |
+| `lib/loot.js` | 战利品表预览与写入 | 57 |
+| `lib/tabs.js` | 创造标签成员 | 64 |
 | `lib/content.js` | 语言/配方/模型/标签资源预览、写入、历史记录与回滚 | 558 |
 | `lib/history.js` | 内容历史的存储、归档、上限、按项目写锁与查询 | 305 |
 | `lib/lang.js` | 语言文件读写、总览、保存事务与语言键生命周期 | 320 |
@@ -61,7 +68,7 @@
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
 | `data/schema.json` | 字段定义的对外副本（生成物） | 7.3 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：31 个文件、333 项 | 7290 |
+| `test/*.mjs` | 回归测试：39 个文件、366 项 | 7903 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 | `docs/fix/` | 问题报告与修复方向（v0.4.0 起） | — |
 
@@ -927,7 +934,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（31 个文件、333 项）
+# 全部测试（39 个文件、366 项）
 npm test
 
 # 只跑某一组
@@ -998,6 +1005,14 @@ client.js
 | `29-codegen-templates.mjs` | 第二批模板渲染与标记写入 | 8 |
 | `30-mdk.mjs` | MDK 识别、zip 解压、整包迁移、作者、Parchment、预览、下载 URL | 13 |
 | `31-modules.mjs` | 模块/阶段读写、systems 回退、任务 moduleId/stageId、确认、导出与 handoff | 12 |
+| `32-recipes.mjs` | 切石/锻造/烟熏/营火配方与模板 | 4 |
+| `33-loot.mjs` | 战利品表预览/保存/读回与模板 | 3 |
+| `34-tabs.mjs` | 创造标签成员添加/去重/移除/校验 | 3 |
+| `35-entity.mjs` | 生物数据、id 校验、模板渲染、计数 | 4 |
+| `36-biome.mjs` | 群系数据、校验、模板渲染、计数 | 4 |
+| `37-worldgen.mjs` | 自然生成/维度/多方块与模板 | 4 |
+| `38-settings.mjs` | 设定/热键/附魔/效果/声音/粒子与模板 | 5 |
+| `39-catalog.mjs` | 分类计数与工具 | 4 |
 | `13-block-assets.mjs` | 方块面贴图解析 | 7 |
 | `14-persist.mjs` | 项目切换持久化 | 10 |
 | `15-structure.mjs` | 代码结构文档 | 15 |

@@ -453,6 +453,17 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | 接口 | `lib/api.js`、`lib/tools.js` | 动作 76 → 86（modules/stages/confirm/plan.export/handoff） |
 | 测试 | `test/31` | 12 项；总计 31 文件 / 333 项 |
 
+### 3.0.24 v0.5.0 完整的简单模组（已完成）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| mod 资料页 | `client.js` | 物品页升级，10 类分类导航与空态 |
+| 分类数据 | `lib/catalog.js`、`entities.js`、`biomes.js`、`worldgen.js`、`extras.js` | `content.catalog` 与各分类 CRUD |
+| 配方/战利品/标签 | `lib/content.js`、`lib/loot.js`、`lib/tabs.js` | 4 类配方、掉落、成员片段 |
+| 模板 | `templates/` | 18 → 40 |
+| 性能 | `scripts/benchmark.mjs` | 100 物品 / 20 模块 / 50 任务，全部达标（docs/PERF.md） |
+| 测试 | `test/31-39` | 39 文件 / 366 项 |
+
 ### 3.1 目标能力（v0.3 起）
 
 | 里程碑 | 能力 | 说明 |
@@ -519,11 +530,11 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**31 个文件、333 项全部通过**）：
+已通过自动化验证（`npm test`，**39 个文件、366 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
-| Host 业务 | 256 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| Host 业务 | 289 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
 | 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |
