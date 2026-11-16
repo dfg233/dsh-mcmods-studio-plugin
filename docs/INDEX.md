@@ -28,7 +28,7 @@
 | `cordis.patch.yml` | 向 Loader 插入 `id: mc-mod-studio` | 12 |
 | `index.js` | Host 入口：HTTP 路由、原生工具注册、卸载清理 | 121 |
 | `client.js` | 浏览器半：全部 UI（单文件模块） | 3890 |
-| `lib/api.js` | 126 个动作的声明式路由表与分派 | 1183 |
+| `lib/api.js` | 129 个动作的声明式路由表与分派 | 1201 |
 | `lib/paths.js` | `.mcstudio/` 路径、id 校验、路径归属 | 75 |
 | `lib/schema.js` | 加载器、构想状态、物品类型（含创造模式标签）、19 个字段 | 185 |
 | `lib/meta.js` | `project.json` 与 `studio.json` 读写、项目创建 | 217 |
@@ -51,7 +51,9 @@
 | `lib/registry.js` | 插件注册表、路径展开、持久原子写入 | 243 |
 | `lib/backup.js` | 导入前项目备份、失败回滚、备份路径 | 109 |
 | `lib/summary.js` | `.mcstudio/summary.json` 的构建（含创造模式标签计数） | 114 |
-| `lib/validate.js` | 9 类项目校验 | 171 |
+| `lib/validate.js` | 9 类项目校验 + 风格检查接入 | 180 |
+| `lib/style.js` | 12 条代码风格检查（结构/注册/资源/datagen） | 136 |
+| `lib/reference.js` | 原版参考：mapped jar 反编译缓存与 javap 兜底 | 192 |
 | `lib/tools.js` | 33 个 agent 工具的定义与调用 | 930 |
 | `lib/api-index.js` | API 索引：classpath 发现、javap 解析、缓存与查询 | 629 |
 | `lib/templates.js` | 模板清单、参数校验、渲染、预览与应用 | 297 |
@@ -68,7 +70,7 @@
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
 | `data/schema.json` | 字段定义的对外副本（生成物） | 7.3 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：39 个文件、366 项 | 7903 |
+| `test/*.mjs` | 回归测试：42 个文件、411 项 | 8124 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 | `docs/fix/` | 问题报告与修复方向（v0.4.0 起） | — |
 
@@ -934,7 +936,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（39 个文件、366 项）
+# 全部测试（42 个文件、411 项）
 npm test
 
 # 只跑某一组
@@ -1013,6 +1015,9 @@ client.js
 | `37-worldgen.mjs` | 自然生成/维度/多方块与模板 | 4 |
 | `38-settings.mjs` | 设定/热键/附魔/效果/声音/粒子与模板 | 5 |
 | `39-catalog.mjs` | 分类计数与工具 | 4 |
+| `40-style.mjs` | 风格检查：标准项目、WoodType、BlockItem、gradle 配置 | 4 |
+| `41-datagen.mjs` | datagen 模板存在与渲染 | 4 |
+| `42-reference.mjs` | 原版参考读取/搜索/非法类名 | 3 |
 | `13-block-assets.mjs` | 方块面贴图解析 | 7 |
 | `14-persist.mjs` | 项目切换持久化 | 10 |
 | `15-structure.mjs` | 代码结构文档 | 15 |

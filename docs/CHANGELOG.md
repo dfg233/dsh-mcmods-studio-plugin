@@ -2,6 +2,20 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.5.1] - 2026-11-16
+
+### 新增
+
+- **标准项目结构**：`docs/design/PROJECT-STRUCTURE.md`；scaffold（内置模板与 MDK）生成标准骨架：主类集中注册、`ModItems` / `ModBlocks` / `ModBlockEntities` / `ModEntities` / `ModCreativeModeTabs`、`datagen/ModDataGenerator`；
+- **代码风格检查**：`agent.validate` 增加 `style` 区段（12 条规则：结构、注册拆分、WoodType 命名空间、sign 模型层、BlockItem 配对、创造栏覆盖、datagen、gradle 配置、资源目录、语言键等）；`scaffold.apply` 生成时 `error` 阻断并回滚；
+- **datagen 模板**：6 个 provider 模板（blockstate / item model / lang / recipe / loot / worldgen），模板 40 → 46；
+- **原版参考**：`reference.get / search / decompile`（项目依赖 mapped jar 的 CFR 反编译缓存 + `javap -p` 签名兜底），不索引教程模组。
+
+### 变更
+
+- 动作 126 → 129；工具 33 → 34；测试 42 文件 / 411 项；
+- 风格基准来自 TutorialMod 分析（仅作插件制作参考，不打包、不索引）。
+
 ## [0.5.0] - 2026-11-15
 
 ### 新增
