@@ -72,6 +72,13 @@ export async function createWorkspace() {
       await writeFile(file, content)
     },
     async cleanup() {
+      // 先注销本次工作区创建的项目，避免注册表残留失效条目
+      const boot = await dispatch('boot', {}).catch(() => null)
+      for (const project of boot?.registry?.projects ?? []) {
+        if (project.path === base || project.path.startsWith(`${base}\\`) || project.path.startsWith(`${base}/`)) {
+          await dispatch('projects.remove', { path: project.path }).catch(() => {})
+        }
+      }
       await rm(base, { recursive: true, force: true })
     },
   }

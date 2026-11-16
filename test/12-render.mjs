@@ -242,8 +242,8 @@ const cases = [
       })
 
       must(hasText(tree, '项目甲'), '应显示第一个项目')
-      must(hasText(tree, '项目乙'), '应显示第二个项目')
-      must(hasText(tree, '目录不存在'), '缺失目录应有提示')
+      must(hasText(tree, '项目乙'), '失效项目名称应显示在折叠区')
+      must(hasText(tree, '失效项目（1）'), '失效项目应折叠显示')
       must(hasText(tree, '扫描已有工程'), '应有扫描区')
     },
   },

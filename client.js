@@ -584,6 +584,8 @@ window.__ModuleLoader__.load({
       const [root, setRoot] = useState(boot?.registry?.root || '')
 
       const projects = boot?.registry?.projects || []
+      const activeProjects = projects.filter((item) => !item.missing)
+      const missingProjects = projects.filter((item) => item.missing)
 
       /** 已登记项目的路径集合（作为旧版扫描结果的兜底判断）。 */
       const importedPaths = useMemo(() => {
@@ -674,10 +676,10 @@ window.__ModuleLoader__.load({
 
         h('div', { style: S.card },
           h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 } },
-            h('div', { style: S.sectionTitle }, `项目列表（${projects.length}）`),
+            h('div', { style: S.sectionTitle }, `项目列表（${activeProjects.length}）`),
             h('button', { style: S.btn('ghost'), onClick: async () => { await refreshBoot() } }, '刷新'),
           ),
-          projects.length === 0
+          activeProjects.length === 0
             ? h('div', { style: S.empty }, '还没有项目。点击「新建项目」或「导入已有工程」开始。')
             : h('table', { style: S.table },
                 h('thead', null, h('tr', null,
@@ -687,7 +689,7 @@ window.__ModuleLoader__.load({
                   h('th', { style: S.th }, '路径'),
                   h('th', { style: S.th }, ''),
                 )),
-                h('tbody', null, projects.map((item) => h('tr', { key: item.path },
+                h('tbody', null, activeProjects.map((item) => h('tr', { key: item.path },
                   h('td', { style: S.td },
                     h('div', { style: { fontWeight: 600 } }, item.name || '（未命名）'),
                     item.missing ? h('div', { style: { ...S.hint, marginTop: 2, color: C.danger } }, '目录不存在') : null,
@@ -706,6 +708,26 @@ window.__ModuleLoader__.load({
                 ))),
               ),
         ),
+
+        missingProjects.length
+          ? h('div', { style: S.card },
+              h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 } },
+                h('div', { style: S.sectionTitle }, `失效项目（${missingProjects.length}）`),
+                h('button', {
+                  style: S.btn('ghost'),
+                  onClick: async () => {
+                    try {
+                      await call('project.prune', {})
+                      await refreshBoot()
+                    } catch (err) { setError(err.message) }
+                  },
+                }, '清理失效项目'),
+              ),
+              h('div', { style: { ...S.hint, marginTop: 4, wordBreak: 'break-all' } },
+                missingProjects.map((item) => (item.name ? `${item.name}（${item.path}）` : item.path)).join('、'),
+              ),
+            )
+          : null,
 
         h('div', { style: S.card },
           h('div', { style: S.sectionTitle }, '扫描已有工程'),
