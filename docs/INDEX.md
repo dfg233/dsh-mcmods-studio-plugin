@@ -28,7 +28,7 @@
 | `cordis.patch.yml` | 向 Loader 插入 `id: mc-mod-studio` | 12 |
 | `index.js` | Host 入口：HTTP 路由、原生工具注册、卸载清理 | 121 |
 | `client.js` | 浏览器半：全部 UI（单文件模块） | 3890 |
-| `lib/api.js` | 129 个动作的声明式路由表与分派 | 1201 |
+| `lib/api.js` | 131 个动作的声明式路由表与分派 | 1246 |
 | `lib/paths.js` | `.mcstudio/` 路径、id 校验、路径归属 | 75 |
 | `lib/schema.js` | 加载器、构想状态、物品类型（含创造模式标签）、19 个字段 | 185 |
 | `lib/meta.js` | `project.json` 与 `studio.json` 读写、项目创建 | 217 |
@@ -70,7 +70,7 @@
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
 | `data/schema.json` | 字段定义的对外副本（生成物） | 7.3 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：42 个文件、411 项 | 8124 |
+| `test/*.mjs` | 回归测试：45 个文件、425 项 | 8306 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 | `docs/fix/` | 问题报告与修复方向（v0.4.0 起） | — |
 
@@ -936,7 +936,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（42 个文件、411 项）
+# 全部测试（45 个文件、425 项）
 npm test
 
 # 只跑某一组
@@ -1018,6 +1018,9 @@ client.js
 | `40-style.mjs` | 风格检查：标准项目、WoodType、BlockItem、gradle 配置 | 4 |
 | `41-datagen.mjs` | datagen 模板存在与渲染 | 4 |
 | `42-reference.mjs` | 原版参考读取/搜索/非法类名 | 3 |
+| `43-import-variants.mjs` | 形态归并：门/作物/告示牌/活板门与真实扫描 | 6 |
+| `44-assets-preview.mjs` | 素材预览：物品 layer、方块面贴图、空回退 | 3 |
+| `45-project-prune.mjs` | 失效项目标记与清理 | 2 |
 | `13-block-assets.mjs` | 方块面贴图解析 | 7 |
 | `14-persist.mjs` | 项目切换持久化 | 10 |
 | `15-structure.mjs` | 代码结构文档 | 15 |

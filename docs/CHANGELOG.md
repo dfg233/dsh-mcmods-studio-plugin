@@ -2,6 +2,19 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.5.2] - 2026-11-16
+
+### 新增
+
+- **形态归并**：`groupBlockVariants` 把门的上下半、作物生长阶段、告示牌 wall 变体、活板门 open 状态归并到父 id（父 id 不存在时不归并），条目不再被拆散；
+- **素材预览**：`assets.preview` 返回物品 item model 的 `layer0..N` 与方块 blockstate 面贴图；资源页按游戏内方式显示（物品 2D 叠加、方块等轴三面），无数据回退单图；
+- **失效项目清理**：`project.prune` 移除目录已不存在的注册项；项目页默认隐藏失效项目并折叠显示「失效项目（N）」+ 清理按钮；测试 helpers 在清理时注销本工作区项目。
+
+### 变更
+
+- 动作 129 → 131；测试 45 文件 / 425 项；
+- `assets.js` 对无 `elements` 的父模型（`cube_all` 等）按 `all`/`side`/`particle` 回退六面。
+
 ## [0.5.1] - 2026-11-16
 
 ### 新增
