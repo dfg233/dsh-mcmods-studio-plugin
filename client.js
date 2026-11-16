@@ -2800,6 +2800,7 @@ window.__ModuleLoader__.load({
       const [modelEditing, setModelEditing] = useState(null)
       const [modelText, setModelText] = useState('')
       const [images, setImages] = useState({})
+      const [previews, setPreviews] = useState({})
       const [modelError, setModelError] = useState('')
 
       useEffect(() => {
@@ -2816,6 +2817,35 @@ window.__ModuleLoader__.load({
           .catch(() => {})
         return () => { alive = false }
       }, [project?.path, assets?.textures?.length])
+
+      // 游戏内式预览：物品按 item model 的 layer 叠加，方块按解析出的面贴图等轴显示
+      useEffect(() => {
+        if (!project) return
+        let alive = true
+        const ids = (project.items || []).filter((item) => item.type !== 'creative_tab').map((item) => item.id)
+        if (!ids.length) { setPreviews({}); return }
+        call('assets.preview', { path: project.path, ids }).then((data) => {
+          if (!alive) return
+          const map = {}
+          const specs = []
+          for (const preview of data.previews || []) {
+            map[preview.id] = preview
+            for (const layer of preview.layers || []) {
+              specs.push({ id: layer.id, kind: layer.kind, key: `${preview.id}:layer:${layer.kind}/${layer.id}` })
+            }
+            for (const face of preview.faces || []) {
+              specs.push({ id: face.textureId, kind: face.kind, key: `${preview.id}:face:${face.face}` })
+            }
+          }
+          setPreviews(map)
+          if (specs.length) {
+            call('assets.readMany', { path: project.path, ids: specs })
+              .then((extra) => { if (alive) setImages((prev) => ({ ...prev, ...(extra.images || {}) })) })
+              .catch(() => {})
+          }
+        }).catch(() => {})
+        return () => { alive = false }
+      }, [project?.path, (project.items || []).length])
 
       if (!project) return h('div', { style: S.empty }, '请先在「项目」中打开一个项目。')
       if (!assets) return h('div', { style: S.empty }, '正在读取素材…')
@@ -2913,6 +2943,41 @@ window.__ModuleLoader__.load({
             (project.items || []).filter((item) => item.type !== 'creative_tab').map((item) => {
               const block = blockMap.get(item.id)
               const ok = hasTexture(item)
+              const preview = previews[item.id]
+              const layerSources = (preview?.layers || [])
+                .map((layer) => images[`${item.id}:layer:${layer.kind}/${layer.id}`])
+                .filter(Boolean)
+              const faceSources = {
+                up: images[`${item.id}:face:up`],
+                north: images[`${item.id}:face:north`],
+                east: images[`${item.id}:face:east`],
+              }
+              const faceStyle = (extra) => ({
+                position: 'absolute', imageRendering: 'pixelated', ...extra,
+              })
+              let thumb = null
+              if (preview?.kind === 'item' && layerSources.length) {
+                thumb = h('div', { style: { position: 'relative', width: 48, height: 48 } },
+                  layerSources.map((src, index) => h('img', {
+                    key: index, src, width: 48, height: 48,
+                    style: { position: 'absolute', inset: 0, imageRendering: 'pixelated' },
+                  })),
+                )
+              } else if (preview?.kind === 'block' && Object.values(faceSources).some(Boolean)) {
+                thumb = h('div', { style: { position: 'relative', width: 56, height: 56 } },
+                  faceSources.up
+                    ? h('img', { src: faceSources.up, style: faceStyle({ width: 56, height: 28, left: 0, top: 0, clipPath: 'polygon(50% 0,100% 50%,50% 100%,0 50%)' }) })
+                    : null,
+                  faceSources.north
+                    ? h('img', { src: faceSources.north, style: faceStyle({ width: 28, height: 28, left: 0, top: 28, clipPath: 'polygon(0 0,100% 50%,100% 100%,0 50%)' }) })
+                    : null,
+                  faceSources.east
+                    ? h('img', { src: faceSources.east, style: faceStyle({ width: 28, height: 28, left: 28, top: 28, clipPath: 'polygon(0 50%,100% 0,100% 50%,0 100%)' }) })
+                    : null,
+                )
+              } else if (images[blockThumbKey(item.id)]) {
+                thumb = h('img', { src: images[blockThumbKey(item.id)], width: 48, height: 48, style: { imageRendering: 'pixelated' } })
+              }
               return h('div', {
                 key: item.id,
                 style: {
@@ -2928,9 +2993,7 @@ window.__ModuleLoader__.load({
                     border: `1px solid ${C.border}`,
                   },
                 },
-                  images[blockThumbKey(item.id)]
-                    ? h('img', { src: images[blockThumbKey(item.id)], width: 48, height: 48, style: { imageRendering: 'pixelated' } })
-                    : h('span', { style: { fontSize: 10.5, color: C.muted } }, '缺失'),
+                  thumb || h('span', { style: { fontSize: 10.5, color: C.muted } }, '缺失'),
                 ),
                 h('code', { style: { fontSize: 10.5, textAlign: 'center', wordBreak: 'break-all' } }, item.id),
 
