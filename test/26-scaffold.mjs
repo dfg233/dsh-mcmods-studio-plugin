@@ -56,6 +56,9 @@ const cases = [
         must(paths.includes(expected), `应包含 ${expected}`)
       }
       must(paths.some((path) => path === 'src/main/java/com/example/previewmod/PreviewmodMod.java'), '应包含主类')
+      must(paths.some((path) => path === 'src/main/java/com/example/previewmod/item/ModItems.java'), '应包含 ModItems 注册类')
+      must(paths.some((path) => path === 'src/main/java/com/example/previewmod/block/ModBlocks.java'), '应包含 ModBlocks 注册类')
+      must(paths.some((path) => path === 'src/main/java/com/example/previewmod/datagen/ModDataGenerator.java'), '应包含 datagen 入口')
       must(paths.includes('src/main/resources/META-INF/mods.toml'), 'forge 应包含 mods.toml')
       equal(result.conflicts.length, 0, '空目录不应有冲突')
     },
@@ -82,6 +85,11 @@ const cases = [
       must(properties.includes('mod_id=applymod'), 'gradle.properties 应写入 modid')
       const main = await readFile(join(dir, 'src/main/java/com/example/applymod/ApplymodMod.java'), 'utf8')
       must(main.includes('@Mod(ApplymodMod.MODID)'), '主类应写入 @Mod')
+      must(main.includes('ModItems.register'), '主类应集中注册')
+      const modItems = await readFile(join(dir, 'src/main/java/com/example/applymod/item/ModItems.java'), 'utf8')
+      must(modItems.includes('DeferredRegister<Item>'), '应生成 ModItems 注册类')
+      const dataGen = await readFile(join(dir, 'src/main/java/com/example/applymod/datagen/ModDataGenerator.java'), 'utf8')
+      must(dataGen.includes('gatherData'), '应生成 datagen 入口')
       const wrapper = await stat(join(dir, 'gradle/wrapper/gradle-wrapper.jar'))
       must(wrapper.size > 1000, '应复制 wrapper jar')
     },

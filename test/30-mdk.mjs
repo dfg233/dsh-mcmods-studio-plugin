@@ -42,12 +42,16 @@ function makeMdkEntries({ minecraft = '1.20.1', loader = '47.4.16', modid = 'exa
     'src/main/java/com/example/examplemod/ExamplemodMod.java': [
       'package com.example.examplemod;',
       '',
+      'import net.minecraftforge.eventbus.api.IEventBus;',
       'import net.minecraftforge.fml.common.Mod;',
+      'import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;',
       '',
       '@Mod(ExamplemodMod.MODID)',
       'public class ExamplemodMod {',
       '    public static final String MODID = "examplemod";',
-      '    public ExamplemodMod() {}',
+      '    public ExamplemodMod() {',
+      '        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();',
+      '    }',
       '}',
     ].join('\n') + '\n',
     'src/main/java/com/example/examplemod/Config.java': [
@@ -163,6 +167,11 @@ const cases = [
       must(main.includes('class MymodMod'), '主类类名已替换')
       const exampleDir = await fsp.stat(join(dir, 'src/main/java/com/example')).then(() => true).catch(() => false)
       equal(exampleDir, false, '旧 example 目录已清理')
+      const modItems = await fsp.readFile(join(dir, 'src/main/java/com/besson/mymod/item/ModItems.java'), 'utf8')
+      must(modItems.includes('DeferredRegister<Item>'), '应生成 ModItems 注册类')
+      const dataGen = await fsp.stat(join(dir, 'src/main/java/com/besson/mymod/datagen/ModDataGenerator.java')).then(() => true).catch(() => false)
+      equal(dataGen, true, '应生成 datagen 入口')
+      must(main.includes('ModItems.register'), '主类应注入集中注册')
       const toml = await fsp.readFile(join(dir, 'src/main/resources/META-INF/mods.toml'), 'utf8')
       must(toml.includes('${mod_id}'), 'mods.toml 保留 Gradle 占位符')
     },
