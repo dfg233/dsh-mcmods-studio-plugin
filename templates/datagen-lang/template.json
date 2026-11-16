@@ -1,0 +1,31 @@
+{
+  "id": "datagen-lang",
+  "name": "Language Provider",
+  "version": 1,
+  "description": "生成 ModEnUsLangProvider（物品/方块/创造栏语言键）。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "datagen",
+  "parameters": [
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraftforge.common.data.LanguageProvider"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/datagen/ModEnUsLangProvider.java",
+      "template": "files/lang.java.tpl",
+      "when": "always"
+    }
+  ],
+  "checks": [
+    "resource-exists"
+  ]
+}

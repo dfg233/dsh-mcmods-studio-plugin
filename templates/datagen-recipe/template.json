@@ -1,0 +1,31 @@
+{
+  "id": "datagen-recipe",
+  "name": "Recipe Provider",
+  "version": 1,
+  "description": "生成 ModRecipesProvider（有序/无序/烧炼示例）。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "datagen",
+  "parameters": [
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.data.recipes.RecipeProvider"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/datagen/ModRecipesProvider.java",
+      "template": "files/recipe.java.tpl",
+      "when": "always"
+    }
+  ],
+  "checks": [
+    "resource-exists"
+  ]
+}

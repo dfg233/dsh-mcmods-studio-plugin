@@ -1,0 +1,31 @@
+{
+  "id": "datagen-loot",
+  "name": "Loot Provider",
+  "version": 1,
+  "description": "生成 ModBlockLootTablesProvider（dropSelf / 门 / 树叶）。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "datagen",
+  "parameters": [
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraft.data.loot.BlockLootSubProvider"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/datagen/ModBlockLootTablesProvider.java",
+      "template": "files/loot.java.tpl",
+      "when": "always"
+    }
+  ],
+  "checks": [
+    "resource-exists"
+  ]
+}

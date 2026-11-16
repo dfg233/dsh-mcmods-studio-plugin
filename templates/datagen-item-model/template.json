@@ -1,0 +1,31 @@
+{
+  "id": "datagen-item-model",
+  "name": "Item Model Provider",
+  "version": 1,
+  "description": "生成 ModItemModelsProvider（basicItem / handheldItem / 方块物品）。",
+  "loaders": [
+    "forge"
+  ],
+  "mcVersion": "1.20.1",
+  "category": "datagen",
+  "parameters": [
+    {
+      "key": "package",
+      "type": "string",
+      "default": ""
+    }
+  ],
+  "apiRefs": [
+    "net.minecraftforge.client.model.generators.ItemModelProvider"
+  ],
+  "files": [
+    {
+      "path": "src/main/java/{{packagePath}}/datagen/ModItemModelsProvider.java",
+      "template": "files/item-model.java.tpl",
+      "when": "always"
+    }
+  ],
+  "checks": [
+    "resource-exists"
+  ]
+}
