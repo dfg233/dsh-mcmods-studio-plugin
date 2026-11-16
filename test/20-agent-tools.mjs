@@ -218,7 +218,7 @@ const cases = [
       for (const expected of ['api', 'template', 'context', 'task', 'scaffold', 'codegen', 'content', 'lang', 'asset', 'project_admin']) {
         must(names.includes(expected), `应包含工具 ${expected}`)
       }
-      equal(names.length, 33, '工具数应为 33')
+      equal(names.length, 34, '工具数应为 34')
     },
   },
 ]
