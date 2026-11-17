@@ -58,6 +58,7 @@ const cases = [
       await ws.call('task.start', { path: dir, id: 't1' })
       let code = ''
       try {
+        await ws.call('tasks.confirm', { path: dir, id: 't1' })
         await ws.call('task.apply', {
           path: dir,
           id: 't1',

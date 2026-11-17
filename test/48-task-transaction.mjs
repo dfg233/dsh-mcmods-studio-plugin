@@ -30,7 +30,9 @@ const cases = [
     async run(ws) {
       const dir = await makeProject(ws, 'batchmod')
       await ws.call('task.start', { path: dir, id: 't1' })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       await ws.call('task.apply', { path: dir, id: 't1', files: [{ path: 'src/a.txt', content: 'A1' }], requestId: 'r1' })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       await ws.call('task.apply', { path: dir, id: 't1', files: [{ path: 'src/a.txt', content: 'B2' }], requestId: 'r2' })
       equal(await read(dir, 'src/a.txt'), 'B2', '第二批内容')
 
@@ -47,7 +49,9 @@ const cases = [
     async run(ws) {
       const dir = await makeProject(ws, 'batchall')
       await ws.call('task.start', { path: dir, id: 't1' })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       await ws.call('task.apply', { path: dir, id: 't1', files: [{ path: 'src/a.txt', content: 'A1' }] })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       await ws.call('task.apply', { path: dir, id: 't1', files: [{ path: 'src/b.txt', content: 'B1' }] })
       const rolled = await ws.call('task.rollback', { path: dir, id: 't1', all: true })
       equal(rolled.rolledBack, 2, '应回滚全部批次')
@@ -60,7 +64,9 @@ const cases = [
     async run(ws) {
       const dir = await makeProject(ws, 'batchcached')
       await ws.call('task.start', { path: dir, id: 't1' })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       await ws.call('task.apply', { path: dir, id: 't1', files: [{ path: 'src/a.txt', content: 'A1' }], requestId: 'r1' })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       const again = await ws.call('task.apply', { path: dir, id: 't1', files: [{ path: 'src/a.txt', content: 'A1' }], requestId: 'r1' })
       equal(again.cached, true, '重放应命中缓存')
     },
@@ -70,8 +76,10 @@ const cases = [
     async run(ws) {
       const dir = await makeProject(ws, 'batchreplay')
       await ws.call('task.start', { path: dir, id: 't1' })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       await ws.call('task.apply', { path: dir, id: 't1', files: [{ path: 'src/a.txt', content: 'A1' }], requestId: 'r1' })
       await ws.call('task.rollback', { path: dir, id: 't1', all: true })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       const replay = await ws.call('task.apply', { path: dir, id: 't1', files: [{ path: 'src/a.txt', content: 'A1' }], requestId: 'r1' })
       must(replay.cached !== true, '回滚后重放不应返回 cached')
       equal(await read(dir, 'src/a.txt'), 'A1', '重放应重新写入')

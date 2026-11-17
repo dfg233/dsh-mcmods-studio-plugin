@@ -28,6 +28,8 @@ const cases = [
       const dir = await makeProject(ws, 'concmod')
       await ws.call('task.start', { path: dir, id: 't1' })
       await ws.call('task.start', { path: dir, id: 't2' })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
+      await ws.call('tasks.confirm', { path: dir, id: 't2' })
       await Promise.all([
         ws.call('task.apply', { path: dir, id: 't1', files: [{ path: 'src/t1.txt', content: '1' }], requestId: 'a' }),
         ws.call('task.apply', { path: dir, id: 't2', files: [{ path: 'src/t2.txt', content: '2' }], requestId: 'b' }),
@@ -48,6 +50,7 @@ const cases = [
     async run(ws) {
       const dir = await makeProject(ws, 'concidem')
       await ws.call('task.start', { path: dir, id: 't1' })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       const files = [{ path: 'src/x.txt', content: 'X' }]
       const [first, second] = await Promise.all([
         ws.call('task.apply', { path: dir, id: 't1', files, requestId: 'same' }),
@@ -65,9 +68,10 @@ const cases = [
     async run(ws) {
       const dir = await makeProject(ws, 'concinter')
       await ws.call('task.start', { path: dir, id: 't1' })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       await Promise.all([
-        ws.call('tasks.confirm', { path: dir, id: 't1' }),
         ws.call('task.apply', { path: dir, id: 't1', files: [{ path: 'src/y.txt', content: 'Y' }] }),
+        ws.call('tasks.list', { path: dir }),
       ])
       const tasks = await ws.call('tasks.list', { path: dir })
       const task = tasks.tasks.find((item) => item.id === 't1')

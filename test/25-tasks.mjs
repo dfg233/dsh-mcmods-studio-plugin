@@ -54,6 +54,7 @@ const cases = [
     async run(ws) {
       const dir = await newProject(ws, 'taskapply')
       await ws.call('task.start', { path: dir, id: 't1' })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       const result = await ws.call('task.apply', { path: dir, id: 't1', files: changes, requestId: 'r1' })
       must(result.backupDir, '应返回备份目录')
       equal(result.files.length, 2, '应记录两个文件')
@@ -68,6 +69,7 @@ const cases = [
       await ws.call('task.start', { path: dir, id: 't1' })
       let message = ''
       try {
+        await ws.call('tasks.confirm', { path: dir, id: 't1' })
         await ws.call('task.apply', {
           path: dir,
           id: 't1',
@@ -84,8 +86,10 @@ const cases = [
     async run(ws) {
       const dir = await newProject(ws, 'taskidem')
       await ws.call('task.start', { path: dir, id: 't1' })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       const first = await ws.call('task.apply', { path: dir, id: 't1', files: changes, requestId: 'same' })
       await ws.write(join(dir, JAVA), 'changed\n')
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       const second = await ws.call('task.apply', { path: dir, id: 't1', files: changes, requestId: 'same' })
       equal(second.cached, true, '应返回缓存结果')
       equal(first.backupDir, second.backupDir, '不应重复备份')
@@ -98,6 +102,7 @@ const cases = [
     async run(ws) {
       const dir = await newProject(ws, 'taskpass')
       await ws.call('task.start', { path: dir, id: 't1' })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       await ws.call('task.apply', { path: dir, id: 't1', files: changes, requestId: 'r1' })
       const result = await ws.call('task.verify', { path: dir, id: 't1' })
       equal(result.task.status, 'review', '全部通过应进入 review')
@@ -134,6 +139,7 @@ const cases = [
       const dir = await newProject(ws, 'taskrollback')
       await ws.write(join(dir, JAVA), 'original\n')
       await ws.call('task.start', { path: dir, id: 't1' })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       await ws.call('task.apply', { path: dir, id: 't1', files: [changes[0]], requestId: 'r1' })
       let content = await readFile(join(dir, JAVA), 'utf8')
       must(content.includes('class Ruby'), '应用后应覆盖')
@@ -183,8 +189,10 @@ const cases = [
     async run(ws) {
       const dir = await newProject(ws, 'taskaction')
       await ws.call('task.start', { path: dir, id: 't1' })
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       const first = await ws.call('task.apply', { path: dir, id: 't1', files: [changes[0]], requestId: 'a1' })
       equal(first.files[0].action, 'create', '首次写入应为 create')
+      await ws.call('tasks.confirm', { path: dir, id: 't1' })
       const second = await ws.call('task.apply', { path: dir, id: 't1', files: [changes[0]], requestId: 'a2' })
       equal(second.files[0].action, 'modify', '再次写入应为 modify')
     },
@@ -204,6 +212,7 @@ const cases = [
       })
       let message = ''
       try {
+        await ws.call('tasks.confirm', { path: dir, id: 't1' })
         await ws.call('task.apply', {
           path: dir, id: 't1',
           files: [{ path: 'src/main/java/com/example/taskguardorder/lock/Locked.java', content: 'x' }],
