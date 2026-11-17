@@ -4,7 +4,7 @@
 > 更新日期：2026-11-17
 > 本文档回答三个问题：**现在能做什么**、**还不能做什么**、**必须遵守什么**。
 > 历史变更见 [CHANGELOG.md](CHANGELOG.md)，版本规则与发版流程见 [VERSION-PLAN.md](VERSION-PLAN.md)，开发方式见 [DEVELOPMENT.md](DEVELOPMENT.md)，当前主线见 [PLAN.md](PLAN.md)，代码索引见 [INDEX.md](INDEX.md)。
-> 本文区分 **as-built（v0.4.0 已实现）** 与 **目标能力（v0.5 起）**；旧路线已归档到 [archive/PLAN-v0.1.md](archive/PLAN-v0.1.md)。
+> 本文区分 **as-built（v0.5.2 已实现）** 与 **目标能力（v0.5.3 起）**；旧路线已归档到 [archive/PLAN-v0.1.md](archive/PLAN-v0.1.md)。
 
 ## 0. 设计目的
 
