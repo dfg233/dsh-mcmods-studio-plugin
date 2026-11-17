@@ -1,8 +1,8 @@
 # 代码索引
 
-> 适用版本：v0.4.0
-> 状态：as-built（v0.4.0 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)，小版本修复计划见 [fix/](fix/README.md)。
-> 更新日期：2026-11-01
+> 适用版本：v0.5.2
+> 状态：as-built（v0.5.2 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)，小版本修复计划见 [fix/](fix/README.md)。
+> 更新日期：2026-11-17
 > 用途：修改插件代码前先查这里，按「文件 → 函数 → 参数 → 返回」定位，不必通读源码。
 > 说明：行号为编写时的位置，改动后会偏移，**优先按名称搜索**。发版与升版本规则见 [VERSION-PLAN.md](VERSION-PLAN.md)。
 
@@ -322,7 +322,7 @@
 
 | 导出 | 用途 |
 | --- | --- |
-| `TOOLS` | 33 个工具定义的数组 |
+| `TOOLS` | 34 个工具定义的数组 |
 | `listTools()` | 精简清单（name / description / input） |
 | `callTool(name, args)` | 按名调用，未知工具抛错 |
 

@@ -1,7 +1,7 @@
 # 项目状态：已实现、未实现与要求
 
-> 适用版本：模组工坊（`dsh-mcmods-studio-plugin`）v0.4.0
-> 更新日期：2026-11-06
+> 适用版本：模组工坊（`dsh-mcmods-studio-plugin`）v0.5.2
+> 更新日期：2026-11-17
 > 本文档回答三个问题：**现在能做什么**、**还不能做什么**、**必须遵守什么**。
 > 历史变更见 [CHANGELOG.md](CHANGELOG.md)，版本规则与发版流程见 [VERSION-PLAN.md](VERSION-PLAN.md)，开发方式见 [DEVELOPMENT.md](DEVELOPMENT.md)，当前主线见 [PLAN.md](PLAN.md)，代码索引见 [INDEX.md](INDEX.md)。
 > 本文区分 **as-built（v0.4.0 已实现）** 与 **目标能力（v0.5 起）**；旧路线已归档到 [archive/PLAN-v0.1.md](archive/PLAN-v0.1.md)。
@@ -17,7 +17,7 @@
 
 当前承担的三件事：
 
-1. **为 agent 提供上下文**（**已完成**）：22 个 DSH 原生工具、项目摘要 `summary.json`、
+1. **为 agent 提供上下文**（**已完成**）：34 个 DSH 原生工具、项目摘要 `summary.json`、
    schema 外置 `data/schema.json`、9 类校验器、导入判定提示；
 2. **为用户提供直观平台**（**已完成 v0.2**）：构想、计划、物品属性、贴图模型、语言/配方/标签/模型与文档；
 3. **衔接设计与实现**（**进行中**）：想法/系统/任务与内容编辑已落地；模板、API 索引与代码生成规划在 v0.3/v0.4。
@@ -151,7 +151,7 @@
 | 代码结构 | `structure.refresh`、`structure.get`、`structure.find`、`structure.annotate` |
 | Agent 与诊断 | `agent.summary`、`agent.validate`、`agent.tools`、`agent.call`、`debug.clientGraph` |
 
-- Agent 工具：22 个，注册为 DSH 原生 `mcmods_*` 工具，清单见 [INDEX.md](INDEX.md) 第 4 节。
+- Agent 工具：34 个，注册为 DSH 原生 `mcmods_*` 工具，清单见 [INDEX.md](INDEX.md) 第 4 节。
 
 ## 3. 未实现功能
 
@@ -161,7 +161,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 | 能力 | 落地 | 说明 |
 | --- | --- | --- |
-| 原生工具 | `lib/tools.js` + `lib/tool-bridge.js` | 33 个工具，注册为 DSH 原生 `mcmods_*` 工具，agent 可直接调用 |
+| 原生工具 | `lib/tools.js` + `lib/tool-bridge.js` | 34 个工具，注册为 DSH 原生 `mcmods_*` 工具，agent 可直接调用 |
 | 项目摘要 | `lib/summary.js` | `.mcstudio/summary.json`，12 物品约 1.2 KB，写操作后自动刷新 |
 | 紧凑 / 详细双表示 | `item_list` / `item_get` | 列举仅回 id / 名称 / 类型（12 物品约 300 字节）；详情才回 19 个字段 |
 | schema 外置 | `data/schema.json` | 由 `lib/schema.js` 生成，`test/10-schema-sync.mjs` 守住一致性 |
@@ -571,7 +571,7 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 - 数据：画布坐标持久化、快照生成、注册表读写、摘要重建；
 - 代码结构：真实 Forge 工程扫描 14 文件 / 15 类 / 38 方法，注册点按 `items` 归类；
 - 内容历史：多次修改后跨调用读取、回到中间步、rolledBack 保留、下一次写入归档、备份缺失停止、损坏降级、50 条上限均有自动化用例；
-- Agent：33 个工具全部注册到宿主，`agent.tools` 返回 31 工具 / 68 动作；
+- Agent：34 个工具全部注册到宿主，`agent.tools` 返回 34 工具 / 131 动作；
 - 槽位：`main`、`sidebar.panellist`、`sidebar.right.pane.tab` 均已确认注册且处于激活状态；
 - 安装：bundle 安装与卸载、接口新旧路径切换。
 

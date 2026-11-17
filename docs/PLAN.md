@@ -1,9 +1,9 @@
 # 项目计划：AI 工作台
 
 > 状态：当前主线（2026-11-08 更新产品定位）；执行细节见 [design/](design/README.md)
-> 目标版本：v0.4.5 → v1.0
+> 目标版本：v0.5.2 → v1.0
 > 适用插件：`dsh-mcmods-studio-plugin`
-> 最后更新：2026-11-08
+> 最后更新：2026-11-17
 > 关联：[VERSION-PLAN.md](VERSION-PLAN.md)、[STATUS.md](STATUS.md)、[REFERENCE-CUIGENGJI.md](REFERENCE-CUIGENGJI.md)、[旧路线存档](archive/PLAN-v0.1.md)
 
 ## 0. 摘要
@@ -607,6 +607,8 @@ AI 负责把自然语言解析为想法卡，但必须：
 - 战利品表（方块常规掉落）、创造标签成员、配方扩展（切石/锻造/烟熏/营火）；
 - 仅 Forge（NeoForge/Fabric 后续版本）；
 - 性能基线（100 物品 / 20 模块 / 50 任务）与示例说明。
+
+> 后续：v0.5.1（代码风格约束与标准结构，`e6aa905` … `2e86bb4`）与 v0.5.2（形态归并、素材预览、失效项目清理，`efbaf12` … `f8c71a3`）已完成；v0.5.3 计划见 [fix/V0.5.3-PLAN.md](fix/V0.5.3-PLAN.md)（待确认）。
 
 ### M5 · v1.0
 

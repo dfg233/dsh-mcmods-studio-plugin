@@ -1,8 +1,8 @@
 # 开发文档
 
-> 适用版本：v0.4.0
-> 状态：as-built（v0.2.0 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
-> 更新日期：2026-11-01
+> 适用版本：v0.5.2
+> 状态：as-built（v0.5.2 已实现）；新主线见 [PLAN.md](PLAN.md)，未实现设计见 [design/](design/README.md)。
+> 更新日期：2026-11-17
 > 发版与版本号规则见 [VERSION-PLAN.md](VERSION-PLAN.md)，函数级索引见 [INDEX.md](INDEX.md)。
 
 ## 1. 插件形态
