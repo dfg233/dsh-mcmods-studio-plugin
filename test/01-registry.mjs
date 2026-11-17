@@ -83,16 +83,21 @@ const cases = [
     },
   },
   {
-    name: '注册表损坏时回退为空列表',
+    name: '注册表损坏时明确报错（不覆盖）',
     async run(ws) {
-      const { mkdir, writeFile } = await import('node:fs/promises')
+      const { mkdir, writeFile, readFile } = await import('node:fs/promises')
       const { join } = await import('node:path')
+      const file = join(ws.home, 'mcmods-studio', 'registry.json')
       await mkdir(join(ws.home, 'mcmods-studio'), { recursive: true })
-      await writeFile(join(ws.home, 'mcmods-studio', 'registry.json'), '{ 这不是合法 JSON')
+      await writeFile(file, '{ 这不是合法 JSON')
 
-      const boot = await ws.call('boot', {})
-      equal(boot.registry.projects.length, 0, '应回退为空列表')
-      must(typeof boot.registry.root === 'string', '应仍返回字符串根目录')
+      let message = ''
+      try {
+        await ws.call('boot', {})
+      } catch (error) { message = error.message }
+      must(message.includes('损坏'), `应抛出损坏错误，实际「${message}」`)
+      const text = await readFile(file, 'utf8')
+      equal(text, '{ 这不是合法 JSON', '损坏文件不应被覆盖')
     },
   },
 ]
