@@ -464,6 +464,19 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 | 性能 | `scripts/benchmark.mjs` | 100 物品 / 20 模块 / 50 任务，全部达标（docs/PERF.md） |
 | 测试 | `test/31-39` | 39 文件 / 366 项 |
 
+### 3.0.27 v0.6.0 可靠变更与注册优先（已完成）
+
+| 事项 | 落地 | 说明 |
+| --- | --- | --- |
+| 路径边界 | `lib/paths.js` | `normalizeProjectPath`：绝对路径/父级跳转/符号链接越界拒绝 |
+| 数据损坏 | `lib/registry.js` | `readJson` strict：事实损坏抛 `DATA_CORRUPT`，不覆盖 |
+| 解压边界 | `lib/mdk.js` | 实际输出上限 `EXTRACT_LIMIT` |
+| 事务/并发 | `lib/transaction.js` | 项目级可重入队列、revision/CAS |
+| 批次/幂等 | `lib/tasks.js` | `result.batches[]`、批次回滚、回滚后重放不假报 |
+| 确认协议 | `lib/workbench.js`、`lib/tasks.js` | 凭据绑定内容与文件基线，apply 校验并消费；`tasks.accept` |
+| 注册优先导入 | `lib/registry-scan.js`、`lib/import.js` | 注册为准、generated 扫描、残留清理、`import.pruneEntries` |
+| 测试 | `test/46-53` | 52 文件 / 458 项 |
+
 ### 3.0.26 v0.5.2 形态归并、素材预览与失效项目（已完成）
 
 | 事项 | 落地 | 说明 |
@@ -550,11 +563,11 @@ v0.1.x 已补齐面向 agent 的能力层，不再需要自写脚本探测项目
 
 ## 5. 验证状态
 
-已通过自动化验证（`npm test`，**45 个文件、425 项全部通过**）：
+已通过自动化验证（`npm test`，**52 个文件、458 项全部通过**）：
 
 | 层 | 覆盖 | 手段 |
 | --- | --- | --- |
-| Host 业务 | 348 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
+| Host 业务 | 381 项 | 直接调 `dispatch`，每个用例用隔离的临时目录 |
 | 方块贴图解析 | 7 项 | 真实工程结构：blockstate、parent 继承、multipart、无 blockstate 回退 |
 | 项目持久化 | 10 项 | 记住 / 恢复 / 清除 / 移除清理 / 旧格式兼容 |
 | 代码结构文档 | 15 项 | Java 解析、注册反查、跨行字段、泛型方法、按哈希增量、解析器版本、注解失效、摘要同步 |

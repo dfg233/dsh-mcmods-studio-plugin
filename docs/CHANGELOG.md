@@ -2,6 +2,24 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.6.0] - 2026-11-17
+
+### 新增
+
+- **路径边界**：`normalizeProjectPath`（拒绝绝对路径、父级跳转、resolve 越界、符号链接跨真实根）；任务 apply 统一使用规范路径，`matchesPath` 折叠 `.`/`..`；
+- **数据损坏 fail-closed**：`readJson` strict 模式，事实数据（注册表、modules/stages/tasks）损坏抛 `DATA_CORRUPT`，不再静默覆盖；
+- **解压边界**：ZIP 解压实际输出上限（`EXTRACT_LIMIT`）；
+- **任务事务**：项目级串行队列（可重入）、revision/CAS、批次栈（`result.batches[]`）、记录写失败回滚并标记 `recoveryRequired`；
+- **回滚与幂等**：默认回滚最近一批 / `batchId` / `all`；回滚后重放旧 `requestId` 不再假报 cached；
+- **确认协议**：`tasks.confirm` 生成绑定内容与文件基线的凭据，`task.apply` 锁内校验并一次性消费（`CONFIRMATION_REQUIRED` / `CONFIRMATION_STALE`）；新增 `tasks.accept` 写后验收；
+- **注册优先导入**：`scanRegistrations` 解析 Java 注册项（跳过注释示例），导入以注册为准、资源只补全；扫描 `src/generated/resources`；reimport 清理非注册残留；新增 `import.pruneEntries`。
+
+### 变更
+
+- 动作 131 → 133；测试 52 文件 / 458 项；
+- 任务记录新增 `revision`、`confirmation`、`result.batches`；旧记录兼容读取；
+- v0.6.0 范围 = P1–P3 + P5；P4（Client 一致性/预算/索引）与 P6（门禁/文档自动化）归 v0.6.1。
+
 ## [0.5.2] - 2026-11-16
 
 ### 新增
