@@ -28,7 +28,7 @@
 | `cordis.patch.yml` | 向 Loader 插入 `id: mc-mod-studio` | 12 |
 | `index.js` | Host 入口：HTTP 路由、原生工具注册、卸载清理 | 121 |
 | `client.js` | 浏览器半：全部 UI（单文件模块） | 3890 |
-| `lib/api.js` | 133 个动作的声明式路由表与分派 | 1246 |
+| `lib/api.js` | 133 个动作的声明式路由表与分派 | 1237 |
 | `lib/paths.js` | `.mcstudio/` 路径、id 校验、路径归属 | 75 |
 | `lib/schema.js` | 加载器、构想状态、物品类型（含创造模式标签）、19 个字段 | 185 |
 | `lib/meta.js` | `project.json` 与 `studio.json` 读写、项目创建 | 217 |
@@ -54,12 +54,14 @@
 | `lib/validate.js` | 9 类项目校验 + 风格检查接入 | 180 |
 | `lib/style.js` | 12 条代码风格检查（结构/注册/资源/datagen） | 136 |
 | `lib/reference.js` | 原版参考：mapped jar 反编译缓存与 javap 兜底 | 192 |
-| `lib/tools.js` | 33 个 agent 工具的定义与调用 | 930 |
+| `lib/tools.js` | 34 个 agent 工具的定义与调用 | 1223 |
 | `lib/api-index.js` | API 索引：classpath 发现、javap 解析、缓存与查询 | 629 |
 | `lib/templates.js` | 模板清单、参数校验、渲染、预览与应用 | 297 |
 | `lib/context.js` | 任务上下文打包与预算裁剪 | 198 |
 | `lib/checks.js` | 任务级检查器（allowed/guard/structure-diff 等） | 301 |
-| `lib/tasks.js` | 任务执行：start / apply / verify / rollback | 283 |
+| `lib/tasks.js` | 任务执行：start / apply / verify / rollback（批次与确认） | 394 |
+| `lib/transaction.js` | 项目级串行队列与 revision/CAS | 53 |
+| `lib/registry-scan.js` | 注册优先导入：解析 Java DeferredRegister | 79 |
 | `lib/scaffold.js` | Gradle 脚手架：参数推断、版本矩阵、预览/应用/回滚 | 257 |
 | `lib/version-matrix.js` | 1.20.1 × loader 的版本能力表 | 63 |
 | `lib/markers.js` | 标记区块解析、替换、追加与错误检测 | 159 |
