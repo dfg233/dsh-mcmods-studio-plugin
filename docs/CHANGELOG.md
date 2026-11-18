@@ -2,6 +2,23 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [0.6.1] - 2026-11-18
+
+### 新增
+
+- **注册类型识别**：泛型支持嵌套 `DeferredRegister<EntityType<X>>`；实体/方块实体/效果/附魔/声音/粒子/流体的注册名不再被识别成物品，旧残留可通过 reimport 或 `import.pruneEntries` 清理；
+- **物品属性提取**：`lib/item-props.js` 从注册表达式提取耐久、攻击伤害/速度、工具/采集等级、护甲值、食物、创造栏分类；导入时写入条目（只填空值，不覆盖手改）；
+- **Client 一致性**：`open` 请求代次（仅最新请求可提交）；`assets.list` 返回 `revision`，素材/模型变化即刷新；
+- **上下文预算**：UTF-8 字节硬边界（1KB–256KB），裁剪顺序与 `overBudget/error` 明示；
+- **索引与增量扫描**：静态索引优先项目 MC/Forge 版本、`classpathHash` 加入 JAR 指纹；结构刷新先 hash 后解析（未变文件零解析）；
+- **门禁**：`lint:syntax`（全量 node --check）、`check:docs`（动作/工具/测试文件数校验）、`engines.node >= 20`。
+
+### 变更
+
+- 动作 133；工具 34；模板 46；测试 59 文件 / 484 项；
+- Client 的 `AssetsTab`/`ItemsTab` 依赖素材 `revision` 而非数量；
+- 新增 `lib/item-props.js`、`scripts/lint-syntax.mjs`、`scripts/check-docs.mjs`。
+
 ## [0.6.0] - 2026-11-17
 
 ### 新增

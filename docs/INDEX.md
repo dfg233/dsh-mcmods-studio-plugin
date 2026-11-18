@@ -62,6 +62,7 @@
 | `lib/tasks.js` | 任务执行：start / apply / verify / rollback（批次与确认） | 394 |
 | `lib/transaction.js` | 项目级串行队列与 revision/CAS | 53 |
 | `lib/registry-scan.js` | 注册优先导入：解析 Java DeferredRegister | 79 |
+| `lib/item-props.js` | 物品属性提取：耐久/伤害/工具/护甲/食物/创造栏 | 245 |
 | `lib/scaffold.js` | Gradle 脚手架：参数推断、版本矩阵、预览/应用/回滚 | 257 |
 | `lib/version-matrix.js` | 1.20.1 × loader 的版本能力表 | 63 |
 | `lib/markers.js` | 标记区块解析、替换、追加与错误检测 | 159 |
@@ -72,7 +73,7 @@
 | `lib/project.js` | **转发层**：`export *` 五个模块 | 18 |
 | `data/schema.json` | 字段定义的对外副本（生成物） | 7.3 KB |
 | `scripts/gen-schema.mjs` | 从 `schema.js` 生成上述 JSON | 40 |
-| `test/*.mjs` | 回归测试：52 个文件、458 项 | 8902 |
+| `test/*.mjs` | 回归测试：59 个文件、484 项 | 9376 |
 | `docs/*.md` | 插件文档（本文件即索引） | — |
 | `docs/fix/` | 问题报告与修复方向（v0.4.0 起） | — |
 
@@ -938,7 +939,7 @@ structure 描述实现层（Java 文件、类、方法、注册点）。
 # 语法
 for f in index.js client.js lib/*.js; do node --check "$f"; done
 
-# 全部测试（52 个文件、458 项）
+# 全部测试（59 个文件、484 项）
 npm test
 
 # 只跑某一组
