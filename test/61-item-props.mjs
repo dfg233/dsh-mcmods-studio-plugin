@@ -66,6 +66,11 @@ const cases = [
       equal(properties.iron_pickaxe.toolTier, 'IRON', '镐工具等级')
       equal(properties.iron_pickaxe.miningLevel, 2, '镐采集等级')
       equal(properties.ice_helmet.armor, 1, '头盔护甲')
+      equal(properties.fire_sword.itemType, 'weapon', '剑应归为武器')
+      equal(properties.fire_sword.maxStackSize, 1, '武器不可堆叠')
+      equal(properties.iron_pickaxe.itemType, 'tool', '镐应归为工具')
+      equal(properties.ice_helmet.itemType, 'armor', '头盔应归为护甲')
+      equal(properties.ice_helmet.maxStackSize, 1, '护甲不可堆叠')
     },
   },
   {

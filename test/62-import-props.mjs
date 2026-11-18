@@ -46,6 +46,8 @@ const cases = [
       equal(prospector.properties.maxDamage, 127, '耐久写回')
       equal(sword.properties.attackDamage, 2, '伤害写回')
       equal(sword.properties.attackSpeed, 3, '速度写回')
+      equal(sword.type, 'weapon', '剑类型写回')
+      equal(sword.properties.maxStackSize, 1, '武器堆叠为 1')
     },
   },
   {
