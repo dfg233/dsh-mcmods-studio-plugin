@@ -8,7 +8,12 @@
   "main": "index.js",
   "scripts": {
     "test": "node test/run.mjs",
+    "lint:syntax": "node scripts/lint-syntax.mjs",
+    "check:docs": "node scripts/check-docs.mjs",
     "gen:schema": "node scripts/gen-schema.mjs"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "exports": {
     ".": "./index.js",
