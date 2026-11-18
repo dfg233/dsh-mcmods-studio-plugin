@@ -544,20 +544,26 @@ window.__ModuleLoader__.load({
         return data
       }, [])
 
+      const openSeqRef = useRef(0)
       const open = useCallback(async (path) => {
+        // P4：请求代次——只有最新一次「打开项目」可以提交状态
+        const seq = ++openSeqRef.current
         setBusy(true)
         setError('')
         try {
           const data = await call('project.open', { path })
+          if (seq !== openSeqRef.current) return
+          const nextAssets = await call('assets.list', { path })
+          if (seq !== openSeqRef.current) return
           setProject(data)
           setStudioState({ projectPath: path, itemId: null })
-          setAssets(await call('assets.list', { path }))
+          setAssets(nextAssets)
           // 记住这个项目，下次进入时恢复；失败不影响打开
           call('projects.remember', { path }).catch(() => {})
         } catch (err) {
-          setError(err.message)
+          if (seq === openSeqRef.current) setError(err.message)
         } finally {
-          setBusy(false)
+          if (seq === openSeqRef.current) setBusy(false)
         }
       }, [])
 
@@ -1731,7 +1737,7 @@ window.__ModuleLoader__.load({
         })
         const data = await call('assets.readMany', { path: project.path, ids: specs }).catch(() => null)
         if (data) setImages(data.images || {})
-      }, [project?.path, items, assets?.blocks])
+      }, [project?.path, items, assets?.blocks, assets?.revision])
 
       useEffect(() => { loadImages() }, [loadImages])
 
@@ -2838,7 +2844,7 @@ window.__ModuleLoader__.load({
           .then((data) => { if (alive) setImages(data.images || {}) })
           .catch(() => {})
         return () => { alive = false }
-      }, [project?.path, assets?.textures?.length])
+      }, [project?.path, assets?.revision])
 
       // 游戏内式预览：物品按 item model 的 layer 叠加，方块按解析出的面贴图等轴显示
       useEffect(() => {
@@ -2867,7 +2873,7 @@ window.__ModuleLoader__.load({
           }
         }).catch(() => {})
         return () => { alive = false }
-      }, [project?.path, (project.items || []).length])
+      }, [project?.path, assets?.revision, (project.items || []).length])
 
       if (!project) return h('div', { style: S.empty }, '请先在「项目」中打开一个项目。')
       if (!assets) return h('div', { style: S.empty }, '正在读取素材…')
